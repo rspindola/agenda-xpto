@@ -188,17 +188,17 @@
 ### US-119 — Funcionalidades restritas por plano (roadmap)
 
 **Como** Admin (`P1`),  
-**quero** saber que certas funcionalidades futuras só existem em planos superiores,  
-**para que** eu alinhe expectativas e roadmap com o meu negócio.
+**quero** saber que certas funcionalidades só existem em planos superiores ou estão no roadmap,  
+**para que** eu alinhe expectativas com o meu negócio.
 
 **Critérios de aceite:**
 
-- ✓ Documentação de produto lista como **pós-MVP / roadmap**:
-  - **WhatsApp IA** (e créditos associados, se aplicável): disponível apenas em **Pro** e **Business** — versão estimada **v1.2** ([PRD §5](../../PRD.md))
-  - **Relatórios avançados**: apenas **Business** — versão estimada **v2.0**
+- ✓ **WhatsApp IA** (e créditos associados, se aplicável): apenas **Pro** e **Business** — versão estimada **v1.2** ([PRD §5](../../PRD.md))
+- ✓ **Relatórios analíticos Pro** (detalhe no [módulo 08](../08-reports/USER_STORIES.md)): apenas **Pro** e **Business**; no **Starter** aparecem com **cadeado** e CTA de upgrade. Incluem, entre outros definidos em produto: **horários de pico**, **serviços mais rentáveis** (preço ÷ duração), **taxa de retorno de clientes**, **antecedência média** e **cancelamentos por motivo** quando o motivo existir no produto.
+- ✓ **Relatórios financeiros avançados** (ex.: **receita realizada e projetada**, **ticket médio por cliente**, métricas dependentes de **pagamento online**): apenas **Business** — versão estimada **v2.0** ([PRD §5](../../PRD.md)); documentação canónica futura no módulo 08 quando existir escopo.
 - ✓ Quando a funcionalidade existir na UI, utilizadores fora do plano veem indicação “indisponível no seu plano” e CTA de upgrade onde fizer sentido
 - ✗ Não deve prometer datas como compromisso legal; manter “estimado”
-- ✗ Não deve listar estas features como inclusas no MVP sem flag clara de futuro
+- ✗ Não deve listar funcionalidades de roadmap como inclusas no MVP sem flag clara de futuro
 
 ---
 
@@ -216,4 +216,4 @@
 - Estabelecimentos e profissionais: [módulo 03](../03-establishment-setup/USER_STORIES.md)  
 - Página pública: [módulo 06](../06-public-booking-page/USER_STORIES.md)  
 - Notificações: [módulo 07](../07-notifications/USER_STORIES.md)  
-- Relatórios (avançados futuros): [módulo 08](../08-reports/USER_STORIES.md)
+- Relatórios e análises: [módulo 08](../08-reports/USER_STORIES.md)
