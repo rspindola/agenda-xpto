@@ -1,83 +1,74 @@
-# 05-Appointments — Diagrama de Estados
+# 05 — Agendamentos: diagrama de estados
+
+Alinhado ao modelo do [módulo 06 — página pública](../../06-public-booking-page/diagrams/state-diagram/states.md): **`pendente` é apenas transitório e interno** (criação atômica); **o cliente vê `confirmado` imediatamente** após agendamento bem-sucedido. Lembretes e envio de e-mail são tratados no [módulo 07](../../07-notifications/USER_STORIES.md), não como estados do agendamento.
+
+---
+
+## Ciclo de vida do agendamento
+
+| Estado | Visível ao cliente (página pública) | Notas |
+|--------|-------------------------------------|--------|
+| `pendente` (interno) | Não | Existe só durante o processamento da criação; não rotular na UI. |
+| `confirmado` | Sim | Estado estável após sucesso; cancelamento via link e lembretes partem daqui. |
+| `concluído` | Opcional / painel | Marcado no painel após atendimento. |
+| `nao_compareceu` | Não (painel / dono) | Equivale ao fluxo operacional de no-show. |
+| `cancelado` | Sim (após cancelar) | Cliente ou dono; slot liberado. |
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending: Agendamento criado<br/>(via WhatsApp ou web)
-    
-    Pending --> CreatingJob: Job criado<br/>(BullMQ)
-    CreatingJob --> WaitingReminder: Agendado<br/>lembrete 24h
-    WaitingReminder --> Reminder1Sent: 24h antes:<br/>SMS enviado
-    Reminder1Sent --> WaitingReminder2: Agendado<br/>lembrete 2h
-    
-    WaitingReminder2 --> Reminder2Sent: 2h antes:<br/>SMS enviado
-    Reminder2Sent --> Confirmed: Estado estável
-    
-    Confirmed --> BeingProcessed: Cliente no local<br/>ou sendo atendido
-    BeingProcessed --> Completed: ✅ Serviço concluído
-    Completed --> [*]: Histórico
-    
-    Confirmed --> NoShowWindow: Passou hora<br/>+ 15min sem<br/>atender
-    NoShowWindow --> NoShow: ⚪ Cliente não compareceu
-    NoShow --> [*]
-    
-    Pending --> CancelledByClient: Cliente clica<br/>link de cancelamento
-    CancelledByClient --> Cancelled
-    
-    Confirmed --> CancelledByAdmin: Admin cancela
-    CancelledByAdmin --> Cancelled
-    
-    Pending --> CancelledBySystem: Falha de criação<br/>de job ou data passou
-    CancelledBySystem --> Cancelled
-    
-    Cancelled --> [*]: Histórico
-    
-    note right of Pending
-      Recém-criado, aguardando
-      processos automáticos
+    direction LR
+
+    [*] --> PendenteInterno: Criacao do agendamento<br/>em andamento
+
+    state "pendente (interno)" as PendenteInterno
+    note right of PendenteInterno
+        Nunca exibido ao cliente
+        na UI publica
     end note
-    
-    note right of Confirmed
-      Pronto e confirmado.
-      Lembretes agendados.
-    end note
-    
-    note right of BeingProcessed
-      Pode não ser rastreado
-      (depende de UX)
-    end note
-    
-    note right of Cancelled
-      Reembolsos/créditos
-      devem ser processados
-      neste ponto
-    end note
+
+    PendenteInterno --> confirmado: Persistencia OK<br/>e regras validadas
+
+    confirmado --> concluido: Dono marca<br/>atendimento concluido
+
+    confirmado --> nao_compareceu: Passou janela<br/>operacional no-show
+
+    PendenteInterno --> cancelado: Falha de negocio<br/>antes de sucesso ao cliente
+
+    confirmado --> cancelado: Cliente link ou<br/>Dono no painel
+
+    concluido --> [*]
+    nao_compareceu --> [*]
+    cancelado --> [*]
 ```
 
-## Estados de Slot de Horário
+---
+
+## Estados de slot de horário
 
 ```mermaid
 stateDiagram-v2
     Available: 🟢 Disponível
     Booked: 🔴 Reservado
     Unavailable: ⚪ Indisponível
-    
+
     Available --> Booked: Agendamento criado
     Booked --> Available: Agendamento cancelado
     Booked --> Completed: Agendamento concluído
-    
+
     Available --> Unavailable: Feriado<br/>ou fechado
     Unavailable --> Available: Feriado removido<br/>ou reabre
-    
+
     note right of Available
       Pode receber novo
       agendamento
     end note
-    
+
     note right of Booked
       Ocupado por agendamento
-      (qualquer status exceto cancelado)
+      confirmado ou concluído
+      até liberar slot
     end note
-    
+
     note right of Unavailable
       Bloco de horário
       não disponível

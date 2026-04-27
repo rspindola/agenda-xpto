@@ -23,6 +23,7 @@
 **para que** eu reserve meu lugar sem esperar.
 
 **Critérios de aceite:**
+- ✓ Após criar o agendamento com sucesso, o estado apresentado ao cliente na experiência web é **confirmado**; `pendente` (se existir no modelo) é apenas **transitório e interno**, nunca exibido como rótulo na UI do cliente
 - ✓ Link público permite visualizar serviços e profissionais
 - ✓ Cliente seleciona serviço → profissional → data → hora
 - ✓ Sistema mostra apenas slots disponíveis (respeita horário + feriado)
