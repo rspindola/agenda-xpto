@@ -1,71 +1,37 @@
-# 02-Config — Fluxo de Usuário
+# 04 — Fluxo de utilizador: configuração (dono) e consumo (agendamento)
+
+Dois eixos: **P1** no painel a definir regras; **cliente** na página pública a consumir slots calculados com essas regras ([módulo 06](../../06-public-booking-page/USER_STORIES.md)).
 
 ```mermaid
-flowchart TD
-    Start([Usuário após login]) --> Dashboard["📊 Dashboard"]
-    Dashboard --> NavConfig["Clica em<br/>Configurações"]
-    
-    NavConfig --> ConfigPage{Qual config?}
-    
-    ConfigPage -->|Básico| BasicConfig["📝 Configuração Básica"]
-    BasicConfig --> Form1["Preencher:<br/>- Nome estabelecimento<br/>- Slug único<br/>- Telefone<br/>- Endereço"]
-    Form1 --> Validate1{Dados válidos<br/>e slug único?}
-    Validate1 -->|Não| Error1["❌ Erro de validação"]
-    Error1 --> Form1
-    Validate1 -->|Sim| SaveBasic["Salvar em database"]
-    SaveBasic --> Success1["✅ Configurações salvas"]
-    Success1 --> ConfigPage
-    
-    ConfigPage -->|Horários| HoursConfig["🕐 Horário de Funcionamento"]
-    HoursConfig --> WeekForm["Selecionar dias da semana"]
-    WeekForm --> TimeForm["Definir:<br/>- Hora abertura<br/>- Hora fechamento<br/>- Intervalo almoço"]
-    TimeForm --> ValidateTime{Horários válidos?}
-    ValidateTime -->|Não| ErrorTime["❌ Hora inválida"]
-    ErrorTime --> TimeForm
-    ValidateTime -->|Sim| SaveHours["Salvar blocos<br/>de disponibilidade"]
-    SaveHours --> Success2["✅ Horários salvos"]
-    Success2 --> ConfigPage
-    
-    ConfigPage -->|Feriados| HolidaysConfig["🗓️ Feriados e Suspensões"]
-    HolidaysConfig --> HolidayList["Ver feriados:<br/>- Data<br/>- Motivo<br/>- Opções editar/remover"]
-    HolidayList --> AddHoliday{Ação?}
-    AddHoliday -->|Adicionar| AddForm["Data + Descrição"]
-    AddForm --> SaveHoliday["Criar holiday"]
-    SaveHoliday --> Success3["✅ Feriado adicionado"]
-    Success3 --> HolidayList
-    
-    AddHoliday -->|Editar| EditForm["Modificar data/descrição"]
-    EditForm --> UpdateHoliday["Atualizar"]
-    UpdateHoliday --> Success4["✅ Feriado atualizado"]
-    Success4 --> HolidayList
-    
-    AddHoliday -->|Remover| DeleteHoliday["Confirmar exclusão"]
-    DeleteHoliday --> Success5["✅ Feriado removido"]
-    Success5 --> HolidayList
-    
-    HolidayList --> ConfigPage
-    
-    ConfigPage -->|Integração| IntegrationConfig["🔗 Integração"]
-    IntegrationConfig --> IntChoice{Qual?}
-    IntChoice -->|WhatsApp| GoWhatsApp["Ir para 06-WhatsApp"]
-    IntChoice -->|Calendário| CalendarSetup["Ir para future module"]
-    
-    ConfigPage -->|Voltar| BackToDash["Voltar ao Dashboard"]
-    BackToDash --> Dashboard
-    
-    Success1 --> NextStep["Via onboarding:<br/>Próximo: 03-Services"]
-    Success2 --> NextStep
-    NextStep --> End([Continuar configuração])
+flowchart TB
+    subgraph configDono [Configuracao pelo dono P1]
+        StartDono([Dono autenticado]) --> MenuDisp[Abre Disponibilidade]
+        MenuDisp --> Estab[US-410 Horario estabelecimento]
+        Estab --> Prof[US-411 Disponibilidade por profissional]
+        Prof --> Feriados[US-412 Feriados suspensões]
+        Feriados --> Bloq[US-413 Bloqueios pontuais]
+        Bloq --> Conflito{Tem confirmados<br/>em conflito?}
+        Conflito -->|Sim| Lista[Mostrar lista conflitos US-417]
+        Lista --> Escolha{Acao dono}
+        Escolha -->|Massa cancelar| Massa[Cancelar e notificar modulo 07]
+        Escolha -->|Apenas guardar| SoBloq[Bloqueio ativo sem massa]
+        Conflito -->|Nao| Antec[US-414 Antecedencia minima]
+        Massa --> Antec
+        SoBloq --> Antec
+        Antec --> Matriz[US-415 Vista consolidada opcional]
+        Matriz --> FimDono([Regras atualizadas])
+    end
+
+    subgraph consultaCliente [Consulta no agendamento modulo 06]
+        StartCli([Cliente abre slug]) --> Escolhas[Seleciona servicos duracao]
+        Escolhas --> Pedido[Pede slots ao servidor]
+        Pedido --> Motor[US-416 Intersecao regras 04]
+        Motor --> Slots{Slots devolvidos}
+        Slots -->|Lista| Confirma[Confirma agendamento]
+        Confirma --> AgendConfirmado[Agendamento confirmado modulo 05 06]
+    end
+
+    FimDono -.->|Altera dados lidos| Motor
 ```
 
-**Decisões Principais:**
-- Slug deve ser único e immutável (chave de URL pública)
-- Horários são blocos repetiveis (segunda tem x, terça tem y, etc.)
-- Feriados são exceções (remove horários normais daquele dia)
-- Validações de horário: abertura < fechamento, intervalo válido
-
-**Validações Críticas:**
-- ✅ Slug: apenas letras, números, hífen (regex)
-- ✅ Telefone: formato válido
-- ✅ Horários: não podem ser negativos ou invertidos
-- ✅ Feriados: data futura (ou atual para hoje)
+**Legenda:** a seta tracejada indica que alterações gravadas no painel passam a alimentar o motor na **próxima** consulta (ver [US-418](../../USER_STORIES.md)).

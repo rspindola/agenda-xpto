@@ -1,100 +1,51 @@
-# 02-Config — Diagrama de Estados
+# 04 — Disponibilidade: diagrama de estados
+
+Dois conjuntos de estados: **ciclo de vida de um bloqueio** (configuração no painel) e relação com **agendamentos confirmados** (módulos [05](../05-appointments/diagrams/state-diagram/states.md) / [06](../06-public-booking-page/diagrams/state-diagram/states.md)). Estados de **agendamento** (`confirmado`, `cancelado`, etc.) não são duplicados aqui.
+
+---
+
+## Bloqueio pontual (recurso de calendário)
+
+| Estado | Significado |
+|--------|-------------|
+| `rascunho` | Opcional na UX: formulário em edição antes de submeter (omitido no diagrama se não existir). |
+| `ativo` | Vigente; intersecta o cálculo de slots enquanto `agora` estiver dentro de `[início, fim]`. |
+| `revogado` | Removido ou anulado pelo dono antes do fim; deixa de afetar novas consultas. |
+| `expirado` | Fim do período passou; deixa de afetar slots (pode manter-se em histórico só leitura). |
 
 ```mermaid
 stateDiagram-v2
-    [*] --> ConfigPending: Tenant criado<br/>(após signup)
-    
-    ConfigPending --> BasicConfigForm: Acessa configurações<br/>básicas
-    BasicConfigForm --> SettingBasic: Preenche dados
-    SettingBasic --> ValidatingBasic: Submit form
-    ValidatingBasic --> ValidError: Slug já existe<br/>ou inválido
-    ValidError --> BasicConfigForm
-    
-    ValidatingBasic --> BasicConfigDone: Dados validados
-    BasicConfigDone --> SavedBasic: Salvo em database
-    SavedBasic --> PartiallyConfigured
-    
-    PartiallyConfigured --> HoursConfigForm: Configurar horários
-    HoursConfigForm --> SelectingDays: Selecionar dias<br/>da semana
-    SelectingDays --> SetTimes: Definir horários<br/>e intervalo
-    SetTimes --> ValidatingTimes: Submit form
-    ValidatingTimes --> TimeError: Horário inválido<br/>(abertura > fechamento)
-    TimeError --> SetTimes
-    
-    ValidatingTimes --> TimesDone: Horários validados
-    TimesDone --> SavedHours: Blocos de disponibilidade<br/>salvos
-    SavedHours --> PartiallyConfigured2
-    
-    PartiallyConfigured2 --> HolidaysForm: Adicionar feriados
-    HolidaysForm --> AddingHoliday: Preencher data<br/>+ descrição
-    AddingHoliday --> ValidatingHoliday: Submit
-    ValidatingHoliday --> HolidayError: Data inválida<br/>ou passada
-    HolidayError --> AddingHoliday
-    
-    ValidatingHoliday --> HolidayDone: Feriado válido
-    HolidayDone --> SavedHoliday: Salvo em database
-    SavedHoliday --> PartiallyConfigured2
-    
-    PartiallyConfigured2 --> EditingHoliday: Clica editar<br/>feriado
-    EditingHoliday --> UpdatingHoliday: Modificar
-    UpdatingHoliday --> SavedHoliday
-    
-    PartiallyConfigured2 --> DeletingHoliday: Clica deletar<br/>feriado
-    DeletingHoliday --> ConfirmDelete: Confirmação
-    ConfirmDelete --> DeletedHoliday: Removido
-    DeletedHoliday --> PartiallyConfigured2
-    
-    PartiallyConfigured2 --> Configured: Todas configurações<br/>obrigatórias done
-    Configured --> Dashboard: Redirecionar para<br/>próxima etapa
-    Dashboard --> [*]
-    
-    Configured --> EditingConfig: Usuário volta para<br/>editar config
-    EditingConfig --> BasicConfigForm
-    EditingConfig --> HoursConfigForm
-    EditingConfig --> HolidaysForm
-    
-    note right of ConfigPending
-      Tenant não pode prosseguir
-      sem config básica
-    end note
-    
-    note right of Configured
-      Tenant agora pode ir para
-      03-Services para criar
-      serviços e profissionais
-    end note
+    direction LR
+
+    [*] --> ativo: Bloqueio guardado<br/>e vigente
+
+    ativo --> revogado: Dono remove ou anula
+    ativo --> expirado: Data fim ultrapassada
+
+    revogado --> [*]
+    expirado --> [*]
 ```
 
-## Estados de Validação de Formulários
+---
+
+## Conflito com agendamentos confirmados (US-417, opção B)
+
+Após persistir bloqueio **ativo**, o sistema pode apresentar **conflitos** com agendamentos **confirmados**. A resolução em massa muda cada agendamento para **cancelado** (ver estados de agendamento no módulo 05); notificações no [módulo 07](../../07-notifications/USER_STORIES.md).
 
 ```mermaid
-stateDiagram-v2
-    Idle --> FormOpen: Usuário clica<br/>editar/novo
-    FormOpen --> Filled: Preenchendo dados
-    
-    Filled --> IsValid: User pressiona<br/>Enter/Submit
-    
-    IsValid --> ClientValidation: Zod validation
-    ClientValidation --> ClientError: Erros encontrados
-    ClientError --> Filled: Mostrar erros<br/>inline
-    
-    ClientValidation --> Valid: Passou
-    Valid --> SubmittingForm: Loading...
-    
-    SubmittingForm --> ServerValidation: Backend valida
-    ServerValidation --> ServerError: Erro no servidor<br/>(ex: slug existe)
-    ServerError --> Filled: Mostrar toast error
-    
-    ServerValidation --> SavedDB: Sucesso!<br/>Salvo no DB
-    SavedDB --> Success: ✅ Toast + Reload
-    Success --> Idle
-    
-    note right of ClientError
-      Validação local é rápida
-      (email format, slug regex, etc)
-    end note
-    
-    note right of ServerError
-      Validação servidor checa<br/>constraints únicos (slug, email)
-    end note
+flowchart TB
+    guardado[Bloqueio guardado ativo]
+    det[Detetar interseccao com agendamentos confirmados]
+    lista[Exibir lista de conflitos ao dono]
+    guardado --> det
+    det --> lista
+    lista --> escolha{Dono escolhe}
+    escolha -->|Cancelamento em massa| massa[Marcar cancelado e enfileirar e-mails modulo 07]
+    escolha -->|Fechar sem cancelar| fim[Bloqueio permanece lista tratada depois]
 ```
+
+---
+
+## Estados de slot (referência alinhada ao 05)
+
+A ocupação de um intervalo por agendamento **confirmado** segue o diagrama de **slot** em [05-appointments — estados de slot](../05-appointments/diagrams/state-diagram/states.md) (`Booked` ↔ agendamento não cancelado). O módulo 04 define **por que** um instante não entra na lista de candidatos a slot livre (regras + bloqueios); o módulo 05/06 define o **ciclo do agendamento** em si.

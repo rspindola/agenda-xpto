@@ -1,7 +1,9 @@
-# User Stories - Establishment Setup
+# User Stories — Establishment Setup (Módulo 03)
 
-> Formato: `Como [persona], quero [acao], para que [beneficio]`
-> Criterios de aceite usam ✓ (deve funcionar) e ✗ (nao deve acontecer)
+> Formato: `Como [persona], quero [ação], para que [benefício]`  
+> Critérios de aceite usam ✓ (deve funcionar) e ✗ (não deve acontecer)
+
+**Disponibilidade (expediente, feriados, disponibilidade semanal por profissional, bloqueios, antecedência mínima, motor de slots):** documentação canónica no [módulo 04 — Disponibilidade](../04-availability/USER_STORIES.md) (US-410 a US-418). As antigas US-202, US-203 e US-304 deste ficheiro foram descontinuadas em favor dessas histórias.
 
 ---
 
@@ -15,14 +17,16 @@
 
 ---
 
-## Bloco A - Configuracoes gerais do estabelecimento
+## Bloco A — Dados gerais e integrações
 
 ### US-201 — Configurar dados básicos
+
 **Como** Admin (`P1`),  
-**quero** preenchero nome do estabelecimento, slug único, telefone e endereço,  
+**quero** preencher o nome do estabelecimento, slug único, telefone e endereço,  
 **para que** meu negócio fique cadastrado corretamente no sistema.
 
 **Critérios de aceite:**
+
 - ✓ Formulário valida email único (case-insensitive)
 - ✓ Slug aceita apenas letras, números e hífen
 - ✓ Telefone é validado (formato E.164 ou nacional)
@@ -33,44 +37,14 @@
 
 ---
 
-### US-202 — Definir horário de funcionamento
-**Como** Admin (`P1`),  
-**quero** configurar horário de abertura, fechamento e intervalo de almoço para cada dia da semana,  
-**para que** o sistema saiba quando posso receber agendamentos.
+### US-202 — Conectar WhatsApp (integração)
 
-**Critérios de aceite:**
-- ✓ Interface permite selecionar 7 dias (seg-dom)
-- ✓ Horários são validados (abertura < fechamento)
-- ✓ Intervalo de almoço é opcional
-- ✓ Dados salvos geram lista de "blocos de disponibilidade"
-- ✓ Cada dia pode ter horário diferente
-- ✗ Não deve aceitar horário invertido (18:00 - 09:00)
-- ✗ Não deve permitir intervalo de almoço fora do expediente
-
----
-
-### US-203 — Gerenciar feriados e suspensões
-**Como** Admin (`P1`),  
-**quero** adicionar, editar e remover datas de feriado/suspensão,  
-**para que** o sistema não permita agendamentos nessas datas.
-
-**Critérios de aceite:**
-- ✓ Interface exibe lista de feriados com data e motivo
-- ✓ Botão "Adicionar" abre form com data + descrição
-- ✓ Editar permite modificar data/motivo existente
-- ✓ Deletar pede confirmação antes de remover
-- ✓ Feriado adicionado aparece imediatamente na lista
-- ✗ Não deve permitir feriado no passado (exceto hoje)
-- ✗ Não deve permitir data duplicada para mesmo feriado
-
----
-
-### US-204 — Conectar WhatsApp (integração)
 **Como** Admin (`P1`),  
 **quero** conectar meu WhatsApp via QR Code (ZeroFila API),  
 **para que** eu possa receber e responder mensagens de clientes.
 
 **Critérios de aceite:**
+
 - ✓ Botão "Conectar WhatsApp" exibe QR Code em tempo real
 - ✓ QR Code renova a cada 15 segundos
 - ✓ Após scanear, status muda para "Conectado" com número exibido
@@ -81,14 +55,16 @@
 
 ---
 
-## Bloco B - Servicos e profissionais
+## Bloco B — Serviços e profissionais
 
-### US-301 — Criar novo serviço
+### US-203 — Criar novo serviço
+
 **Como** Admin (`P1`),  
 **quero** cadastrar um serviço com nome, duração e preço,  
 **para que** eu possa oferecer esse serviço nos agendamentos.
 
 **Critérios de aceite:**
+
 - ✓ Form solicita: nome, duração (minutos), preço (R$), descrição opcional
 - ✓ Duração deve ser > 0 minutos
 - ✓ Preço deve ser ≥ 0
@@ -99,12 +75,14 @@
 
 ---
 
-### US-302 — Gerenciar profissionais
+### US-204 — Gerenciar profissionais
+
 **Como** Admin (`P1`),  
 **quero** adicionar profissionais, definir quais serviços cada um oferece e editar dados,  
 **para que** eu controle quem trabalha e o que faz.
 
 **Critérios de aceite:**
+
 - ✓ Form solicita: nome, email (opcional), telefone
 - ✓ Após criar, interface permite atribuir serviços (N:N)
 - ✓ Profissional pode ofertar múltiplos serviços
@@ -113,14 +91,18 @@
 - ✗ Não deve permitir deletar profissional com agendamentos ativos
 - ✗ Não deve aceitar email duplicado (se preenchido)
 
+**Nota:** a **disponibilidade semanal** (quando cada profissional atende) está no [módulo 04 — US-411](../04-availability/USER_STORIES.md).
+
 ---
 
-### US-303 — Definir preços diferenciados por profissional
+### US-205 — Definir preços diferenciados por profissional
+
 **Como** Admin (`P1`),  
-**quero** definir preços diferentes para o mesmo serviço conforme o profissional (ex: Junior vs Senior),  
+**quero** definir preços diferentes para o mesmo serviço conforme o profissional (ex.: Junior vs Senior),  
 **para que** eu tenha flexibilidade de pricing.
 
 **Critérios de aceite:**
+
 - ✓ Na atribuição de serviço a profissional, permite override de preço
 - ✓ Se preço não for definido, usa o padrão do serviço
 - ✓ Preço específico do profissional aparece em agendamentos
@@ -130,43 +112,37 @@
 
 ---
 
-### US-304 — Visualizar matriz de disponibilidade
-**Como** Admin (`P1`),  
-**quero** ver em uma matriz qual profissional trabalha em qual dia/hora e qual serviço oferece,  
-**para que** eu tenha visão rápida da capacidade operacional.
+## Bloco C — Operação assíncrona e automações
 
-**Critérios de aceite:**
-- ✓ Exibe grid com profissionais (linhas) x dias (colunas)
-- ✓ Células exibem horário de trabalho e serviços oferecidos
-- ✓ Pode filtrar por serviço
-- ✓ Visão é read-only (configuração feita em outro lugar)
-- ✗ Não deve carregar se houver muitos profissionais (max 50 visualmente)
+> **Referência canónica de notificações por e-mail (MVP), retry e templates:** [módulo 07 — Notificações](../07-notifications/USER_STORIES.md) (**US-701 a US-708**). As histórias abaixo permanecem neste módulo por contexto de produto; o detalhe de canais, políticas de falha e tipos de mensagem deve alinhar-se ao 07.
 
----
+### US-206 — Receber lembretes automáticos 24h antes
 
-## Bloco C - Operacao assincrona e automacoes
-
-### US-401 — Receber lembretes automáticos 24h antes
 **Como** Cliente (`P2`),  
-**quero** receber uma mensagem (SMS/WhatsApp) 24 horas antes do meu agendamento,  
+**quero** receber uma mensagem 24 horas antes do meu agendamento,  
 **para que** eu não esqueça e não deixe o profissional esperando.
 
 **Critérios de aceite:**
+
 - ✓ Lembrete é enviado automaticamente (não requer ação admin)
-- ✓ Mensagem é enviada 24 horas exatas antes do agendamento
-- ✓ Se falhar, é retentado 3 vezes com backoff exponencial
-- ✓ Log registra se foi enviado com sucesso
+- ✓ Mensagem é enviada na janela definida em produto (ex.: 24h antes do agendamento)
+- ✓ Se falhar, é retentado conforme política (ver [US-706](../07-notifications/USER_STORIES.md))
+- ✓ Log regista se foi enviado com sucesso
 - ✗ Não deve enviar se cliente cancelou agendamento
 - ✗ Não deve enviar para agendamentos no passado
 
+**Referência cruzada:** lembrete 24h e 2h, confirmação e cancelamentos — [US-702](../07-notifications/USER_STORIES.md), [US-703](../07-notifications/USER_STORIES.md) e restantes **US-701+** no módulo 07.
+
 ---
 
-### US-402 — Atualizar status para "no-show" automaticamente
+### US-207 — Atualizar status para "no-show" automaticamente
+
 **Como** Admin (`P1`),  
-**quero** que sistema marque um agendamento como "no-show" se não foi confirmado no horário,  
+**quero** que o sistema marque um agendamento como "no-show" se não foi confirmado no horário,  
 **para que** eu não precise fazer isso manualmente.
 
 **Critérios de aceite:**
+
 - ✓ Job BullMQ executa 15 minutos após horário do agendamento
 - ✓ Se status ainda for "confirmed", muda para "no-show"
 - ✓ Admin recebe notificação do no-show
@@ -176,17 +152,17 @@
 
 ---
 
-### US-403 — Debitar créditos de IA automaticamente
+### US-208 — Debitar créditos de IA automaticamente
+
 **Como** Admin (`P1`),  
-**quero** que sistema debite créditos IA conforme conversas ocorrem via WhatsApp,  
+**quero** que o sistema debite créditos IA conforme conversas ocorrem via WhatsApp,  
 **para que** eu controle consumo sem intervenção manual.
 
 **Critérios de aceite:**
+
 - ✓ Job executa a cada hora, resumindo consumo do período
 - ✓ Créditos são debitados da quota do tenant
 - ✓ Logs registram cada debitagem (quando, quantos, por quê)
 - ✓ Se quota atingir mínimo, admin recebe alerta
 - ✗ Não deve debitar se tenant não tem créditos suficientes
 - ✗ Não deve processar créditos de tenant suspenso
-
----

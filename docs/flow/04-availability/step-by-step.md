@@ -1,63 +1,88 @@
-# Step-by-step - Availability
+# 04 — Disponibilidade: passo a passo (painel do dono)
 
-## Horario de funcionamento do estabelecimento
+Fluxo recomendado para configurar **quando** o estabelecimento e os profissionais aceitam agendamentos. O consumo dessas regras na **página pública** está descrito na secção «Integração com o agendamento (módulo 06)».
 
-###  Horário de Funcionamento
-
-  
-
-Configure os dias e horários em que o estabelecimento está aberto:
-
-  
-
--  Ative ou desative cada dia da semana.
-
--  Defina o horário de abertura e encerramento.
-
-  
-
-**Exemplo:** Seg-Sex: 09:00–19:00 | Sáb: 08:00–16:00 | Dom: Fechado
-
-  
+**Pré-requisito:** profissionais e serviços já existentes no painel ([módulo 03](../03-establishment-setup/USER_STORIES.md)).
 
 ---
 
-## Disponibilidade por profissional e datas bloqueadas
+## 1. Horário de funcionamento do estabelecimento
 
-## Definir Disponibilidade dos Profissionais
+1. Dono acede a **Disponibilidade** (ou **Configurações → Horário do estabelecimento**, conforme IA da aplicação).
+2. Para cada dia da semana: ativar ou desativar; se ativo, definir abertura, fechamento e opcionalmente intervalo de almoço.
+3. Guardar. O sistema valida (abertura antes do fechamento; almoço dentro do período).
+4. O resultado define o **teto** temporal em que qualquer profissional pode ter slots (interseção com a sua própria disponibilidade).
 
-**Menu:** Painel Admin → **Disponibilidade**
+**Exemplo:** Seg–Sex 09:00–19:00 com almoço 12:00–13:00; Sáb 08:00–16:00; Dom fechado.
 
-Esta configuração define quando cada profissional está disponível para atender. Sem esta configuração, o assistente IA não conseguirá oferecer horários ao cliente.
+---
 
-![Definir Disponibilidade](image-3.png)
+## 2. Disponibilidade semanal por profissional
 
-### Como configurar:
+1. Na mesma área, selecionar **profissional** na lista.
+2. Por cada dia: definir um ou mais blocos (ex.: 09:00–12:00 e 14:00–19:00) ou marcar dia como folga.
+3. Guardar. O sistema recusa blocos fora do expediente do estabelecimento nesse dia.
+4. Repetir para cada profissional que atende ao público.
 
-1. Selecione o **profissional** na lista.
-2. Para cada dia da semana, defina a **hora de início** e **hora de fim**.
-3. É possível configurar **múltiplos blocos por dia** (ex.: manhã e tarde, com intervalo).
-4. Desative os dias em que o profissional não trabalha.
+**Dica:** almoço do profissional pode ser modelado com dois blocos contíguos ao intervalo desejado.
 
-![Profissional Renato selecionado](image-3.png)
+---
 
-### Exemplo de disponibilidade:
+## 3. Feriados e suspensões (nível estabelecimento)
 
-| Dia              | Bloco 1       | Bloco 2       |
-| ---------------- | ------------- | ------------- |
-| Segunda a Quinta | 09:00 — 12:00 | 14:00 — 19:00 |
-| Sexta            | 09:00 — 12:00 | 14:00 — 17:00 |
-| Sábado           | 08:00 — 14:00 | —             |
-| Domingo          | Folga         | —             |
+1. Abrir **Feriados e suspensões** (calendário do estabelecimento).
+2. Adicionar data (ou intervalo, se o modelo o suportar) e motivo; guardar.
+3. Nesses dias, **nenhum** profissional apresenta slots na consulta pública.
 
-> **Dica:** Configure intervalos para almoço criando blocos separados. Ex.: 09:00–12:00 e 14:00–18:00.
+---
 
-### Datas Bloqueadas (Férias e Folgas)
+## 4. Bloqueios pontuais (folgas, férias, fecho, intervalo reservado)
 
-Abaixo da disponibilidade semanal, encontra a seção **Datas Bloqueadas**. Use-a para:
+1. Abrir **Bloqueios**.
+2. Escolher âmbito: **profissional** ou **todo o estabelecimento**.
+3. Definir início, fim e motivo; guardar.
+4. Se existirem **agendamentos confirmados** que intersectam o período (**US-417, opção B**):
+   - O sistema **permite guardar** o bloqueio.
+   - Apresenta **lista de conflitos** (agendamentos afetados).
+   - O dono pode:
+     - **Só confirmar o bloqueio** e tratar reagendamentos manualmente mais tarde, ou
+     - Executar **cancelamento em massa** dos listados; para cada um: estado **cancelado**, slot libertado, e-mails disparados via [módulo 07](../07-notifications/USER_STORIES.md) (cliente e regras de notificação ao dono, conforme tipo de evento).
 
-- **Férias de um profissional** — Selecione o profissional, defina as datas de início e fim, e adicione um motivo (ex: "Férias").
-- **Folga pontual** — Bloqueie um único dia para um profissional específico.
-- **Fecho do estabelecimento** — Selecione "Todo o estabelecimento" para bloquear todos os profissionais num período (ex: feriados, obras).
+---
 
-Quando uma data está bloqueada, os horários desse profissional (ou de todos) não aparecem como disponíveis — nem no WhatsApp, nem na página de agendamento online.
+## 5. Antecedência mínima
+
+1. Abrir **Regras de agendamento** (ou secção equivalente na área de disponibilidade).
+2. Definir valor (ex.: 120 minutos). Guardar.
+3. A partir daí, a API de slots e a criação de agendamentos rejeitam inícios antes de `agora + antecedência` ([US-606](../06-public-booking-page/USER_STORIES.md)).
+
+---
+
+## 6. Matriz / vista consolidada (opcional na jornada)
+
+1. Abrir **Vista consolidada** / matriz.
+2. Rever profissionais × dias; usar filtros se disponíveis.
+3. Para corrigir detalhes, voltar aos passos 1–4.
+
+---
+
+## Integração com o agendamento (módulo 06)
+
+Quando o **cliente** agenda na página pública:
+
+1. O front-end pede slots (profissional, serviços/duração total, intervalo de datas).
+2. O **servidor** calcula candidatos aplicando, por ordem lógica: expediente do estabelecimento ∩ disponibilidade do profissional − feriados globais − bloqueios aplicáveis − antecedência mínima − intervalos já ocupados por agendamentos **confirmados**.
+3. Devolve apenas inícios válidos para um bloco contínuo de duração pedida.
+4. No **submit**, a mesma regra é revalidada para evitar condição de corrida.
+
+*(MVP do produto no [PRD](../../PRD.md) é página web; integrações conversacionais ficam fora deste documento.)*
+
+---
+
+## Resumo de erros comuns
+
+| Problema | Verificar |
+|----------|-----------|
+| Nenhum slot num dia em que o salão abre | Disponibilidade do profissional nesse dia; feriado; bloqueio |
+| Slot aparece e depois falha ao confirmar | Concorrência; revalidar no servidor |
+| Bloqueio não bloqueia | Âmbito (profissional vs estabelecimento); datas UTC vs local |

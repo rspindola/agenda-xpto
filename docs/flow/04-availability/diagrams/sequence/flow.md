@@ -1,139 +1,78 @@
-# 02-Config — Diagrama de Sequência
+# 04 — Diagramas de sequência: disponibilidade
 
-## Fluxo de Salvar Configuração Básica
+## 1. Consulta de slots na página pública (integração com módulo 06)
 
-```mermaid
-sequenceDiagram
-    actor User as 👤 Usuário
-    participant Web as 🌐 Web Client
-    participant API as 🚀 API
-    participant DB as 🗄️ PostgreSQL
-    
-    User->>Web: Acessa /config/basic
-    Web-->>User: Renderiza formulário
-    
-    User->>User: Preenche:<br/>- Nome<br/>- Slug<br/>- Telefone
-    User->>Web: Clica "Salvar"
-    
-    Web->>Web: Zod validation<br/>- Slug format (regex)<br/>- Telefone format<br/>- Nome min 3 chars
-    
-    alt Validação local falha
-        Web-->>User: ❌ Erro de validação
-    else Validação OK
-        Web->>API: PATCH /config/basic<br/>{name, slug, phone...}
-        
-        API->>API: Zod validation<br/>(duplica validação client)
-        API->>API: Rate limit check
-        
-        API->>DB: SELECT COUNT(*) FROM tenants<br/>WHERE slug = ?<br/>AND id != tenant_id
-        DB-->>API: 0 (slug disponível)
-        
-        alt Slug já existe
-            API-->>Web: 409 Conflict<br/>{status: error}
-            Web-->>User: ❌ Slug já está em uso
-        else Slug disponível
-            API->>DB: UPDATE tenants<br/>SET name = ?, slug = ?,<br/>phone = ?,<br/>updated_at = NOW()
-            
-            DB-->>API: Row updated
-            API->>API: Invalidar cache<br/>da URL pública
-            API-->>Web: 200 OK<br/>{status: ok, tenant}
-            
-            Web->>Web: Mostrar toast
-            Web-->>User: ✅ Configurações salvas
-        end
-    end
-```
-
-## Fluxo de Salvar Horários de Funcionamento
+Fluxo em que o **cliente** (módulo 06) obtém horários válidos; o servidor aplica todas as camadas do módulo 04 + ocupação por agendamentos **confirmados**.
 
 ```mermaid
 sequenceDiagram
-    actor User as 👤 Usuário
-    participant Web as 🌐 Web Client
-    participant API as 🚀 API
-    participant DB as 🗄️ PostgreSQL
-    participant Cache as 💾 Redis
-    
-    User->>Web: Acessa /config/hours
-    Web-->>User: Renderiza seletor
-    
-    User->>User: Seleciona dias<br/>e horários
-    User->>Web: Clica "Salvar"
-    
-    Web->>Web: Validação local<br/>- Abertura < Fechamento?<br/>- Intervalo válido?
-    
-    alt Validação falha
-        Web-->>User: ❌ Horário inválido
-    else OK
-        Web->>API: POST /config/availability<br/>{weekDays: [{day, open, close}]}
-        
-        API->>API: Validação backend
-        API->>DB: DELETE FROM availability_blocks<br/>WHERE tenant_id = ?
-        
-        DB-->>API: Deleted N rows
-        
-        API->>DB: INSERT INTO availability_blocks<br/>(tenant_id, day_of_week,<br/>open_time, close_time,<br/>break_start, break_end)<br/>VALUES (...)
-        
-        DB-->>API: N rows inserted
-        API->>Cache: DEL availability:{tenant_id}
-        API-->>Web: 201 Created
-        
-        Web-->>User: ✅ Horários salvos
-        Web->>Web: Atualizar UI
-    end
+    participant Cliente as Cliente pagina publica
+    participant Web as Front publico
+    participant API as API slots agendamento
+    participant Reg as Servico regras disponibilidade
+    participant DB as Base de dados
+
+    Cliente->>Web: Escolhe servicos e duracao total
+    Cliente->>Web: Escolhe profissional ou data
+    Web->>API: GET slots estabelecimento profissional periodo duracao
+
+    API->>Reg: Calcular candidatos
+    Reg->>DB: Expediente estabelecimento
+    DB-->>Reg: Blocos semanais tenant
+
+    Reg->>DB: Disponibilidade profissional
+    DB-->>Reg: Blocos por dia
+
+    Reg->>DB: Feriados e bloqueios ativos
+    DB-->>Reg: Intervalos excluidos
+
+    Reg->>DB: Antecedencia minima tenant
+    DB-->>Reg: Minutos
+
+    Reg->>DB: Agendamentos confirmados sobrepostos
+    DB-->>Reg: Ocupacao
+
+    Reg-->>API: Lista inicios validos
+    API-->>Web: JSON slots
+    Web-->>Cliente: Mostra horarios disponiveis
 ```
 
-## Fluxo de Adicionar Feriado
+**Notas:**
+
+- A mesma função de cálculo (ou equivalente) deve ser invocada na **criação** do agendamento com validação final e bloqueio transacional do intervalo.
+- Lembretes e e-mails transacionais após reserva/cancelamento: [módulo 07](../../07-notifications/USER_STORIES.md).
+
+---
+
+## 2. Dono grava bloqueio com conflitos e cancelamento em massa (US-417 opção B)
 
 ```mermaid
 sequenceDiagram
-    actor User as 👤 Usuário
-    participant Web as 🌐 Web Client
-    participant API as 🚀 API
-    participant DB as 🗄️ PostgreSQL
-    
-    User->>Web: Clica "+ Adicionar Feriado"
-    Web-->>User: Abre modal com form
-    
-    User->>User: Preenche:<br/>- Data<br/>- Motivo
-    User->>Web: Clica "Salvar"
-    
-    Web->>Web: Validação local<br/>- Data válida?<br/>- Não é passada?
-    
-    alt Validação falha
-        Web-->>User: ❌ Data inválida
-    else OK
-        Web->>API: POST /config/holidays<br/>{date, reason}
-        
-        API->>API: Validação backend
-        API->>API: Verificar data<br/>não é anterior a hoje
-        
-        API->>DB: INSERT INTO holidays<br/>(tenant_id, date, reason,<br/>created_at)
-        
-        DB-->>API: Holiday inserted
-        API-->>Web: 201 Created<br/>{holiday}
-        
-        Web->>Web: Adicionar na lista
-        Web-->>User: ✅ Feriado adicionado
+    participant Dono as Dono painel
+    participant Web as Front admin
+    participant API as API disponibilidade
+    participant DB as Base de dados
+    participant Notif as Fila notificacoes modulo 07
+
+    Dono->>Web: Cria bloqueio intervalo e ambito
+    Web->>API: POST bloqueios
+    API->>DB: INSERT bloqueio estado ativo
+    API->>DB: SELECT agendamentos confirmados intersectam
+    DB-->>API: Lista conflitos ou vazio
+
+    alt Sem conflitos
+        API-->>Web: 201 bloqueio e conflitos vazios
+    else Com conflitos
+        API-->>Web: 201 bloqueio mais lista conflitos
+        Web-->>Dono: Mostra lista e opcoes
+
+        Dono->>Web: Confirma cancelamento em massa
+        Web->>API: POST bloqueios id cancelar afetados
+        API->>DB: UPDATE agendamentos para cancelado
+        API->>Notif: Enfileirar e-mails por agendamento
+        API-->>Web: 200 resultado
+        Web-->>Dono: Resumo e confirmacao
     end
-    
-    User->>Web: Clica editar
-    Web-->>User: Abre form preenchido
-    
-    User->>Web: Modifica e clica "Salvar"
-    Web->>API: PATCH /config/holidays/{id}<br/>{date, reason}
-    API->>DB: UPDATE holidays<br/>SET date = ?, reason = ?
-    DB-->>API: Updated
-    API-->>Web: 200 OK
-    Web-->>User: ✅ Feriado atualizado
-    
-    User->>Web: Clica deletar
-    Web-->>User: Confirmação modal
-    User->>Web: Confirma
-    Web->>API: DELETE /config/holidays/{id}
-    API->>DB: DELETE FROM holidays<br/>WHERE id = ?
-    DB-->>API: Deleted
-    API-->>Web: 204 No Content
-    Web->>Web: Remover da lista
-    Web-->>User: ✅ Feriado removido
 ```
+
+*(Os códigos HTTP são exemplificativos; o essencial é: bloqueio persistido, deteção de conflitos, cancelamento explícito em massa e disparo de notificações.)*
