@@ -1,124 +1,52 @@
-# 00-Dashboard — Fluxo / Wireframes / Estados / Sequência / ERD
+# 02 — Dashboard: fluxo do utilizador (painel)
 
-## User Flow
+Fluxo do **donno (Admin)** após autenticação. Detalhe de user stories: [USER_STORIES.md](../../USER_STORIES.md).
 
 ```mermaid
 flowchart TD
-    Start([Usuário faz login]) --> Dashboard["📊 Dashboard Principal"]
-    Dashboard --> Overview["🏠 Visão Geral"]
-    Overview --> Content["Exibir:<br/>- Próximos agendamentos<br/>- Estatísticas do mês<br/>- Créditos IA restantes<br/>- Plano ativo"]
-    
-    Content --> Sidebar["Navegação Lateral"]
-    Sidebar --> Menu1["📋 Agendamentos"]
-    Sidebar --> Menu2["📱 WhatsApp"]
-    Sidebar --> Menu3["⚙️ Configurações"]
-    Sidebar --> Menu4["💰 Créditos/Plano"]
-    Sidebar --> Menu5["📊 Relatórios"]
-    Sidebar --> Menu6["📚 FAQ"]
-    Sidebar --> Menu7["💼 Afiliados"]
-    
-    Menu1 --> Route1["→ 05-Appointments"]
-    Menu2 --> Route2["→ 06-WhatsApp"]
-    Menu3 --> Route3["→ 02-Config + 03-Services"]
-    Menu4 --> Route4["→ 07-IA-Credits + 10-Plans"]
-    Menu5 --> Route5["→ 09-Analytics"]
-    Menu6 --> Route6["→ 08-FAQ"]
-    Menu7 --> Route7["→ 11-Affiliates"]
-    
-    Dashboard --> Cards["📈 Cards de Métricas"]
-    Cards --> Card1["🟢 Agendamentos<br/>esta semana"]
-    Cards --> Card2["📱 Mensagens<br/>recebidas"]
-    Cards --> Card3["💳 Créditos<br/>restantes"]
-    Cards --> Card4["⭐ Taxa de<br/>no-show"]
-    
-    Dashboard --> Activity["📝 Atividade Recente"]
-    Activity --> Recent["Últimas ações:<br/>- Agendamentos criados<br/>- Clientes adicionados<br/>- Créditos debitados"]
-    
-    Dashboard --> Logout["Clica Logout"]
-    Logout --> End([Sessão encerrada])
+  start([Login_bem_sucedido])
+  dash[Dashboard_estabelecimento_activo]
+  start --> dash
+
+  subgraph quick [Accoes_rapidas_desde_o_dashboard]
+    q1[Alternar_estabelecimento]
+    q2[Clicar_proximo_agendamento]
+    q3[Abrir_atalhos_de_alertas]
+    q4[Abrir_disponibilidade_sem_slots]
+  end
+
+  subgraph modules [Navegacao_para_modulos]
+    m05[Modulo_05_Agenda_calendario]
+    m04[Modulo_04_Disponibilidade]
+    m07[Modulo_07_Notificacoes]
+    m03[Modulo_03_Setup_estabelecimento]
+    m06[Modulo_06_Pagina_publica_teste]
+    m08[Modulo_08_Relatorios_fora_MVP_resumo]
+  end
+
+  dash --> q1
+  dash --> q2
+  dash --> q3
+  dash --> q4
+
+  q1 --> dash
+  q2 --> m05
+  q3 --> m04
+  q3 --> m07
+  q3 --> m05
+  q4 --> m04
+
+  dash --> m05
+  dash --> m04
+  dash --> m07
+  dash --> m03
+  dash --> m06
+
+  dash -.->|"tendencias_receita_comparativos_fora_MVP"| m08[Modulo_08_Relatorios]
 ```
 
-## Wireframes
+**Legenda**
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 🏠 Dashboard                          [👤 João Silva] [⊙ ⋮]  │
-├─┬───────────────────────────────────────────────────────────┤
-│ │ 📋 Agendamentos                                            │
-│ │ 📱 WhatsApp                                                │
-│ │ ⚙️ Configurações                                           │
-│ │ 💰 Planos & Créditos                                       │
-│ │ 📊 Relatórios                                              │
-│ │ 📚 FAQ                                                     │
-│ │ 💼 Afiliados                                               │
-│ │ ⚙️ Minha Conta                                             │
-│ │ 🚪 Sair                                                    │
-│ └───────────────────────────────────────────────────────────┤
-│                                                              │
-│  Boas-vindas, João Silva! 👋                               │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ 🟢 Próximos  │  │ 📱 Mensagens │  │ 💳 Créditos  │     │
-│  │   Agendamen │  │   Recebidas  │  │   Restantes  │     │
-│  │     15      │  │      234     │  │     450/500  │     │
-│  │ esta semana │  │   este mês   │  │   (90%)      │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ ⭐ Taxa      │  │ 📈 Revenue   │  │ 👥 Clientes  │     │
-│  │   No-show    │  │   (Mês)      │  │   Ativos     │     │
-│  │     2%       │  │   R$ 1.250   │  │     142      │     │
-│  │  excelente!  │  │              │  │              │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                              │
-│  ─────────────────────────────────────────────────────────  │
-│                                                              │
-│  📅 Próximos Agendamentos                                   │
-│                                                              │
-│  🟢 Amanhã 09:00 — João Silva — Corte Masculino            │
-│  🟢 Amanhã 14:30 — Maria Silva — Barba                     │
-│  🟢 Em 2 dias 10:00 — Carlos Santos — Combo                │
-│  [ Ver Todos ]                                              │
-│                                                              │
-│  ─────────────────────────────────────────────────────────  │
-│                                                              │
-│  📝 Atividade Recente                                       │
-│                                                              │
-│  18/05 14:32 — Agendamento criado (cliente: Ana)           │
-│  18/05 13:15 — Créditos debitados (120 tokens)             │
-│  18/05 09:00 — Agendamento concluído (João)                │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## ERD
-
-```mermaid
-erDiagram
-    TENANTS ||--o{ DASHBOARD_METRICS : has
-    TENANTS ||--o{ ACTIVITY_LOGS : generates
-    
-    DASHBOARD_METRICS {
-        uuid id PK
-        uuid tenant_id FK
-        date metric_date
-        integer appointments_confirmed
-        integer appointments_cancelled
-        integer appointments_noshow
-        integer messages_received
-        integer credits_used
-        integer credits_remaining
-        decimal revenue_generated
-        integer active_clients
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    ACTIVITY_LOGS {
-        uuid id PK
-        uuid tenant_id FK
-        enum action "appointment_created, appointment_cancelled, credit_deducted, whatsapp_connected"
-        json metadata "{appointmentId, creditsUsed, etc}"
-        timestamp created_at
-    }
-```
+- **Acções rápidas:** interacções que actualizam ou navegam com um clique a partir do próprio dashboard ([US-109](../../USER_STORIES.md)).
+- **Navegação:** entradas de menu ou links equivalentes para trabalho prolongado (lista completa, configuração, relatórios).
+- **Módulo 08:** não faz parte do MVP do dashboard; linha tracejada indica pedido explícito fora do escopo do ecrã inicial.
