@@ -177,11 +177,13 @@ Os concorrentes atuais (Booksy, Trinks, iSalon) oferecem agendamento, mas têm g
 
 ## 10. Modelo de Negócio
 
-| Plano | Estabelecimentos | Profissionais | Preço estimado |
-|---|---|---|---|
-| Starter | 1 | até 2 | R$ 59/mês |
-| Pro | até 3 | até 10 por estabelecimento | R$ 129/mês |
-| Business | até 10 | ilimitado | R$ 249/mês |
+| Plano | Estabelecimentos | Profissionais | Agendamentos/mês | Preço estimado |
+|---|---|---|---|---|
+| Starter | 1 | até 2 | até 100 | R$ 59/mês |
+| Pro | até 3 | até 10 por estabelecimento | ilimitado | R$ 129/mês |
+| Business | até 10 | ilimitado | ilimitado | R$ 249/mês |
+
+**Trial:** 15 dias gratuitos no plano **Pro** para novos cadastros; **sem cartão de crédito** durante o trial — o método de pagamento é solicitado apenas na **conversão** para plano pago. Se o trial terminar **sem conversão**, a conta faz **downgrade automático para o plano Starter** (limites do Starter passam a aplicar-se; detalhe operacional em `docs/flow/09-plans/`).
 
 > ⚠️ Preços a validar com pesquisa de mercado e entrevistas com potenciais clientes.
 

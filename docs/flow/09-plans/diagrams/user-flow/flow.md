@@ -1,97 +1,71 @@
-# 10-Plans — Fluxo
+# Módulo 09 — Planos: fluxo do utilizador (AgendaIA)
 
-## User Flow
+Visão resumida: trial Pro → uso → conversão ou Starter automático; Starter → alertas de volume → possível cap na página pública; upgrade e downgrade (com gate).
+
+Detalhe: [USER_STORIES.md](../../USER_STORIES.md), [step-by-step.md](../../step-by-step.md), [states.md](../state-diagram/states.md).
+
+---
+
+## Planos (referência)
+
+| Plano | Estabelecimentos | Profissionais | Agendamentos/mês |
+|-------|------------------|----------------|------------------|
+| Starter | 1 | até 2 | até 100 |
+| Pro | até 3 | até 10 por estabelecimento | ilimitado |
+| Business | até 10 | ilimitado | ilimitado |
+
+Trial: **15 dias Pro**, sem cartão; cartão só na **conversão**. Fim do trial sem pagamento: **Starter automático**.
+
+---
+
+## Flowchart — trial, limite Starter, upgrade e downgrade
 
 ```mermaid
 flowchart TD
-    Start([Usuário]) --> PlansPage["💳 Planos & Subscrição"]
-    PlansPage --> ViewPlans["Ver planos disponíveis:<br/>- Trial (500 créditos)<br/>- Starter (1500 créditos)<br/>- Pro (8000 créditos)<br/>- Business (30000 créditos)"]
-    
-    ViewPlans --> CurrentPlan["Plano atual: Starter"]
-    CurrentPlan --> Action{Qual ação?}
-    
-    Action -->|Upgrade| SelectNewPlan["Selecionar novo plano"]
-    SelectNewPlan --> Pricing["Ver preço:<br/>Starter: R$ 49/mês<br/>Pro: R$ 99/mês<br/>Business: R$ 199/mês"]
-    Pricing --> Checkout["Ir para Stripe"]
-    Checkout --> Payment["Completar pagamento"]
-    Payment --> Updated["✅ Plano atualizado"]
-    Updated --> PlansPage
-    
-    Action -->|Downgrade| DowngradeConfirm["Confirmar downgrade"]
-    DowngradeConfirm --> BeCareful["⚠️ Você perderá<br/>créditos excedentes"]
-    BeCareful --> Downgraded["Plano reduzido"]
-    Downgraded --> PlansPage
-    
-    Action -->|Cancel| CancelSub["Cancelar subscrição"]
-    CancelSub --> ConfirmCancel["Confirmar"]
-    ConfirmCancel --> Cancelled["❌ Subscrição cancelada<br/>Plano volta para Trial"]
-    Cancelled --> PlansPage
-    
-    PlansPage --> End([Voltar])
+  signup[Novo cadastro]
+  signup --> trialPro[Trial Pro 15 dias sem cartao]
+  trialPro --> uso[Uso do painel e agendamentos]
+  uso --> alertasTrial{Alertas fim trial}
+  alertasTrial --> uso
+  uso --> fimTrial{Trial expirou}
+  fimTrial -->|conversao com pagamento| planoPago[Plano pago escolhido]
+  fimTrial -->|sem conversao| starterAuto[Starter automatico]
+  starterAuto --> usoStarter[Operacao Starter]
+  usoStarter --> contador{Criados no mes civil timezone estabelecimento}
+  contador -->|menos de 80| usoStarter
+  contador -->|80 a 89| warn80[Alerta painel faltam 20]
+  contador -->|90 a 99| warn90[Alerta painel faltam 10]
+  contador -->|100| capPublico[Bloqueio novos na pagina publica]
+  warn80 --> usoStarter
+  warn90 --> usoStarter
+  capPublico --> ctaUpgrade[CTA upgrade no painel]
+  uso --> mudancaPlano{Mudanca de plano}
+  mudancaPlano -->|upgrade| payUp[Pagamento confirmado]
+  payUp --> limitesUp[Limites novos imediatos]
+  limitesUp --> uso
+  mudancaPlano -->|downgrade| gate{Excede limites destino}
+  gate -->|sim| assistente[Assistente hard gate arquivar ajustar]
+  assistente --> gate
+  gate -->|nao| confDown[Confirmar downgrade]
+  confDown --> limitesDown[Limites destino imediatos]
+  confDown --> billNext[Facturacao proximo ciclo]
+  limitesDown --> uso
+  billNext --> uso
+  planoPago --> uso
 ```
 
-## Wireframes
+---
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Planos & Subscrição                       [← Voltar]   │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Sua Subscrição Atual                                   │
-│  ╔═════════════════════════════════════════════════╗   │
-│  ║ 🟢 Starter — R$ 49/mês                         ║   │
-│  ║                                                 ║   │
-│  ║ ✅ 1.500 créditos/mês                           ║   │
-│  ║ ✅ Agendamentos ilimitados                      ║   │
-│  ║ ✅ Até 3 profissionais                          ║   │
-│  ║ ✅ Lembretes automáticos                        ║   │
-│  ║ ✅ Dashboard básico                             ║   │
-│  ║                                                 ║   │
-│  ║ Próxima renovação: 18/06/2026                   ║   │
-│  ║ [ Cancelar Subscrição ]                         ║   │
-│  ╚═════════════════════════════════════════════════╝   │
-│                                                         │
-│  ─────────────────────────────────────────────────────  │
-│                                                         │
-│  Outros Planos Disponíveis                              │
-│                                                         │
-│  ┌──────────────────┐ ┌──────────────────┐             │
-│  │ 🆓 Trial         │ │ 💎 Pro           │             │
-│  │ (Upgrade Plan)   │ │ R$ 99/mês        │             │
-│  │                  │ │                  │             │
-│  │ 500 créditos     │ │ 8.000 créditos   │             │
-│  │ [ Manter ]       │ │ [ Upgrade ]      │             │
-│  └──────────────────┘ └──────────────────┘             │
-│                                                         │
-│  ┌──────────────────┐                                   │
-│  │ 🏢 Business      │                                   │
-│  │ R$ 199/mês       │                                   │
-│  │                  │                                   │
-│  │ 30.000 créditos  │                                   │
-│  │ [ Upgrade ]      │                                   │
-│  └──────────────────┘                                   │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+## Notas de leitura do diagrama
 
-## ERD
+- **Contador mensal:** zera no **dia 1** no timezone do estabelecimento; ver [step-by-step.md](../../step-by-step.md).
+- **Upgrade:** após pagamento, **limites** imediatos; levantamento do cap público se o novo plano for ilimitado em agendamentos.
+- **Downgrade:** **não** conclui com conflito; **assistente** até conformidade; **dados preservados**; cobrança ao novo tier no **próximo ciclo** após confirmação.
 
-```mermaid
-erDiagram
-    TENANTS ||--o{ SUBSCRIPTIONS : has
-    
-    SUBSCRIPTIONS {
-        uuid id PK
-        uuid tenant_id FK "unique"
-        enum plan_type "trial, starter, pro, business"
-        integer credits_per_month
-        decimal price_cents_monthly
-        string stripe_subscription_id
-        enum status "active, cancelled, past_due"
-        timestamp billing_cycle_start
-        timestamp billing_cycle_end
-        timestamp cancellation_date
-        timestamp created_at
-        timestamp updated_at
-    }
-```
+---
+
+## Referências
+
+- [USER_STORIES.md](../../USER_STORIES.md)  
+- [step-by-step.md](../../step-by-step.md)  
+- [states.md](../state-diagram/states.md)
