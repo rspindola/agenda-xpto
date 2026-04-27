@@ -1,7 +1,6 @@
-# User Stories — XP WhatsApp
+# User Stories - Availability
 
-> Formato: `Como [persona], quero [ação], para que [benefício]`
-> Critérios de aceite usam ✓ (deve funcionar) e ✗ (não deve acontecer)
+> Historias consolidadas de disponibilidade, horarios e bloqueios.
 
 ---
 
@@ -15,23 +14,7 @@
 
 ---
 
-## Módulo 03 — Configurações
-
-### US-201 — Configurar dados básicos
-**Como** Admin (`P1`),  
-**quero** preenchero nome do estabelecimento, slug único, telefone e endereço,  
-**para que** meu negócio fique cadastrado corretamente no sistema.
-
-**Critérios de aceite:**
-- ✓ Formulário valida email único (case-insensitive)
-- ✓ Slug aceita apenas letras, números e hífen
-- ✓ Telefone é validado (formato E.164 ou nacional)
-- ✓ Endereço permite até 500 caracteres
-- ✓ Dados salvos com sucesso retornam mensagem de confirmação
-- ✗ Não deve permitir slug duplicado (retorna 409)
-- ✗ Não deve aceitar telefone inválido
-
----
+## Disponibilidade operacional
 
 ### US-202 — Definir horário de funcionamento
 **Como** Admin (`P1`),  
@@ -49,6 +32,8 @@
 
 ---
 
+## Feriados e suspensoes
+
 ### US-203 — Gerenciar feriados e suspensões
 **Como** Admin (`P1`),  
 **quero** adicionar, editar e remover datas de feriado/suspensão,  
@@ -65,18 +50,16 @@
 
 ---
 
-### US-204 — Conectar WhatsApp (integração)
+## Matriz de disponibilidade
+
+### US-304 — Visualizar matriz de disponibilidade
 **Como** Admin (`P1`),  
-**quero** conectar meu WhatsApp via QR Code (ZeroFila API),  
-**para que** eu possa receber e responder mensagens de clientes.
+**quero** ver em uma matriz qual profissional trabalha em qual dia/hora e qual serviço oferece,  
+**para que** eu tenha visão rápida da capacidade operacional.
 
 **Critérios de aceite:**
-- ✓ Botão "Conectar WhatsApp" exibe QR Code em tempo real
-- ✓ QR Code renova a cada 15 segundos
-- ✓ Após scanear, status muda para "Conectado" com número exibido
-- ✓ Desconectar remove a sessão (reversível)
-- ✓ Status sempre atualizado (ativo/inativo)
-- ✗ Não deve armazenar credenciais Meta localmente
-- ✗ Não deve quebrar após logout da conta WhatsApp
-
----
+- ✓ Exibe grid com profissionais (linhas) x dias (colunas)
+- ✓ Células exibem horário de trabalho e serviços oferecidos
+- ✓ Pode filtrar por serviço
+- ✓ Visão é read-only (configuração feita em outro lugar)
+- ✗ Não deve carregar se houver muitos profissionais (max 50 visualmente)

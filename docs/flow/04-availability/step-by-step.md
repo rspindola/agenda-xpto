@@ -1,27 +1,28 @@
+# Step-by-step - Availability
 
-## Cadastrar Profissionais
+## Horario de funcionamento do estabelecimento
 
-**Menu:**  Painel Admin →  **Profissionais**
+###  Horário de Funcionamento
 
-![Painel Profissionais](image.png)
+  
 
-### Como adicionar:
+Configure os dias e horários em que o estabelecimento está aberto:
 
-1.  Clique em  **"Novo Profissional"**.
-2.  Preencha:  **Nome**,  **E-mail**  e  **Telefone**.
-3.  Clique em  **"Salvar"**.
+  
 
-### Gerenciar profissionais:
+-  Ative ou desative cada dia da semana.
 
--   **Editar**  — Altere informações de contacto.
--   **Ativar/Desativar**  — Profissionais desativados não aparecem para agendamento. Use quando um profissional estiver de férias.
--   **Avatar**  — Pode carregar uma foto do profissional.
--   **Excluir**  — Exclui o profissional.
+-  Defina o horário de abertura e encerramento.
 
-![Editar Profissional](image-1.png)
-![Excluir Profissional](image-2.png)
+  
 
-**Importante:**  Após cadastrar o profissional, é necessário definir a disponibilidade (secção seguinte). Não é possivel excluir um profissional caso tenha serviço agendado para ele.
+**Exemplo:** Seg-Sex: 09:00–19:00 | Sáb: 08:00–16:00 | Dom: Fechado
+
+  
+
+---
+
+## Disponibilidade por profissional e datas bloqueadas
 
 ## Definir Disponibilidade dos Profissionais
 
