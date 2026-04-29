@@ -85,10 +85,10 @@ export async function buildServer(): Promise<FastifyInstance> {
       openapi: {
         openapi: "3.1.0",
         info: {
-          title: "ZeroFila API",
+          title: "Agenda XPTO API",
           version: "1.0.0",
           description:
-            "HTTP API for ZeroFila scheduling: establishments, availability, appointments, public booking, notifications, reports, and subscription plans.",
+            "HTTP API for Agenda XPTO scheduling: establishments, availability, appointments, public booking, notifications, reports, and subscription plans.",
         },
         servers: [
           {

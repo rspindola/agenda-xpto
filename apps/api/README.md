@@ -170,7 +170,7 @@ Com **`NODE_ENV !== production`**, a API regista `@fastify/swagger` + `@fastify/
 - **Swagger UI:** `http://localhost:3001/docs` (ajusta `PORT` se necessário)
 - **OpenAPI JSON:** `GET /docs/json`
 
-Em **produção**, `/docs` e `/docs/json` **não** são expostos. O título da especificação é **ZeroFila API**.
+Em **produção**, `/docs` e `/docs/json` **não** são expostos. O título da especificação é **Agenda XPTO API**.
 
 Rotas devem usar schemas Zod e `fastify-type-provider-zod` (ver regra `.cursor/rules/swagger-docs.mdc` na raiz do monorepo).
 

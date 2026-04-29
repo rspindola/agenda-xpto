@@ -4,7 +4,7 @@ import { resend } from "~/lib/email.js";
 
 export type AuthEmailKind = "verification" | "password_reset";
 
-const DEFAULT_FROM = "ZeroFila <onboarding@resend.dev>";
+const DEFAULT_FROM = "Agenda XPTO <onboarding@resend.dev>";
 
 export async function sendAuthTransactionalEmail(options: {
   logger: FastifyBaseLogger;
@@ -14,7 +14,7 @@ export async function sendAuthTransactionalEmail(options: {
 }): Promise<void> {
   const { logger, kind, to, url } = options;
   const subject =
-    kind === "verification" ? "Confirm your ZeroFila email" : "Reset your ZeroFila password";
+    kind === "verification" ? "Confirm your Agenda XPTO email" : "Reset your Agenda XPTO password";
 
   if (!process.env.RESEND_API_KEY || !resend) {
     logger.info(
