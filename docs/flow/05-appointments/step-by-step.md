@@ -51,7 +51,7 @@ Além do agendamento via WhatsApp, o seu estabelecimento tem uma página públic
 
 ### O link da sua página
 
-A URL da página é  `zerofila.cubicodigital.cloud/b/_slug-do-seu-estabelecimento_`. O slug foi definido quando configurou o estabelecimento pela primeira vez.
+A URL da página é  `agenda-xpto.cubicodigital.cloud/b/_slug-do-seu-estabelecimento_`. O slug foi definido quando configurou o estabelecimento pela primeira vez.
 
 ### Como funciona para o cliente
 
@@ -110,7 +110,7 @@ Veja o fluxo completo do ponto de vista do cliente:
 
 ## Lembretes Automáticos
 
-O ZeroFila envia automaticamente lembretes por WhatsApp. Não é necessária nenhuma configuração adicional — funciona de forma automática assim que o WhatsApp estiver configurado.
+A Agenda XPTO envia automaticamente lembretes por WhatsApp. Não é necessária nenhuma configuração adicional — funciona de forma automática assim que o WhatsApp estiver configurado.
 
 | Lembrete       | Quando               | Inclui                                        |
 |----------------|----------------------|-----------------------------------------------|
@@ -128,7 +128,7 @@ O ZeroFila envia automaticamente lembretes por WhatsApp. Não é necessária nen
 
 ## Cancelamentos
 
-O ZeroFila oferece dois métodos de cancelamento simples e sem intervenção do estabelecimento:
+A Agenda XPTO oferece dois métodos de cancelamento simples e sem intervenção do estabelecimento:
 
 ### Pelo link do lembrete
 

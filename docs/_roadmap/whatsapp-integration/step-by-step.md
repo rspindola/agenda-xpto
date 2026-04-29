@@ -4,17 +4,17 @@
 
 ![Conectar Whatsapp](image.png)
 
-O ZeroFila oferece duas formas de ligar o WhatsApp ao seu negócio. Escolha a que melhor se adapta às suas necessidades:
+A Agenda XPTO oferece duas formas de ligar o WhatsApp ao seu negócio. Escolha a que melhor se adapta às suas necessidades:
 
 ---
 
-## 🟢 Opção A — ZeroFila API (QR Code) *(Recomendado)*
+## 🟢 Opção A — Agenda XPTO API (QR Code) *(Recomendado)*
 
 A forma mais rápida e simples. Conecte qualquer número WhatsApp (pessoal ou Business) em menos de 2 minutos, sem necessidade de conta Meta Business.
 
 ### Como configurar:
 
-1. No painel, vá a **WhatsApp** e selecione **"ZeroFila API (QR Code)"**.  
+1. No painel, vá a **WhatsApp** e selecione **"Agenda XPTO API (QR Code)"**.  
 2. Clique em **"Configurar Agora"** — o sistema cria automaticamente a sua instância.  
 3. Um **QR Code** aparecerá no ecrã.  
 4. No seu telemóvel, abra o WhatsApp → **Dispositivos vinculados** → **Vincular dispositivo**.  
@@ -50,7 +50,7 @@ Para empresas que necessitam da API oficial do WhatsApp Business Platform. Reque
 
 ### Passos:
 
-1. Preencha os campos acima no painel do ZeroFila e clique em **"Salvar"**.  
+1. Preencha os campos acima no painel da Agenda XPTO e clique em **"Salvar"**.  
 2. No **Meta for Developers**, configure o webhook com a URL do seu domínio.  
 3. Use o mesmo **Verify Token** que definiu no passo 1.  
 4. Subscreva o campo **"messages"**.  
@@ -60,4 +60,4 @@ Para empresas que necessitam da API oficial do WhatsApp Business Platform. Reque
 
 ## 💬 Precisa de ajuda?
 
-A configuração pode ser técnica. Contacte a equipa de suporte do ZeroFila para assistência.
+A configuração pode ser técnica. Contacte a equipa de suporte da Agenda XPTO para assistência.

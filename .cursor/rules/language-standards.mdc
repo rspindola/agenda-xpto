@@ -1,0 +1,66 @@
+# Language Standards - Agenda XPTO API
+
+## Purpose & Scope
+This rule defines the language standards for all communication and code in the Agenda XPTO project. Cursor must respond in **Brazilian Portuguese** while all code artifacts must be written in **English**.
+
+## Cursor Responses
+- **MUST** always respond to the user in **Brazilian Portuguese (pt-BR)**.
+- **MUST** use Brazilian Portuguese for explanations, suggestions, and clarifications.
+- **MUST** use Brazilian Portuguese for error descriptions and debugging guidance.
+- **NEVER** respond to the user in English, even if the user writes in English.
+- **NEVER** mix languages within the same response sentence.
+
+## Code Language
+- **MUST** write all variable names, function names, class names, and type names in English.
+- **MUST** write all code comments in English.
+- **MUST** write all JSDoc/TSDoc documentation in English.
+- **MUST** write all error messages and log messages in English.
+- **MUST** write all Git commit messages in English following Conventional Commits.
+- **MUST** write all Swagger/OpenAPI summaries, descriptions, and tags in English.
+- **NEVER** use Portuguese words in variable names, function names, or code identifiers.
+- **AVOID** abbreviations that only make sense in Portuguese (e.g., `qtd`, `vlr`, `nro`).
+
+## Conventional Commits (English only)
+- **MUST** follow the pattern: `type(scope): description`
+- **MUST** use imperative present tense: `add`, `fix`, `remove` — not `added`, `fixed`, `removed`
+- **MUST** use scopes matching module names: `auth`, `establishments`, `appointments`, `availability`, `booking`, `notifications`, `reports`, `plans`
+
+### Commit Examples
+```
+feat(appointments): add cancel token validation on booking flow
+fix(availability): correct slot intersection when break hours overlap
+chore(prisma): add index on appointments start_at column
+test(establishments): add repository unit tests for create method
+docs(swagger): add request examples to booking endpoints
+```
+
+## Code Examples
+
+### Correct
+```typescript
+// Validates that the appointment slot does not overlap with existing confirmed appointments
+async function checkSlotAvailability(
+  professionalId: string,
+  startAt: Date,
+  endAt: Date,
+): Promise<boolean> {
+  const conflicting = await appointmentRepository.findConflicting(
+    professionalId,
+    startAt,
+    endAt,
+  );
+  return conflicting.length === 0;
+}
+```
+
+### Incorrect
+```typescript
+// Valida se o horário não conflita com agendamentos existentes
+async function verificarDisponibilidade(
+  profissionalId: string,
+  inicio: Date,
+  fim: Date,
+): Promise<boolean> {
+  // ...
+}
+```

@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│          🔒 Criar Conta - ZeroFila          │
+│          🔒 Criar Conta - Agenda XPTO          │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Email                                      │
@@ -38,7 +38,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│          🔒 Entrar - ZeroFila               │
+│          🔒 Entrar - Agenda XPTO               │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Email                                      │
@@ -67,7 +67,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│    🔐 Recuperar Senha - ZeroFila            │
+│    🔐 Recuperar Senha - Agenda XPTO            │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Insira o email da sua conta:               │
@@ -90,7 +90,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│    🔑 Redefinir Senha - ZeroFila            │
+│    🔑 Redefinir Senha - Agenda XPTO            │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Nova Senha                                 │
@@ -120,7 +120,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│      📬 Confirmar Email - ZeroFila          │
+│      📬 Confirmar Email - Agenda XPTO          │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Enviamos um link para: admin@exemplo.com   │

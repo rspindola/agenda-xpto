@@ -1,0 +1,391 @@
+// Agenda XPTO — schema canónico copiado de docs/flow/00-sustain/DATABASE.md §3 (gerador + datasource + enums + modelos até @@map).
+// Better Auth (scaffold): validado com better-auth Prisma adapter + emailAndPassword — não foi necessário alterar campos
+// face ao §3 (Session, Account, Verification, User). Em upgrades futuros do Better Auth, se o CLI/adapter exigir campos extra,
+// documentar o diff mínimo aqui e actualizar DATABASE.md.
+//
+// Desvio mínimo face ao §3 (Prisma): o documento lista `verifications Verification[]` em `User`, mas `Verification` não declara
+// FK para `User`. O Prisma exige relação bidireccional — removida apenas essa lista no modelo `User` (tabela `verifications` inalterada).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+// PENDING não existe na BD: só estado lógico durante a transação de criação (ver secção 1 e 5).
+enum AppointmentStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  APPOINTMENT_CONFIRMATION
+  REMINDER_24H
+  REMINDER_2H
+  CANCELLATION_CLIENT
+  CANCELLATION_OWNER
+  NO_SHOW_CLIENT
+  TRIAL_EXPIRY_ALERT
+  PLAN_CHANGED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED_RETRYING
+  FAILED_PERMANENT
+}
+
+enum PlanType {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum BlockScope {
+  ESTABLISHMENT
+  PROFESSIONAL
+}
+
+enum Weekday {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum CancelledBy {
+  CLIENT
+  OWNER
+  SYSTEM
+}
+
+// --- Better Auth (campos mínimos; completar com adapter oficial) ---
+
+model User {
+  id            String    @id @default(cuid(2))
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  sessions              Session[]
+  accounts              Account[]
+  establishments        Establishment[]
+  subscription          Subscription?
+  appointmentsCreated   Appointment[] @relation("AppointmentCreatedBy")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid(2))
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid(2))
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid(2))
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// --- Negócio ---
+
+model Subscription {
+  id                              String             @id @default(cuid(2))
+  userId                          String             @unique @map("user_id")
+  user                            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planType                        PlanType           @map("plan_type")
+  status                          SubscriptionStatus
+  trialEndsAt                     DateTime?          @map("trial_ends_at")
+  currentPeriodStart              DateTime?          @map("current_period_start")
+  currentPeriodEnd                DateTime?          @map("current_period_end")
+  /// Contador denormalizado para plano Starter: agendamentos criados no mês civil (ver secção 5).
+  starterMonthlyAppointmentsCount Int                @default(0) @map("starter_monthly_appointments_count")
+  /// Início UTC do período mensal usado para o contador (ajustado pelo job do dia 1).
+  starterQuotaPeriodStart         DateTime?          @map("starter_quota_period_start")
+  createdAt                       DateTime           @default(now()) @map("created_at")
+  updatedAt                       DateTime           @updatedAt @map("updated_at")
+
+  @@index([status, planType])
+  @@map("subscriptions")
+}
+
+model Establishment {
+  id                   String    @id @default(cuid(2))
+  userId               String    @map("user_id")
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  slug                 String    @unique
+  email                String
+  phone                String?
+  address              String?
+  /// IANA TZ, ex.: America/Sao_Paulo — usado em relatórios e mês civil Starter.
+  timezone             String
+  minAdvanceMinutes    Int       @default(60) @map("min_advance_minutes")
+  isActive             Boolean   @default(true) @map("is_active")
+  archivedAt           DateTime? @map("archived_at")
+  /// Destino de alertas operacionais (ex.: cancelamento pelo cliente — US-705).
+  operationalEmail     String?   @map("operational_email")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  businessHours   EstablishmentBusinessHour[]
+  holidays        EstablishmentHoliday[]
+  professionals   Professional[]
+  services        Service[]
+  blocks          Block[]
+  appointments    Appointment[]
+  notifications   Notification[]
+
+  @@index([userId])
+  @@index([userId, deletedAt])
+  @@map("establishments")
+}
+
+model EstablishmentBusinessHour {
+  id              String        @id @default(cuid(2))
+  establishmentId String        @map("establishment_id")
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  weekday         Weekday
+  opensAt         DateTime      @map("opens_at") @db.Time(6)
+  closesAt        DateTime      @map("closes_at") @db.Time(6)
+  breakStartsAt   DateTime?     @map("break_starts_at") @db.Time(6)
+  breakEndsAt     DateTime?     @map("break_ends_at") @db.Time(6)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@unique([establishmentId, weekday])
+  @@map("establishment_business_hours")
+}
+
+model EstablishmentHoliday {
+  id              String        @id @default(cuid(2))
+  establishmentId String        @map("establishment_id")
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  date            DateTime      @db.Date
+  reason          String
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@unique([establishmentId, date])
+  @@index([establishmentId, date])
+  @@map("establishment_holidays")
+}
+
+model Professional {
+  id              String        @id @default(cuid(2))
+  establishmentId String        @map("establishment_id")
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  name            String
+  email           String?
+  phone           String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+
+  professionalServices ProfessionalService[]
+  availabilities       ProfessionalAvailability[]
+  appointments         Appointment[]
+  blocks               Block[]
+
+  @@unique([establishmentId, email])
+  @@index([establishmentId, deletedAt])
+  @@map("professionals")
+}
+
+model Service {
+  id              String        @id @default(cuid(2))
+  establishmentId String        @map("establishment_id")
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  durationMinutes Int           @map("duration_minutes")
+  priceCents      Int           @map("price_cents")
+  /// Opcional: true para destacar na UI como “combo”; mesmo modelo de dados que serviço avulso.
+  catalogCombo    Boolean       @default(false) @map("catalog_combo")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+
+  professionalServices ProfessionalService[]
+  appointmentServices  AppointmentService[]
+
+  @@index([establishmentId, deletedAt])
+  @@map("services")
+}
+
+model ProfessionalService {
+  professionalId     String       @map("professional_id")
+  professional       Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  serviceId          String       @map("service_id")
+  service            Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  priceOverrideCents Int?         @map("price_override_cents")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  @@id([professionalId, serviceId])
+  @@map("professional_services")
+}
+
+model ProfessionalAvailability {
+  id               String       @id @default(cuid(2))
+  professionalId String       @map("professional_id")
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  weekday          Weekday
+  startsAt         DateTime     @map("starts_at") @db.Time(6)
+  endsAt           DateTime     @map("ends_at") @db.Time(6)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  @@index([professionalId, weekday])
+  @@map("professional_availabilities")
+}
+
+model Block {
+  id              String        @id @default(cuid(2))
+  establishmentId String        @map("establishment_id")
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  scope           BlockScope
+  professionalId  String?       @map("professional_id")
+  professional    Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  startsAt        DateTime      @map("starts_at")
+  endsAt          DateTime      @map("ends_at")
+  reason          String
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@index([establishmentId, startsAt, endsAt])
+  @@index([professionalId, startsAt, endsAt])
+  @@map("blocks")
+}
+
+model Appointment {
+  id                 String             @id @default(cuid(2))
+  establishmentId    String             @map("establishment_id")
+  establishment      Establishment      @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  professionalId     String             @map("professional_id")
+  professional       Professional       @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  status             AppointmentStatus
+  startAt            DateTime           @map("start_at")
+  /// Fim exclusivo ou inclusivo documentado na secção 5; calcular como startAt + soma das durações snapshot.
+  endAt              DateTime           @map("end_at")
+  clientName         String             @map("client_name")
+  clientPhone        String             @map("client_phone")
+  clientEmail        String             @map("client_email")
+  cancelToken        String             @unique @map("cancel_token")
+  cancelTokenUsedAt  DateTime?          @map("cancel_token_used_at")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  cancelledBy        CancelledBy?       @map("cancelled_by")
+  createdByUserId    String?            @map("created_by_user_id")
+  createdByUser      User?              @relation("AppointmentCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  appointmentServices AppointmentService[]
+  notifications       Notification[]
+
+  @@index([establishmentId, startAt])
+  @@index([establishmentId, professionalId, startAt])
+  @@index([establishmentId, status, startAt])
+  @@index([clientEmail, establishmentId])
+  @@index([createdByUserId])
+  @@map("appointments")
+}
+
+model AppointmentService {
+  id                        String      @id @default(cuid(2))
+  appointmentId             String      @map("appointment_id")
+  appointment               Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  serviceId                 String?     @map("service_id")
+  service                   Service?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  snapshotName              String      @map("snapshot_name")
+  snapshotDurationMinutes   Int         @map("snapshot_duration_minutes")
+  snapshotPriceCents        Int         @map("snapshot_price_cents")
+  sortOrder                 Int         @default(0) @map("sort_order")
+  createdAt                 DateTime    @default(now()) @map("created_at")
+  updatedAt                 DateTime    @updatedAt @map("updated_at")
+
+  @@index([appointmentId])
+  @@map("appointment_services")
+}
+
+model Notification {
+  id               String             @id @default(cuid(2))
+  establishmentId  String             @map("establishment_id")
+  establishment    Establishment      @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  appointmentId    String?            @map("appointment_id")
+  appointment      Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  type             NotificationType
+  status           NotificationStatus
+  recipientEmail   String             @map("recipient_email")
+  attemptCount     Int                @default(0) @map("attempt_count")
+  lastError        String?            @map("last_error")
+  scheduledFor     DateTime?          @map("scheduled_for")
+  sentAt           DateTime?          @map("sent_at")
+  idempotencyKey   String?            @unique @map("idempotency_key")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@index([status, scheduledFor])
+  @@index([appointmentId, type])
+  @@map("notifications")
+}

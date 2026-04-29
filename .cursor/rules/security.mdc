@@ -1,0 +1,80 @@
+# Security Standards - Agenda XPTO API
+
+## Purpose & Scope
+This rule enforces security practices across the Agenda XPTO API, covering authentication, authorization, input validation, and sensitive data handling.
+
+## Input Validation
+- **MUST** validate all incoming data with Zod at the route level before it reaches the service.
+- **MUST** validate path params, query strings, and request bodies — none can be trusted.
+- **NEVER** pass raw `request.body` or `request.params` to the service — always use the validated and typed version.
+- **NEVER** use `z.any()` in request schemas.
+
+## Authentication
+- **MUST** protect all `/dashboard/*` routes with the Better Auth session middleware.
+- **MUST** extract `userId` from the verified session — never from the request body or query string.
+- **NEVER** trust client-provided user IDs.
+- **NEVER** expose internal IDs in error messages.
+
+## Tenant Isolation (Multi-establishment)
+- **MUST** validate that every resource (establishment, professional, service, appointment) belongs to the authenticated user before reading or writing.
+- **MUST** perform this check in the service layer using the repository — never rely solely on route-level checks.
+- **MUST** throw `AppError` with `statusCode: 403` and `code: FORBIDDEN` when tenant mismatch is detected.
+- **NEVER** accept `establishmentId` from the request body for write operations — always resolve it from the authenticated session context.
+
+```typescript
+// CORRECT: tenant isolation in service
+async getAppointment(userId: string, appointmentId: string) {
+  const appointment = await this.repository.findById(appointmentId);
+
+  if (!appointment) {
+    throw new AppError({ statusCode: 404, code: 'APPOINTMENT_NOT_FOUND', message: 'Appointment not found.' });
+  }
+
+  if (appointment.establishment.userId !== userId) {
+    throw new AppError({ statusCode: 403, code: 'FORBIDDEN', message: 'Access denied.' });
+  }
+
+  return appointment;
+}
+```
+
+## Cancel Token
+- **MUST** generate `cancelToken` as a cryptographically random UUID (use `crypto.randomUUID()`).
+- **MUST** validate `cancelTokenUsedAt` is null before allowing cancellation.
+- **MUST** set `cancelTokenUsedAt` immediately upon use in the same transaction as the status update.
+- **NEVER** log or return `cancelToken` after the initial appointment creation response.
+- **NEVER** expose `cancelToken` in list or detail endpoints.
+
+## Sensitive Data
+- **NEVER** log: passwords, tokens, `clientEmail`, `clientPhone`, `cancelToken`, `accessToken`, `refreshToken`.
+- **NEVER** return stack traces in API error responses in production.
+- **NEVER** expose internal Prisma errors or database error codes to the client.
+- **MUST** sanitize error messages before sending — use `AppError.message` only.
+- **AVOID** including sensitive fields in `select` unless strictly necessary for the use case.
+
+## Rate Limiting
+- **MUST** apply rate limiting to public routes (booking page, cancel token endpoint) using `@fastify/rate-limit`.
+- **MUST** apply stricter rate limiting to auth routes (login, signup, forgot-password).
+- **AVOID** applying rate limiting to authenticated internal routes unless there is a specific abuse risk.
+
+## Error Handling
+- **MUST** use a global Fastify error handler that:
+  - Returns `AppError` fields as-is (statusCode, code, message).
+  - Returns `500` with a generic message for unexpected errors.
+  - Never exposes stack traces in production.
+- **NEVER** swallow errors silently — always log unexpected errors with `fastify.log.error`.
+
+```typescript
+// src/shared/errors/AppError.ts
+export class AppError extends Error {
+  constructor(
+    public readonly statusCode: number,
+    public readonly code: string,
+    message: string,
+    public readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
+```

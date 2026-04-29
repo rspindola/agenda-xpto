@@ -69,7 +69,7 @@
 │ Agendamento via WhatsApp. Cliente prefere máquina.      │
 │                                                         │
 │ Link de Cancelamento (para cliente)                     │
-│ 🔗 zerofila.app/cancel/abc-def-123-456                  │
+│ 🔗 agendaxpto.app/cancel/abc-def-123-456                  │
 │ (Expire em: 18/05/2026 09:00)                           │
 │                                                         │
 │ Ações:                                                  │

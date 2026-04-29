@@ -1,0 +1,19 @@
+{
+  "name": "agenda-xpto",
+  "private": true,
+  "description": "Agenda XPTO monorepo",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  }
+}

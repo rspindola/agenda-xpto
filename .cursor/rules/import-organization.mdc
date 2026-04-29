@@ -1,0 +1,163 @@
+---
+description: Enforces import organization standards and path aliases usage for Agenda XPTO API
+globs: ["apps/api/src/**/*.ts", "packages/**/*.ts"]
+alwaysApply: true
+---
+
+# Import Organization Standards - Agenda XPTO API - Version: 1.0.0
+
+## Purpose & Scope
+This rule defines import organization for the Agenda XPTO backend, including correct usage of path aliases and standardized import ordering across all TypeScript files. **ALL responses must be provided in Brazilian Portuguese.**
+
+## Import Order
+**MUST** follow this exact order with a blank line between each group:
+
+1. **Node.js built-ins** — `node:crypto`, `node:path`, etc.
+2. **External libraries** — `fastify`, `zod`, `@prisma/client`, `bullmq`, etc.
+3. **Internal packages** — `@agenda-xpto/types`, `@agenda-xpto/validations`
+4. **Path aliases** — `~/lib/*`, `~/shared/*`, `~/jobs/*`
+5. **Relative imports** — only within the same module folder (`./*.schema`, `./*.repository`)
+6. **Type-only imports** — `import type` at the end of each group or as a separate group
+
+```typescript
+// ✅ DO: correct import order with blank lines between groups
+import { randomUUID } from 'node:crypto';
+
+import { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import { z } from 'zod';
+
+import type { EstablishmentPublic } from '@agenda-xpto/types';
+
+import { prisma } from '~/lib/prisma';
+import { AppError } from '~/shared/errors/AppError';
+import { notificationsQueue } from '~/jobs/queues';
+
+import { type CreateAppointmentBody, createAppointmentBodySchema } from './appointments.schema';
+import { AppointmentsRepository } from './appointments.repository';
+```
+
+## Path Aliases
+- **MUST** use path aliases for all imports outside the current module folder.
+- **NEVER** use relative paths with more than one level (`../../`).
+- **NEVER** mix relative and alias imports for the same category.
+
+### Available Aliases
+| Alias | Resolves to | Usage |
+|---|---|---|
+| `~/lib/*` | `apps/api/src/lib/*` | `~/lib/prisma`, `~/lib/redis`, `~/lib/email` |
+| `~/shared/*` | `apps/api/src/shared/*` | `~/shared/errors/AppError`, `~/shared/schemas/error.schema` |
+| `~/jobs/*` | `apps/api/src/jobs/*` | `~/jobs/queues` |
+| `~/modules/*` | `apps/api/src/modules/*` | Only when one module needs a type from another |
+| `@agenda-xpto/types` | `packages/types/src` | Shared domain types |
+| `@agenda-xpto/validations` | `packages/validations/src` | Shared Zod schemas |
+
+```typescript
+// ✅ DO: use aliases
+import { prisma } from '~/lib/prisma';
+import { AppError } from '~/shared/errors/AppError';
+import { notificationsQueue } from '~/jobs/queues';
+import type { EstablishmentPublic } from '@agenda-xpto/types';
+
+// ❌ DON'T: relative paths outside module folder
+import { prisma } from '../../lib/prisma';
+import { AppError } from '../../../shared/errors/AppError';
+```
+
+## Type Imports
+- **MUST** use `import type` for all type-only imports.
+- **MUST** separate `import type` from value imports.
+- **SHOULD** group type imports at the end of their respective group.
+
+```typescript
+// ✅ DO: import type for type-only imports
+import { z } from 'zod';
+import type { ZodSchema } from 'zod';
+
+import { AppError } from '~/shared/errors/AppError';
+import type { AppErrorOptions } from '~/shared/errors/AppError';
+
+import type { CreateAppointmentBody } from './appointments.schema';
+import { AppointmentsRepository } from './appointments.repository';
+
+// ❌ DON'T: import types as values
+import { CreateAppointmentBody } from './appointments.schema'; // type-only, use import type
+```
+
+## Named vs Default Imports
+- **MUST** use named exports and named imports everywhere — no default exports.
+- **NEVER** use `import * as X from` — import only what is needed.
+
+```typescript
+// ✅ DO: named imports
+import { createAppointmentBodySchema, type CreateAppointmentBody } from './appointments.schema';
+import { AppointmentsService } from './appointments.service';
+
+// ❌ DON'T: default imports or namespace imports
+import AppointmentsService from './appointments.service'; // no default exports
+import * as appointmentsSchema from './appointments.schema'; // import only what you need
+```
+
+## Unused Imports
+- **NEVER** leave unused imports in any file.
+- **MUST** remove imports immediately when the usage is deleted.
+- **AVOID** importing entire modules when only one or two exports are needed.
+
+## Module-specific Patterns
+
+### Route files (`*.routes.ts`)
+```typescript
+import type { FastifyInstance } from 'fastify';
+
+import { AppError } from '~/shared/errors/AppError';
+
+import { type CreateEstablishmentBody, createEstablishmentBodySchema } from './establishments.schema';
+import { EstablishmentsService } from './establishments.service';
+import { EstablishmentsRepository } from './establishments.repository';
+```
+
+### Service files (`*.service.ts`)
+```typescript
+import { AppError } from '~/shared/errors/AppError';
+
+import type { CreateEstablishmentBody } from './establishments.schema';
+import type { EstablishmentsRepository } from './establishments.repository';
+```
+
+### Repository files (`*.repository.ts`)
+```typescript
+import type { Prisma } from '@prisma/client';
+
+import { prisma } from '~/lib/prisma';
+
+import type { CreateEstablishmentBody } from './establishments.schema';
+```
+
+### Schema files (`*.schema.ts`)
+```typescript
+import { z } from 'zod';
+
+import type { EstablishmentPublic } from '@agenda-xpto/types';
+```
+
+### Test files (`*.test.ts`)
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { AppError } from '~/shared/errors/AppError';
+
+import type { CreateEstablishmentBody } from '../establishments.schema';
+import { EstablishmentsService } from '../establishments.service';
+import type { EstablishmentsRepository } from '../establishments.repository';
+```
+
+## Restrictions
+- **MUST NOT** use relative paths when path aliases are available.
+- **MUST NOT** import from barrel files (`index.ts`) that re-export everything.
+- **MUST NOT** keep unused imports in any file.
+- **MUST NOT** use default exports or default imports anywhere.
+- **MUST NOT** use `import * as X` — always import specific named exports.
+
+## Related Rules
+- `@architecture.mdc`
+- `@typescript-conventions.mdc`
+- `@testing-tdd.mdc`

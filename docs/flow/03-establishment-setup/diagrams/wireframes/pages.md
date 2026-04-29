@@ -20,7 +20,7 @@
 │  ┌───────────────────────────────────────────────────┐  │
 │  │ barbearia-do-joao                                 │  │
 │  └───────────────────────────────────────────────────┘  │
-│  🔗 Preview: zerofila.app/b/barbearia-do-joao          │
+│  🔗 Preview: agendaxpto.app/b/barbearia-do-joao          │
 │                                                         │
 │  Telefone *                                             │
 │  ┌───────────────────────────────────────────────────┐  │

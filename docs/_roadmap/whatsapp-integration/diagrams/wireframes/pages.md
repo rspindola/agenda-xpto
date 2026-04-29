@@ -11,7 +11,7 @@
 │                                                         │
 │ ┌────────────────────────────────────────────────────┐ │
 │ │                                                    │ │
-│ │  🟢 Opção A — ZeroFila API (QR Code)              │ │
+│ │  🟢 Opção A — Agenda XPTO API (QR Code)              │ │
 │ │  (Recomendado)                                     │ │
 │ │                                                    │ │
 │ │  ✅ Rápido (< 2 minutos)                           │ │
@@ -41,7 +41,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Conectar WhatsApp — ZeroFila API              [← Voltar] │
+│  Conectar WhatsApp — Agenda XPTO API              [← Voltar] │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  📱 Passe 1: Abra o WhatsApp no seu telefone           │

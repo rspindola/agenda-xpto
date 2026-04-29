@@ -1,0 +1,104 @@
+# Database & Prisma Conventions - Agenda XPTO API
+
+## Purpose & Scope
+This rule enforces consistent database access patterns using Prisma, aligned with the schema defined in `docs/flow/00-sustain/DATABASE.md`. All database interactions MUST go through the repository layer.
+
+## General Rules
+- **MUST** use the Prisma singleton from `~/lib/prisma` — never instantiate `PrismaClient` directly.
+- **MUST** keep all Prisma queries inside `*.repository.ts` files.
+- **NEVER** write raw SQL (`$queryRaw`, `$executeRaw`) unless absolutely unavoidable — document why with a comment.
+- **NEVER** import `prisma` inside `*.service.ts` or `*.routes.ts`.
+- **NEVER** edit migration files after they are generated — always create a new migration.
+- **AVOID** using `prisma.findMany()` without pagination on tables that can grow (appointments, notifications).
+
+## Migrations
+- **MUST** generate migrations with `pnpm --filter api db:migrate` — never write migrations manually.
+- **MUST** give descriptive migration names: `pnpm prisma migrate dev --name add_cancel_token_to_appointments`.
+- **MUST** commit migration files to version control.
+- **NEVER** run `prisma migrate reset` in any environment with real data.
+
+## Soft Delete
+- **MUST** use `deletedAt` for soft delete on: `users`, `establishments`, `professionals`, `services`.
+- **MUST** always filter `deletedAt: null` in queries for soft-deleted entities.
+- **NEVER** use Prisma's `delete()` on soft-delete entities — use `update({ deletedAt: new Date() })`.
+
+```typescript
+// CORRECT: soft delete
+async softDelete(id: string): Promise<void> {
+  await prisma.professional.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+}
+
+// INCORRECT: hard delete on soft-delete entity
+async delete(id: string): Promise<void> {
+  await prisma.professional.delete({ where: { id } }); // NEVER do this
+}
+```
+
+## Querying Patterns
+- **MUST** always filter by `establishmentId` (or `userId`) to enforce tenant isolation.
+- **MUST** use `select` to return only the fields needed — avoid over-fetching.
+- **MUST** use pagination (`skip`, `take`) on list queries — default page size: 20.
+- **AVOID** using `include` with deeply nested relations (more than 2 levels).
+
+```typescript
+// CORRECT: scoped query with select and pagination
+async findAllByEstablishment(
+  establishmentId: string,
+  page: number,
+): Promise<Service[]> {
+  return prisma.service.findMany({
+    where: { establishmentId, deletedAt: null },
+    select: { id: true, name: true, durationMinutes: true, priceCents: true },
+    orderBy: { createdAt: 'desc' },
+    skip: (page - 1) * 20,
+    take: 20,
+  });
+}
+```
+
+## Transactions
+- **MUST** use `prisma.$transaction()` when multiple writes must succeed or fail together.
+- **MUST** use transactions for: creating appointments (+ appointment_services + notification enqueue), cancellations (+ notification enqueue), plan changes.
+
+```typescript
+// CORRECT: transaction for appointment creation
+async createWithServices(data: CreateAppointmentData) {
+  return prisma.$transaction(async (tx) => {
+    const appointment = await tx.appointment.create({ data: { ...data.appointment } });
+
+    await tx.appointmentService.createMany({
+      data: data.services.map((s) => ({ ...s, appointmentId: appointment.id })),
+    });
+
+    return appointment;
+  });
+}
+```
+
+## Slot Availability Queries
+- **MUST** use the intersection algorithm defined in `docs/flow/00-sustain/DATABASE.md §5.6`.
+- **MUST** only consider `AppointmentStatus.CONFIRMED` as slot-blocking — never `COMPLETED`, `NO_SHOW`, or `CANCELLED`.
+- **MUST** use pessimistic locking (`SELECT ... FOR UPDATE`) when confirming an appointment to prevent double-booking.
+
+## Monetary Values
+- **MUST** store all monetary values as integers in cents (`price_cents: Int`).
+- **MUST** convert to/from cents at the schema boundary (Zod transform), never inside the service or repository.
+- **NEVER** use `Float` or `Decimal` for monetary fields.
+
+```typescript
+// Schema boundary: cents conversion
+export const createServiceBodySchema = z.object({
+  name: z.string(),
+  // User sends price in reais (e.g., 45.00), stored as cents (4500)
+  price: z.number().positive().transform((val) => Math.round(val * 100)),
+  durationMinutes: z.number().int().positive(),
+});
+```
+
+## Sensitive Data
+- **NEVER** log full Prisma query results that contain: `clientEmail`, `clientPhone`, `cancelToken`, `password`, `accessToken`, `refreshToken`.
+- **NEVER** return `cancelToken` in API responses after the appointment creation response.
+- **AVOID** selecting sensitive fields unless the specific use case requires them.

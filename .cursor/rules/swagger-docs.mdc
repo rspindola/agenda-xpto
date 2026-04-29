@@ -1,0 +1,102 @@
+# Swagger / OpenAPI Documentation - Agenda XPTO API
+
+## Purpose & Scope
+This rule enforces complete and consistent OpenAPI documentation on every Fastify route using `@fastify/swagger`, `@fastify/swagger-ui`, and `fastify-type-provider-zod`. Documentation is not optional — undocumented endpoints MUST NOT be merged.
+
+## Setup Requirements
+- **MUST** use `fastify-type-provider-zod` as the type provider for all routes.
+- **MUST** expose Swagger UI at `/docs` in `development` environment only.
+- **MUST** expose raw OpenAPI JSON at `/docs/json`.
+- **NEVER** expose `/docs` in `production` — gate it with `NODE_ENV` check.
+
+## Route Documentation
+Every route **MUST** include a `schema` object with all of the following fields:
+
+```typescript
+fastify.get('/establishments/:id', {
+  schema: {
+    tags: ['establishments'],
+    summary: 'Get establishment by ID',
+    description: 'Returns a single establishment belonging to the authenticated user.',
+    params: getEstablishmentParamsSchema,
+    response: {
+      200: getEstablishmentResponseSchema,
+      401: errorResponseSchema,
+      403: errorResponseSchema,
+      404: errorResponseSchema,
+    },
+  },
+}, handler);
+```
+
+- **MUST** add `tags` — one tag per module matching: `auth`, `establishments`, `availability`, `appointments`, `booking`, `notifications`, `reports`, `plans`.
+- **MUST** add `summary` — short one-line description (max 60 chars, imperative: "Get", "Create", "Cancel").
+- **MUST** add `description` — one or two sentences explaining the business context.
+- **MUST** add `response` for every possible HTTP status code the route can return.
+- **MUST** add `body` schema for POST/PUT/PATCH routes.
+- **MUST** add `querystring` schema when query params exist.
+- **MUST** add `params` schema when path params exist.
+- **NEVER** leave any route without a `schema` object.
+- **NEVER** use plain `z.object({})` inline in the route — always reference a named schema from `*.schema.ts`.
+
+## Error Response Schema
+- **MUST** define a shared `errorResponseSchema` in `src/shared/schemas/error.schema.ts` and reuse it across all routes:
+
+```typescript
+// src/shared/schemas/error.schema.ts
+import { z } from 'zod';
+
+export const errorResponseSchema = z.object({
+  statusCode: z.number(),
+  code: z.string(),
+  message: z.string(),
+});
+
+export type ErrorResponse = z.infer<typeof errorResponseSchema>;
+```
+
+## Request Examples
+- **MUST** add `.openapi({ example: { ... } })` (via `zod-openapi` or inline `.describe()`) to body schemas for POST/PUT routes.
+- **MUST** use realistic but non-sensitive example values.
+- **NEVER** use `foo`, `bar`, `string`, `123` as example values — use domain-realistic values.
+
+### Example
+```typescript
+// src/modules/appointments/appointments.schema.ts
+import { z } from 'zod';
+
+export const createAppointmentBodySchema = z.object({
+  professionalId: z.string().cuid2().describe('ID of the professional to book'),
+  serviceIds: z.array(z.string().cuid2()).min(1).describe('List of service IDs to include'),
+  startAt: z.string().datetime().describe('Appointment start time in ISO 8601 UTC'),
+  clientName: z.string().min(2).max(100).describe('Full name of the client'),
+  clientEmail: z.string().email().describe('Client email for confirmation and reminders'),
+  clientPhone: z.string().min(8).max(20).describe('Client phone number with country code'),
+});
+```
+
+## Tags Organization
+- **MUST** register all tags globally in the Swagger plugin config:
+
+```typescript
+await fastify.register(swagger, {
+  openapi: {
+    info: { title: 'Agenda XPTO API', version: '1.0.0' },
+    tags: [
+      { name: 'auth', description: 'Authentication and session management' },
+      { name: 'establishments', description: 'Establishment setup and configuration' },
+      { name: 'availability', description: 'Business hours, holidays, and blocks' },
+      { name: 'appointments', description: 'Appointment management (admin panel)' },
+      { name: 'booking', description: 'Public booking page (no auth required)' },
+      { name: 'notifications', description: 'Notification logs and alerts' },
+      { name: 'reports', description: 'Analytics and reports' },
+      { name: 'plans', description: 'Subscription plans and billing' },
+    ],
+  },
+});
+```
+
+## Validation
+- **MUST** verify that `/docs` loads correctly after adding or modifying any route.
+- **NEVER** merge a PR where `/docs` returns a 500 or shows schema errors.
+- **AVOID** duplicating schema definitions between the Swagger config and Zod schemas — derive one from the other.

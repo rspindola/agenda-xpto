@@ -1,0 +1,145 @@
+# Testing Standards (TDD) - Agenda XPTO API
+
+## Purpose & Scope
+This rule enforces Test-Driven Development (TDD) practices across all modules using **Vitest**. Tests are not optional — every module MUST have tests before or alongside implementation.
+
+## TDD Workflow
+- **MUST** follow Red → Green → Refactor cycle:
+  1. Write a failing test that describes the expected behavior.
+  2. Write the minimum code to make the test pass.
+  3. Refactor while keeping tests green.
+- **MUST** write tests before or alongside implementation — never after the fact.
+- **NEVER** mark a module as complete without passing tests.
+
+## Test File Structure
+- **MUST** place all tests inside `__tests__/` within the module folder.
+- **MUST** name test files as `<module>.<layer>.test.ts` (e.g., `appointments.service.test.ts`).
+- **MUST** create at minimum:
+  - `<module>.service.test.ts` — unit tests with mocked repository.
+  - `<module>.repository.test.ts` — integration tests against a real test database.
+- **AVOID** testing route handlers directly — prefer service and repository tests.
+
+## Naming Conventions
+- **MUST** follow this structure for all test blocks:
+  ```typescript
+  describe('ClassName or moduleName', () => {
+    describe('methodName', () => {
+      it('should <expected behavior> when <condition>', () => { ... });
+      it('should throw <ErrorCode> when <invalid condition>', () => { ... });
+    });
+  });
+  ```
+- **MUST** use `should` at the start of every `it` description.
+- **NEVER** use vague descriptions like `it('works')` or `it('test 1')`.
+
+## Service Tests (Unit)
+- **MUST** mock the repository using `vi.mock()` or manual mocks.
+- **MUST** test every public method of the service.
+- **MUST** test both the happy path and all error cases (`AppError` throws).
+- **MUST** assert the exact `AppError.code` when testing error scenarios.
+- **NEVER** connect to the database in service tests.
+
+```typescript
+// src/modules/establishments/tests/establishments.service.test.ts
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { EstablishmentsService } from '../establishments.service';
+import { type EstablishmentsRepository } from '../establishments.repository';
+
+const mockRepository: EstablishmentsRepository = {
+  findBySlug: vi.fn(),
+  create: vi.fn(),
+  findAllByUserId: vi.fn(),
+};
+
+describe('EstablishmentsService', () => {
+  let service: EstablishmentsService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    service = new EstablishmentsService(mockRepository);
+  });
+
+  describe('create', () => {
+    it('should create an establishment when slug is available', async () => {
+      vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
+      vi.mocked(mockRepository.create).mockResolvedValue({ id: 'est_1', slug: 'my-salon' } as any);
+
+      const result = await service.create('user_1', { name: 'My Salon', slug: 'my-salon' });
+
+      expect(result.slug).toBe('my-salon');
+      expect(mockRepository.create).toHaveBeenCalledOnce();
+    });
+
+    it('should throw SLUG_ALREADY_TAKEN when slug is in use', async () => {
+      vi.mocked(mockRepository.findBySlug).mockResolvedValue({ id: 'est_2' } as any);
+
+      await expect(
+        service.create('user_1', { name: 'My Salon', slug: 'taken-slug' }),
+      ).rejects.toMatchObject({ code: 'SLUG_ALREADY_TAKEN' });
+    });
+  });
+});
+```
+
+## Repository Tests (Integration)
+- **MUST** use a real PostgreSQL test database (separate from dev database).
+- **MUST** clean up test data after each test using `afterEach` or transactions.
+- **MUST** use the Prisma singleton from `~/lib/prisma` connected to `DATABASE_URL_TEST`.
+- **MUST** test the actual SQL behavior: constraints, unique violations, cascades.
+- **NEVER** mock Prisma in repository tests.
+
+```typescript
+// src/modules/establishments/tests/establishments.repository.test.ts
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { prisma } from '~/lib/prisma';
+import { EstablishmentsRepository } from '../establishments.repository';
+
+const repository = new EstablishmentsRepository(prisma);
+
+describe('EstablishmentsRepository', () => {
+  let userId: string;
+
+  beforeEach(async () => {
+    const user = await prisma.user.create({
+      data: { email: 'test@example.com', name: 'Test User' },
+    });
+    userId = user.id;
+  });
+
+  afterEach(async () => {
+    await prisma.establishment.deleteMany();
+    await prisma.user.deleteMany();
+  });
+
+  describe('findBySlug', () => {
+    it('should return null when slug does not exist', async () => {
+      const result = await repository.findBySlug('nonexistent-slug');
+      expect(result).toBeNull();
+    });
+
+    it('should return establishment when slug exists', async () => {
+      await prisma.establishment.create({
+        data: { userId, name: 'Test Salon', slug: 'test-salon', timezone: 'America/Sao_Paulo', email: 'test@example.com' },
+      });
+
+      const result = await repository.findBySlug('test-salon');
+      expect(result?.slug).toBe('test-salon');
+    });
+  });
+});
+```
+
+## Coverage
+- **MUST** maintain minimum **80% coverage** per module (lines, functions, branches).
+- **MUST** run `vitest --coverage` before marking any PR as ready.
+- **NEVER** use `/* istanbul ignore */` or `/* v8 ignore */` without a comment explaining why.
+- **AVOID** writing tests purely to hit coverage numbers — test meaningful behavior.
+
+## Configuration
+- **MUST** configure Vitest in `vitest.config.ts` at the root with:
+  - `environment: 'node'`
+  - `coverage.provider: 'v8'`
+  - `coverage.thresholds: { lines: 80, functions: 80, branches: 80 }`
+  - Separate configs for unit (`*.service.test.ts`) and integration (`*.repository.test.ts`) if needed.

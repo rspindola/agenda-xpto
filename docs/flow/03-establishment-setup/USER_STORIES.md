@@ -40,7 +40,7 @@
 ### US-202 — Conectar WhatsApp (integração)
 
 **Como** Admin (`P1`),  
-**quero** conectar meu WhatsApp via QR Code (ZeroFila API),  
+**quero** conectar meu WhatsApp via QR Code (Agenda XPTO API),  
 **para que** eu possa receber e responder mensagens de clientes.
 
 **Critérios de aceite:**

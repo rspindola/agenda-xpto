@@ -1,0 +1,103 @@
+# Code Architecture - Agenda XPTO API
+
+## Purpose & Scope
+This rule enforces the modular layered architecture defined in `docs/flow/00-sustain/ARCHITECTURE.md`. Every backend feature MUST follow the established patterns for routes, services, repositories, and schemas.
+
+## Module Structure
+- **MUST** organize every feature inside `src/modules/<module-name>/` following this exact structure:
+  ```
+  src/modules/<module>/
+  ├── <module>.routes.ts      # HTTP layer: input validation + service calls
+  ├── <module>.service.ts     # Business logic layer
+  ├── <module>.repository.ts  # Database layer: Prisma queries only
+  ├── <module>.schema.ts      # Zod schemas for input/output
+  └── __tests__/
+      ├── <module>.service.test.ts
+      └── <module>.repository.test.ts
+  ```
+- **MUST** use kebab-case for all file names.
+- **NEVER** add business logic to route handlers.
+- **NEVER** import Prisma directly in service files — always use the repository.
+- **NEVER** import the repository directly in route handlers — always use the service.
+- **NEVER** create files outside this structure without explicit justification.
+
+## Routes Layer (`*.routes.ts`)
+- **MUST** validate all incoming data with Zod schemas before calling the service.
+- **MUST** use `fastify-type-provider-zod` for type-safe request/response.
+- **MUST** include full Swagger documentation on every route (see `swagger-docs.mdc`).
+- **MUST** return HTTP status codes consistently:
+  - `200` for successful reads
+  - `201` for successful creates
+  - `204` for successful deletes with no body
+  - `400` for validation errors
+  - `401` for unauthenticated requests
+  - `403` for unauthorized access (wrong establishment)
+  - `404` for not found resources
+  - `422` for business rule violations
+  - `500` for unexpected errors
+- **NEVER** catch errors in route handlers — let the global error handler manage them.
+- **AVOID** putting more than 50 lines in a single route handler function.
+
+## Service Layer (`*.service.ts`)
+- **MUST** contain all business logic and domain rules.
+- **MUST** throw `AppError` for all expected error cases with a specific `code` string.
+- **MUST** be fully testable without HTTP context.
+- **NEVER** import `PrismaClient` or any database client directly.
+- **NEVER** import Fastify request/reply types.
+- **AVOID** services calling other services — prefer composing at the route level or creating a shared utility.
+
+## Repository Layer (`*.repository.ts`)
+- **MUST** contain all Prisma queries — no raw SQL unless absolutely necessary.
+- **MUST** accept typed parameters and return typed results.
+- **MUST** use `prisma` singleton from `~/lib/prisma`.
+- **NEVER** contain business logic or conditional branching based on business rules.
+- **AVOID** returning Prisma model types directly — map to domain types when needed.
+
+## Schema Layer (`*.schema.ts`)
+- **MUST** define all Zod schemas for request body, query params, path params, and responses.
+- **MUST** export inferred TypeScript types alongside schemas: `export type CreateAppointmentBody = z.infer<typeof createAppointmentBodySchema>`.
+- **MUST** reuse schemas from `@agenda-xpto/validations` when available.
+- **NEVER** duplicate schema definitions across modules.
+
+## Imports & Exports
+- **MUST** use named exports only — no default exports anywhere.
+- **MUST** use path aliases: `~/lib/prisma`, `~/shared/errors/AppError`, `@agenda-xpto/types`.
+- **NEVER** use relative imports with more than one level: `../../` is forbidden.
+- **AVOID** barrel files (`index.ts`) that re-export everything — import directly from the file.
+
+## TypeScript
+- **MUST** enable `strict: true` — no exceptions.
+- **MUST** use `type` instead of `interface` for all type definitions.
+- **MUST** use `unknown` instead of `any` for uncertain types.
+- **NEVER** use `as` type casting without a comment explaining why it is safe.
+- **NEVER** use non-null assertion (`!`) without a comment explaining why it is guaranteed.
+- **AVOID** `enum` — use `const` objects with `as const` or Zod enums instead.
+
+### Example
+```typescript
+// src/modules/establishments/establishments.service.ts
+
+import { AppError } from '~/shared/errors/AppError';
+import { type EstablishmentsRepository } from './establishments.repository';
+import { type CreateEstablishmentInput } from './establishments.schema';
+
+export class EstablishmentsService {
+  constructor(
+    private readonly repository: EstablishmentsRepository,
+  ) {}
+
+  async create(userId: string, input: CreateEstablishmentInput) {
+    const slugExists = await this.repository.findBySlug(input.slug);
+
+    if (slugExists) {
+      throw new AppError({
+        statusCode: 422,
+        code: 'SLUG_ALREADY_TAKEN',
+        message: 'The provided slug is already in use by another establishment.',
+      });
+    }
+
+    return this.repository.create({ userId, ...input });
+  }
+}
+```

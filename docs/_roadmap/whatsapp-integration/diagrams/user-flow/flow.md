@@ -8,7 +8,7 @@ flowchart TD
     
     IntegrationPage --> CheckStatus{WhatsApp já<br/>conectado?}
     
-    CheckStatus -->|Não| OptionA["📱 Opção A:<br/>ZeroFila API QR Code<br/>(Recomendado)"]
+    CheckStatus -->|Não| OptionA["📱 Opção A:<br/>Agenda XPTO API QR Code<br/>(Recomendado)"]
     OptionA --> QRSetup["Clica<br/>'Configurar Agora'"]
     QRSetup --> GenerateQR["Sistema gera QR Code"]
     GenerateQR --> DisplayQR["🔲 QR Code exibido"]
@@ -50,7 +50,7 @@ flowchart TD
 ```
 
 **Decisões Principais:**
-- ZeroFila API (Evolution API) = padrão (sem conta Meta)
+- Agenda XPTO API (Evolution API) = padrão (sem conta Meta)
 - API Oficial Meta = para empresas com negócios verificados
 - QR Code renova a cada 15 segundos
 - Session monitoring contínuo

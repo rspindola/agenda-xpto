@@ -1,0 +1,198 @@
+---
+description: Enforces TypeScript conventions and type safety standards for Agenda XPTO API
+globs: ["apps/api/src/**/*.ts", "packages/**/*.ts"]
+alwaysApply: true
+---
+
+# TypeScript Conventions - Agenda XPTO API - Version: 1.0.0
+
+## Purpose & Scope
+This rule defines TypeScript conventions for the Agenda XPTO backend project, including typing patterns for Fastify, Prisma, Zod, and the modular layered architecture. **ALL responses must be provided in Brazilian Portuguese.**
+
+## Implementation Guidelines
+- **MUST** enable and respect `strict: true` in all `tsconfig.json` files — no exceptions.
+- **MUST** use `type` for unions, primitives, computed types, and Zod inferred types.
+- **MUST** use `type` (not `interface`) for all type definitions — consistency with Zod inference.
+- **MUST** use PascalCase for types, classes, and enums.
+- **MUST** use camelCase for variables, functions, and methods.
+- **MUST** use UPPER_SNAKE_CASE for constants and `as const` objects.
+- **MUST** always provide explicit return types for public methods and service functions.
+- **MUST** use `unknown` instead of `any` for uncertain types — always narrow before use.
+- **MUST** use `import type` for type-only imports to avoid runtime overhead.
+- **NEVER** use `any` type anywhere in the codebase.
+- **NEVER** use type assertions (`as`) without a comment explaining why it is safe.
+- **NEVER** use non-null assertion (`!`) without a comment explaining the guarantee.
+- **NEVER** disable TypeScript strict checks (`@ts-ignore`, `@ts-expect-error`) without justification.
+- **AVOID** overly complex generic types that hurt readability.
+- **AVOID** `enum` keyword — use `const` objects with `as const` or Zod enums instead.
+
+## Type vs Interface
+- **MUST** use `type` for everything in this project — Zod infers `type`, not `interface`, and mixing both creates inconsistency.
+
+```typescript
+// ✅ DO: use type consistently
+type CreateEstablishmentInput = z.infer<typeof createEstablishmentBodySchema>;
+
+type Establishment = {
+  id: string;
+  name: string;
+  slug: string;
+  timezone: string;
+  createdAt: Date;
+};
+
+type PaginatedResult<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+// ❌ DON'T: use interface (inconsistent with Zod inference pattern)
+interface CreateEstablishmentInput {
+  name: string;
+  slug: string;
+}
+```
+
+## Enums
+- **MUST** use `const` objects with `as const` instead of TypeScript `enum`.
+- **MUST** derive the union type from the const object.
+
+```typescript
+// ✅ DO: const object with as const
+const AppointmentStatus = {
+  CONFIRMED: 'CONFIRMED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  NO_SHOW: 'NO_SHOW',
+} as const;
+
+type AppointmentStatus = typeof AppointmentStatus[keyof typeof AppointmentStatus];
+
+// ❌ DON'T: TypeScript enum
+enum AppointmentStatus {
+  CONFIRMED = 'CONFIRMED',
+  COMPLETED = 'COMPLETED',
+}
+```
+
+## Generics
+- **MUST** use descriptive generic parameter names — not just `T`.
+
+```typescript
+// ✅ DO: descriptive generic names
+type PaginatedResult<TItem> = { data: TItem[]; total: number };
+type ServiceResult<TData> = Promise<TData>;
+async function findById<TEntity>(id: string): Promise<TEntity | null> { ... }
+
+// ❌ DON'T: single-letter generics without context
+type Result<T> = { data: T };
+```
+
+## Return Types
+- **MUST** always declare return types on public service methods and repository functions.
+- **SHOULD** declare return types on route handlers.
+
+```typescript
+// ✅ DO: explicit return types
+export class EstablishmentsService {
+  async create(userId: string, input: CreateEstablishmentInput): Promise<Establishment> {
+    // ...
+  }
+
+  async findAllByUser(userId: string): Promise<Establishment[]> {
+    // ...
+  }
+}
+
+// ❌ DON'T: omit return types on public methods
+export class EstablishmentsService {
+  async create(userId: string, input: CreateEstablishmentInput) { // missing return type
+    // ...
+  }
+}
+```
+
+## Error Typing
+- **MUST** always use `AppError` for expected errors — never `throw new Error('message')`.
+- **MUST** type `catch` clauses as `unknown` and narrow before use.
+
+```typescript
+// ✅ DO: typed error handling
+try {
+  await someOperation();
+} catch (error: unknown) {
+  if (error instanceof AppError) {
+    throw error;
+  }
+  fastify.log.error(error, 'Unexpected error in operation');
+  throw new AppError(500, 'INTERNAL_ERROR', 'An unexpected error occurred.');
+}
+
+// ❌ DON'T: untyped catch or generic Error
+try {
+  await someOperation();
+} catch (error) { // untyped
+  throw new Error('something went wrong'); // no code, no statusCode
+}
+```
+
+## Zod Schema Typing
+- **MUST** always export the inferred type alongside the schema.
+- **MUST** use `z.infer<typeof schema>` — never manually duplicate the type.
+
+```typescript
+// ✅ DO: schema + inferred type exported together
+export const createAppointmentBodySchema = z.object({
+  professionalId: z.string().cuid2(),
+  serviceIds: z.array(z.string().cuid2()).min(1),
+  startAt: z.string().datetime(),
+  clientName: z.string().min(2).max(100),
+  clientEmail: z.string().email(),
+  clientPhone: z.string().min(8).max(20),
+});
+
+export type CreateAppointmentBody = z.infer<typeof createAppointmentBodySchema>;
+
+// ❌ DON'T: duplicate the type manually
+export type CreateAppointmentBody = {
+  professionalId: string;
+  serviceIds: string[];
+  // ...
+};
+```
+
+## Prisma Types
+- **MUST** use Prisma-generated types for repository return values when appropriate.
+- **MUST** use `Prisma.XxxGetPayload<...>` for complex selected/included types.
+- **AVOID** returning raw Prisma model types from the repository when the service needs a subset — use `select` and map.
+
+```typescript
+// ✅ DO: precise Prisma payload type
+import type { Prisma } from '@prisma/client';
+
+type AppointmentWithServices = Prisma.AppointmentGetPayload<{
+  include: { appointmentServices: true };
+}>;
+
+async function findWithServices(id: string): Promise<AppointmentWithServices | null> {
+  return prisma.appointment.findUnique({
+    where: { id },
+    include: { appointmentServices: true },
+  });
+}
+```
+
+## Naming Conventions
+| Element | Convention | Example |
+|---|---|---|
+| Types | PascalCase | `CreateEstablishmentInput` |
+| Classes | PascalCase | `EstablishmentsService` |
+| Functions / methods | camelCase | `findAllByUser` |
+| Variables | camelCase | `appointmentId` |
+| Constants | UPPER_SNAKE_CASE | `MAX_APPOINTMENTS_PER_PAGE` |
+| Files | kebab-case | `establishments.service.ts` |
+| Prisma models | PascalCase (generated) | `Appointment` |
+| Zod schemas | camelCase + Schema suffix | `createAppointmentBodySchema` |
+| Inferred types | PascalCase | `CreateAppointmentBody` |
