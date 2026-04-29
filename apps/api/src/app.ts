@@ -1,28 +1,140 @@
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
+import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
+import type { FastifyInstance, FastifyRequest, RouteOptions } from "fastify";
+import {
+  type ZodTypeProvider,
+  jsonSchemaTransform,
+  serializerCompiler,
+  validatorCompiler,
+} from "fastify-type-provider-zod";
+
+import { healthResponseSchema } from "./shared/schemas/health.schema.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? "3001", 10);
+const API_BASE_URL = process.env.API_URL ?? `http://localhost:${String(PORT)}`;
+const isNonProduction = process.env.NODE_ENV !== "production";
 
-async function buildServer() {
-  const app = Fastify({ logger: true });
+function applyRouteRateLimitByTags(routeOptions: RouteOptions): void {
+  const rawSchema: unknown = routeOptions.schema;
+  if (typeof rawSchema !== "object" || rawSchema === null || !("tags" in rawSchema)) {
+    return;
+  }
+  const tagsUnknown = (rawSchema as { tags?: unknown }).tags;
+  if (!Array.isArray(tagsUnknown)) {
+    return;
+  }
+  const tags = tagsUnknown.filter((t): t is string => typeof t === "string");
+  if (tags.length === 0) {
+    return;
+  }
+
+  routeOptions.config = routeOptions.config ?? {};
+  if (tags.includes("auth")) {
+    routeOptions.config.rateLimit = { max: 10, timeWindow: "1 minute" };
+    return;
+  }
+  if (tags.includes("booking")) {
+    routeOptions.config.rateLimit = { max: 20, timeWindow: "1 minute" };
+  }
+}
+
+export async function buildServer(): Promise<FastifyInstance> {
+  const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+
+  app.setValidatorCompiler(validatorCompiler);
+  // fastify-type-provider-zod provides serializers compatible with Fastify; generic typing is wider than ZodTypeProvider.
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- boundary with fastify-type-provider-zod
+  app.setSerializerCompiler(serializerCompiler);
+
+  app.addHook("onRoute", applyRouteRateLimitByTags);
 
   await app.register(cors, { origin: true });
-  // @fastify/jwt instalado — registo fica para o módulo de auth / rotas protegidas.
 
-  app.get("/health", async () => ({
-    status: "ok" as const,
-    timestamp: new Date().toISOString(),
-  }));
+  if (isNonProduction) {
+    await app.register(fastifySwagger, {
+      openapi: {
+        openapi: "3.1.0",
+        info: {
+          title: "ZeroFila API",
+          version: "1.0.0",
+          description:
+            "HTTP API for ZeroFila scheduling: establishments, availability, appointments, public booking, notifications, reports, and subscription plans.",
+        },
+        servers: [
+          {
+            url: API_BASE_URL,
+            description: "Local development",
+          },
+        ],
+        tags: [
+          { name: "auth", description: "Authentication and session management" },
+          { name: "establishments", description: "Establishment setup and configuration" },
+          { name: "availability", description: "Business hours, holidays, and blocks" },
+          { name: "appointments", description: "Appointment management (admin panel)" },
+          { name: "booking", description: "Public booking page (no auth required)" },
+          { name: "notifications", description: "Notification logs and alerts" },
+          { name: "reports", description: "Analytics and reports" },
+          { name: "plans", description: "Subscription plans and billing" },
+          { name: "system", description: "Operational and health endpoints" },
+        ],
+      },
+      transform: jsonSchemaTransform,
+    });
+  }
+
+  await app.register(rateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
+    allowList: (request: FastifyRequest, _key: string) => {
+      const pathname = request.url.split("?")[0] ?? "";
+      if (pathname === "/health") {
+        return true;
+      }
+      if (isNonProduction && (pathname === "/docs" || pathname.startsWith("/docs/"))) {
+        return true;
+      }
+      return false;
+    },
+  });
+
+  app.get(
+    "/health",
+    {
+      schema: {
+        tags: ["system"],
+        summary: "Health check",
+        description:
+          "Returns API liveness and the current server time in ISO 8601 (UTC). Used by load balancers and monitoring.",
+        response: {
+          200: healthResponseSchema,
+        },
+      },
+    },
+    (): { status: "ok"; timestamp: string } => ({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    }),
+  );
+
+  if (isNonProduction) {
+    // @fastify/swagger-ui already registers GET /docs/json (and /docs/yaml) under routePrefix.
+    await app.register(fastifySwaggerUi, {
+      routePrefix: "/docs",
+    });
+  }
 
   return app;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const app = await buildServer();
 
   await app.listen({ port: PORT, host: "0.0.0.0" });
 
-  const shutdown = async (signal: string) => {
+  const shutdown = async (signal: string): Promise<void> => {
     app.log.info({ signal }, "shutdown");
     await app.close();
     process.exit(0);
@@ -33,6 +145,8 @@ async function main() {
 }
 
 main().catch((err: unknown) => {
+  // Bootstrap: Fastify logger is not available before `buildServer()` completes.
+  // eslint-disable-next-line no-console -- fatal startup path only
   console.error(err);
   process.exit(1);
 });

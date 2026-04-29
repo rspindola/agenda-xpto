@@ -74,7 +74,7 @@ agenda-xpto/
 | Auth | Better Auth |
 | Queues | BullMQ + Redis 7 |
 | Email | Resend |
-| Validation | Zod |
+| Validation | Zod 4.x |
 | Testing | Vitest |
 | Monorepo | Turborepo + pnpm workspaces |
 | Dev infra | Docker Compose (PostgreSQL + Redis) |

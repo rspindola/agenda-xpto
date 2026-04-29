@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "outDir": "./dist-eslint"
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts", "vitest.setup.integration.ts"]
+}

@@ -13,7 +13,7 @@ A aplicação usa **Fastify v5** com **TypeScript**, **Prisma** (PostgreSQL) e u
 - **Autenticação:** [Better Auth](https://www.better-auth.com/) (instância em `src/lib/auth.ts`; rotas `/api/auth/*` ficam no módulo `auth`)
 - **Filas:** [BullMQ](https://docs.bullmq.io/) + [Redis](https://redis.io/) (definição de filas em `src/jobs/queues.ts`)
 - **E-mail:** [Resend](https://resend.com/) (`src/lib/email.ts`)
-- **Validação:** [Zod](https://zod.dev/) (partilhável com o frontend via `@agenda-xpto/validations`)
+- **Validação:** [Zod](https://zod.dev/) v4 (partilhável com o frontend via `@agenda-xpto/validations`; `fastify-type-provider-zod` requer Zod 4)
 - **HTTP:** `@fastify/cors` registado em `app.ts`; `@fastify/jwt` instalado para uso futuro (ainda não registado no bootstrap)
 
 **Infra local:** PostgreSQL 16 e Redis 7 via Docker Compose na **raiz** do monorepo (`../../docker-compose.yml`).
@@ -95,6 +95,13 @@ Este pacote faz parte de um **monorepo pnpm** com Turborepo. Na raiz do reposit�
 
    - Copiar [`../../.env.example`](../../.env.example) para **`apps/api/.env`** (ficheiro ignorado pelo Git).
    - Garantir que `DATABASE_URL` e `REDIS_URL` coincidem com o Docker Compose (por defeito Postgres e Redis em `127.0.0.1`).
+   - Para testes de integração (`pnpm test:integration`), definir **`DATABASE_URL_TEST`** apontando para uma base **separada** no **mesmo** servidor PostgreSQL (ex.: `agenda_xpto_test`). Criar a base manualmente (sem segundo contentor):
+
+     ```bash
+     docker compose exec postgres psql -U agenda_xpto -d agenda_xpto -c "CREATE DATABASE agenda_xpto_test;"
+     ```
+
+     (Ajusta o nome do serviço do Compose se for diferente de `postgres`.)
 
    Lista de chaves alinhada a [ARCHITECTURE.md §9](../../docs/flow/00-sustain/ARCHITECTURE.md).
 
@@ -140,6 +147,11 @@ Porta por defeito: **`PORT=3001`** (ver `.env.example` na raiz).
 | `pnpm db:seed` | `prisma db seed` (executa `prisma/seed.ts`) |
 | `pnpm db:studio` | `prisma studio` |
 | `pnpm lint` | ESLint |
+| `pnpm lint:fix` | ESLint com `--fix` |
+| `pnpm test` | Vitest — apenas testes unitários (`*.test.ts` exceto `*.repository.test.ts`) |
+| `pnpm test:integration` | Vitest — apenas `*.repository.test.ts` (requer `DATABASE_URL_TEST`) |
+| `pnpm test:all` | Unitários + integração |
+| `pnpm test:coverage` | Unitários com cobertura v8 (limiar 80% nas linhas incluídas em `vitest.config.ts`) |
 
 ## Documentação relacionada
 
@@ -153,7 +165,14 @@ Porta por defeito: **`PORT=3001`** (ver `.env.example` na raiz).
 
 ## Documentação OpenAPI (Swagger)
 
-Não está configurada neste scaffold. O registo de um plugin Swagger em Fastify está planeado (ver `src/plugins/README.md`).
+Com **`NODE_ENV !== production`**, a API regista `@fastify/swagger` + `@fastify/swagger-ui`:
+
+- **Swagger UI:** `http://localhost:3001/docs` (ajusta `PORT` se necessário)
+- **OpenAPI JSON:** `GET /docs/json`
+
+Em **produção**, `/docs` e `/docs/json` **não** são expostos. O título da especificação é **ZeroFila API**.
+
+Rotas devem usar schemas Zod e `fastify-type-provider-zod` (ver regra `.cursor/rules/swagger-docs.mdc` na raiz do monorepo).
 
 ## Health check
 

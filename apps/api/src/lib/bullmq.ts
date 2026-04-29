@@ -3,7 +3,7 @@ import type { ConnectionOptions } from "bullmq";
 function parseRedisUrl(url: string): ConnectionOptions {
   try {
     const u = new URL(url);
-    const dbPath = u.pathname?.replace("/", "") ?? "";
+    const dbPath = u.pathname.replace(/^\//, "");
     const db = dbPath ? Number.parseInt(dbPath, 10) : undefined;
     return {
       host: u.hostname,
