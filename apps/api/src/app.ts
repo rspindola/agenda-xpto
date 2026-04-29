@@ -11,6 +11,9 @@ import {
   validatorCompiler,
 } from "fastify-type-provider-zod";
 
+import { registerAuthModule } from "~/modules/auth/auth.routes.js";
+
+import { AppError } from "./shared/errors/AppError.js";
 import { healthResponseSchema } from "./shared/schemas/health.schema.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? "3001", 10);
@@ -51,7 +54,31 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   app.addHook("onRoute", applyRouteRateLimitByTags);
 
-  await app.register(cors, { origin: true });
+  app.setErrorHandler((error: unknown, request, reply) => {
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send({
+        statusCode: error.statusCode,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    request.log.error({ err: error }, "Unhandled error");
+    return reply.status(500).send({
+      statusCode: 500,
+      code: "INTERNAL_ERROR",
+      message: "An unexpected error occurred.",
+    });
+  });
+
+  const webOrigin = process.env.WEB_URL ?? "http://localhost:5173";
+  await app.register(cors, {
+    origin: webOrigin,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
+  });
+
+  registerAuthModule(app);
 
   if (isNonProduction) {
     await app.register(fastifySwagger, {

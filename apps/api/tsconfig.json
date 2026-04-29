@@ -13,5 +13,5 @@
       "@agenda-xpto/validations": ["../../packages/validations/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }
