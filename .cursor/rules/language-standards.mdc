@@ -1,3 +1,9 @@
+---
+description: Enforces Brazilian Portuguese for Cursor responses and English for all code, comments and commits
+globs: ["apps/api/src/**/*.ts", "packages/**/*.ts"]
+alwaysApply: true
+---
+
 # Language Standards - Agenda XPTO API
 
 ## Purpose & Scope

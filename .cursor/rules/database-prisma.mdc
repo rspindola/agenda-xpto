@@ -1,3 +1,9 @@
+---
+description: Enforces Prisma usage patterns — repository only, soft delete, transactions, cents, tenant isolation
+globs: ["apps/api/src/modules/**/*.repository.ts", "apps/api/prisma/**/*.ts"]
+alwaysApply: true
+---
+
 # Database & Prisma Conventions - Agenda XPTO API
 
 ## Purpose & Scope

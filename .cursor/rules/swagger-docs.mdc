@@ -1,3 +1,9 @@
+---
+description: Enforces complete OpenAPI documentation on every Fastify route using fastify-type-provider-zod
+globs: ["apps/api/src/modules/**/*.routes.ts"]
+alwaysApply: true
+---
+
 # Swagger / OpenAPI Documentation - Agenda XPTO API
 
 ## Purpose & Scope

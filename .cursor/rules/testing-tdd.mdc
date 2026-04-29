@@ -1,3 +1,9 @@
+---
+description: Enforces TDD workflow with Vitest — unit and integration test patterns and coverage thresholds
+globs: ["apps/api/src/**/*.ts"]
+alwaysApply: true
+---
+
 # Testing Standards (TDD) - Agenda XPTO API
 
 ## Purpose & Scope

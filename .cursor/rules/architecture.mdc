@@ -1,3 +1,9 @@
+---
+description: Enforces modular layered architecture — routes, service, repository, schema structure
+globs: ["apps/api/src/**/*.ts"]
+alwaysApply: true
+---
+
 # Code Architecture - Agenda XPTO API
 
 ## Purpose & Scope

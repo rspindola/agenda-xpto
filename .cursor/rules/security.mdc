@@ -1,3 +1,9 @@
+---
+description: Enforces security standards — auth, tenant isolation, cancel token, sensitive data handling
+globs: ["apps/api/src/**/*.ts"]
+alwaysApply: true
+---
+
 # Security Standards - Agenda XPTO API
 
 ## Purpose & Scope
