@@ -46,7 +46,8 @@ agenda-xpto/
 │       │   ├── schema.prisma       # Source of truth for DB schema
 │       │   └── seed.ts             # Dev seed data
 │       └── src/
-│           ├── app.ts              # Fastify bootstrap
+│           ├── app.ts              # Process entry only: `main()` + `listen()` / shutdown (do not register routes here)
+│           ├── server.ts          # `buildServer()`: Fastify instance, plugins, global error handler, route modules
 │           ├── modules/            # Feature modules (one per domain)
 │           ├── jobs/               # BullMQ queues and workers
 │           ├── lib/                # Singletons (prisma, redis, email, bullmq)
@@ -60,6 +61,16 @@ agenda-xpto/
     ├── flow/                       # Module-level docs (user stories, diagrams)
     └── _roadmap/                   # Post-MVP features (do not implement)
 ```
+
+### API bootstrap (`app.ts` vs `server.ts`)
+
+- **`src/app.ts`** — Entry point only: calls `buildServer()` from `server.ts`, then `app.listen()`. Importing this file as a library runs `main()` and binds a port; **do not** use it from tests or other modules.
+- **`src/server.ts`** — Defines `export async function buildServer()` and everything that composes the app: CORS, `@fastify/swagger` (before documented routes, when not production), `registerAuthModule`, `registerEstablishmentsModule`, rate limit, `/health`, Swagger UI, etc. **New HTTP modules** register their routes from here (or from a dedicated registrar imported by `server.ts`), not from `app.ts`.
+- **Tests / scripts** — Import `buildServer` from `~/server.js` (or `./server.js`) so the Fastify instance is created without listening.
+
+### `plans` module — existing repository file
+
+`src/modules/plans/subscription.repository.ts` already exists (introduced for establishment plan limits: `findSubscriptionByUserId`). When the full **plans** module is implemented, **extend this file** (add functions, types, tests) — **do not** recreate a second subscription access layer under another name unless you are deliberately deprecating and migrating call sites.
 
 ---
 
@@ -205,7 +216,7 @@ All coding standards are enforced via `.cursor/rules/`:
 | `typescript-conventions.mdc` | Types, generics, Zod, Prisma typing |
 | `import-organization.mdc` | Import order, path aliases |
 | `testing-tdd.mdc` | TDD workflow, Vitest, coverage |
-| `swagger-docs.mdc` | OpenAPI on every endpoint; keep `/docs` in sync when routes change; `@fastify/swagger` before routes in `app.ts` |
+| `swagger-docs.mdc` | OpenAPI on every endpoint; keep `/docs` in sync when routes change; `@fastify/swagger` before documented routes in `server.ts` (`buildServer`) |
 | `database-prisma.mdc` | Prisma patterns, soft delete, transactions |
 | `security.mdc` | Auth, tenant isolation, sensitive data |
 

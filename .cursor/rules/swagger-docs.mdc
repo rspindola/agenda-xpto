@@ -1,6 +1,6 @@
 ---
 description: Enforces complete OpenAPI documentation, Swagger UI verification, and correct @fastify/swagger registration order
-globs: ["apps/api/src/modules/**/*.routes.ts", "apps/api/src/app.ts"]
+globs: ["apps/api/src/modules/**/*.routes.ts", "apps/api/src/server.ts"]
 alwaysApply: true
 ---
 
@@ -18,7 +18,7 @@ Whenever you **add, rename, remove, or change** an HTTP route (path, method, bod
 - **NEVER** expose `/docs` in `production` — gate it with `NODE_ENV` check.
 
 ## OpenAPI visibility (`@fastify/swagger` registration order)
-- **MUST** register `@fastify/swagger` **before** any route that must appear in the generated OpenAPI document (see `apps/api/src/app.ts`: CORS → `fastifySwagger` → feature modules such as `registerAuthModule` → `rateLimit` → documented routes like `/health` → `fastifySwaggerUi`).
+- **MUST** register `@fastify/swagger` **before** any route that must appear in the generated OpenAPI document (see `apps/api/src/server.ts` inside `buildServer()`: CORS → `fastifySwagger` → feature modules such as `registerAuthModule` → `rateLimit` → documented routes like `/health` → `fastifySwaggerUi`).
 - **NEVER** register new `app.get` / `app.post` / `app.all` **above** the `fastifySwagger` block unless those routes are intentionally excluded from `/docs`.
 - If operations disappear from Swagger after a bootstrap refactor, **first** verify registration order before debugging schemas.
 
@@ -119,5 +119,5 @@ await fastify.register(swagger, {
 ## Checklist — endpoint change (copy mentally for every PR)
 1. `schema` on the route: `tags`, `summary`, `description`, `body` / `querystring` / `params` as applicable, `response` for each status.
 2. Named Zod exports in the module `*.schema.ts` (no large anonymous `z.object` inline in the route file).
-3. If bootstrap changed: `@fastify/swagger` still **before** documented routes in `app.ts`.
+3. If bootstrap changed: `@fastify/swagger` still **before** documented routes in `server.ts` (`buildServer`).
 4. Local check: `/docs` → correct tag → operation visible; `/docs/json` contains the path.
