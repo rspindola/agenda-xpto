@@ -5,15 +5,43 @@ on:
     branches: [main]
     paths:
       - 'apps/api/**'
+      - 'packages/types/**'
+      - 'packages/validations/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
       - '.github/workflows/api.yml'
   pull_request:
     paths:
       - 'apps/api/**'
+      - 'packages/types/**'
+      - 'packages/validations/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
       - '.github/workflows/api.yml'
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agenda_xpto_test
+  DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/agenda_xpto_test
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: agenda_xpto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -24,8 +52,14 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agenda-xpto/types run lint
+      - run: pnpm --filter @agenda-xpto/validations run lint
       # ESLint uses type-aware rules; Prisma models are `any` until `prisma generate` runs.
       - run: pnpm --filter api run db:generate
+      - run: pnpm --filter api run db:migrate:deploy
       - run: pnpm --filter api run lint
+      - run: pnpm --filter api run typecheck
       - run: pnpm --filter api run test
+      - run: pnpm --filter api run test:integration
+      - run: pnpm --filter api run test:coverage
       - run: pnpm --filter api run build
