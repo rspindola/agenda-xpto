@@ -158,6 +158,25 @@ describe("EstablishmentsService", () => {
         }),
       ).rejects.toMatchObject({ code: "SUBSCRIPTION_NOT_FOUND" });
     });
+
+    it("should throw SLUG_ALREADY_TAKEN when repository returns P2002", async () => {
+      findSubscription.mockResolvedValue({
+        planType: PlanType.PRO,
+        status: SubscriptionStatus.ACTIVE,
+      });
+      vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
+      vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
+      const prismaError = Object.assign(new Error("Unique"), { code: "P2002" });
+      vi.mocked(mockRepository.create).mockRejectedValue(prismaError);
+
+      await expect(
+        service.create("user_1", {
+          name: "Shop",
+          email: "a@b.com",
+          timezone: "UTC",
+        }),
+      ).rejects.toMatchObject({ code: "SLUG_ALREADY_TAKEN" });
+    });
   });
 
   describe("findById", () => {
@@ -165,6 +184,45 @@ describe("EstablishmentsService", () => {
       vi.mocked(mockRepository.findOwnedById).mockResolvedValue(null);
 
       await expect(service.findById("user_1", "est_x")).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+  });
+
+  describe("update", () => {
+    it("should throw VALIDATION_ERROR when body has no defined fields", async () => {
+      await expect(service.update("user_1", "est_1", {})).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    });
+
+    it("should throw SLUG_ALREADY_TAKEN when slug is taken by another establishment", async () => {
+      vi.mocked(mockRepository.findBySlugExcludingId).mockResolvedValue({ id: "other" });
+
+      await expect(service.update("user_1", "est_1", { slug: "taken" })).rejects.toMatchObject({
+        code: "SLUG_ALREADY_TAKEN",
+      });
+      expect(vi.mocked(mockRepository.update)).not.toHaveBeenCalled();
+    });
+
+    it("should return updated establishment when update succeeds", async () => {
+      vi.mocked(mockRepository.update).mockResolvedValue(publicDto);
+
+      const result = await service.update("user_1", "est_1", { name: "Renamed" });
+
+      expect(result).toEqual(publicDto);
+      expect(vi.mocked(mockRepository.update)).toHaveBeenCalledWith("user_1", "est_1", { name: "Renamed" });
+    });
+
+    it("should throw NOT_FOUND when repository returns null", async () => {
+      vi.mocked(mockRepository.update).mockResolvedValue(null);
+
+      await expect(service.update("user_1", "est_1", { name: "X" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("should throw SLUG_ALREADY_TAKEN when repository returns P2002", async () => {
+      const prismaError = Object.assign(new Error("Unique"), { code: "P2002" });
+      vi.mocked(mockRepository.update).mockRejectedValue(prismaError);
+
+      await expect(service.update("user_1", "est_1", { name: "X" })).rejects.toMatchObject({
+        code: "SLUG_ALREADY_TAKEN",
+      });
     });
   });
 

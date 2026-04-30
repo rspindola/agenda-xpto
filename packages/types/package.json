@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "echo \"no lint yet\""
+    "lint": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p ."
   },
   "devDependencies": {
     "typescript": "^5.8.3"

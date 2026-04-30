@@ -20,13 +20,15 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
-      include: ["src/shared/errors/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/**/*.repository.test.ts"],
+      // Unit-test coverage for service layer and shared code. AGENTS.md targets 80% per module; the
+      // aggregate floor matches the current suite; raise thresholds when adding service tests.
+      include: ["src/modules/**/*.service.ts", "src/shared/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/**/*.repository.test.ts", "src/**/*.d.ts"],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
+        lines: 93,
+        functions: 97,
+        branches: 88,
+        statements: 93,
       },
     },
     projects: [

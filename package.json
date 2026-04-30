@@ -7,13 +7,20 @@
     "node": ">=22 <23"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
     "db:migrate": "turbo run db:migrate",
     "db:seed": "turbo run db:seed"
   },
+  "lint-staged": {
+    "apps/api/**/*.ts": "pnpm --filter api exec eslint --max-warnings=0 --"
+  },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.1",
     "turbo": "^2.5.4"
   }
 }

@@ -12,6 +12,9 @@
     "lint": {
       "outputs": []
     },
+    "typecheck": {
+      "outputs": []
+    },
     "db:migrate": {
       "cache": false
     },
