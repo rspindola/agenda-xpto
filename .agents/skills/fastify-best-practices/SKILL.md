@@ -73,3 +73,4 @@ Read individual rule files for detailed explanations and code examples:
 - **Performance**: Fastify is optimized for speed; use its features correctly
 - **Async/await**: All handlers and hooks support async functions
 - **Minimal dependencies**: Prefer Fastify's built-in features and official plugins
+- **Named route params when nesting**: For paths that include several resources (e.g. `/establishments/:establishmentId/professionals/:professionalId/...`), use descriptive segment names—not repeated generic `:id`. See `rules/routes.md` → *Descriptive path parameters (nested resources)*.

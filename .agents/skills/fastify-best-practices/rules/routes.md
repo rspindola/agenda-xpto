@@ -75,6 +75,34 @@ app.get('/orders/:id(\\d+)', async (request) => {
 });
 ```
 
+## Descriptive path parameters (nested resources)
+
+Use a **generic** segment name such as `:id` only when a single resource appears in the path and the meaning is obvious (e.g. `/users/:id`).
+
+When the URL nests **multiple** resources, give each segment a **resource-specific** name so `request.params`, OpenAPI, logs, and team code stay unambiguous.
+
+**Do** use distinct names, for example:
+
+```typescript
+// Good: each param name identifies the resource
+app.register(
+  async function professionalAvailabilityRoutes(fastify) {
+    fastify.get('/', async (request) => {
+      const { establishmentId, professionalId } = request.params as {
+        establishmentId: string;
+        professionalId: string;
+      };
+      return { establishmentId, professionalId };
+    });
+  },
+  { prefix: '/establishments/:establishmentId/professionals/:professionalId/availabilities' },
+);
+```
+
+**Avoid** repeating `:id` (or `:slug`) at more than one level in the same path — it forces awkward param keys, confuses generated clients, and makes handlers harder to read.
+
+**Do not** “normalize” nested APIs to `:id` just to match a top-level pattern like `/establishments/:id`. For paths such as `/establishments/:establishmentId/professionals/:professionalId`, keeping `:establishmentId` and `:professionalId` is the **correct** design choice.
+
 ## Query String Parameters
 
 Access query parameters through `request.query`:
