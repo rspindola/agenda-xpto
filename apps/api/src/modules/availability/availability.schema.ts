@@ -73,6 +73,46 @@ export const replaceBusinessHoursBodySchema = z
 
 export type ReplaceBusinessHoursBody = z.infer<typeof replaceBusinessHoursBodySchema>;
 
+/** Single weekday upsert (weekday comes from path params). Same rules as businessHourDayInputSchema without weekday field (Zod 4 disallows .omit() on refined objects). */
+export const putBusinessHourBodySchema = z
+  .object({
+    closed: z.boolean().describe("When true, the establishment is closed this weekday (row deleted)"),
+    opensAt: timeHmSchema.optional(),
+    closesAt: timeHmSchema.optional(),
+    breakStartsAt: timeHmSchema.nullable().optional(),
+    breakEndsAt: timeHmSchema.nullable().optional(),
+  })
+  .superRefine((day, ctx) => {
+    if (day.closed) {
+      return;
+    }
+    if (day.opensAt === undefined || day.closesAt === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "opensAt and closesAt are required when closed is false.",
+        path: ["opensAt"],
+      });
+      return;
+    }
+    const hasBreakStart = day.breakStartsAt !== undefined && day.breakStartsAt !== null;
+    const hasBreakEnd = day.breakEndsAt !== undefined && day.breakEndsAt !== null;
+    if (hasBreakStart !== hasBreakEnd) {
+      ctx.addIssue({
+        code: "custom",
+        message: "breakStartsAt and breakEndsAt must both be set or both omitted.",
+        path: ["breakStartsAt"],
+      });
+    }
+  });
+
+export type PutBusinessHourBody = z.infer<typeof putBusinessHourBodySchema>;
+
+export const establishmentWeekdayParamsSchema = establishmentIdParamsSchema.extend({
+  weekday: weekdaySchema,
+});
+
+export type EstablishmentWeekdayParams = z.infer<typeof establishmentWeekdayParamsSchema>;
+
 export const businessHourRowSchema = z.object({
   id: z.string(),
   weekday: weekdaySchema,
@@ -149,6 +189,16 @@ export const createBlockBodySchema = z
 
 export type CreateBlockBody = z.infer<typeof createBlockBodySchema>;
 
+export const appointmentConflictItemSchema = z.object({
+  id: z.string(),
+  professionalId: z.string(),
+  startAt: z.iso.datetime(),
+  endAt: z.iso.datetime(),
+  clientName: z.string(),
+});
+
+export type AppointmentConflictItem = z.infer<typeof appointmentConflictItemSchema>;
+
 export const blockRowSchema = z.object({
   id: z.string(),
   scope: blockScopeSchema,
@@ -164,6 +214,13 @@ export const blocksListResponseSchema = z.array(blockRowSchema);
 
 export type BlocksListResponse = z.infer<typeof blocksListResponseSchema>;
 
+export const createBlockResponseSchema = z.object({
+  block: blockRowSchema,
+  conflicts: z.array(appointmentConflictItemSchema),
+});
+
+export type CreateBlockResponse = z.infer<typeof createBlockResponseSchema>;
+
 export const blockIdParamsSchema = establishmentIdParamsSchema.extend({
   blockId: z.string().min(1),
 });
@@ -175,6 +232,22 @@ export const professionalAvailabilityInputSchema = z.object({
 });
 
 export type ProfessionalAvailabilityInput = z.infer<typeof professionalAvailabilityInputSchema>;
+
+export const professionalAvailabilityIdParamsSchema = professionalIdParamsSchema.extend({
+  availabilityId: z.string().min(1).describe("Professional availability cuid2 identifier"),
+});
+
+export type ProfessionalAvailabilityIdParams = z.infer<typeof professionalAvailabilityIdParamsSchema>;
+
+/** Create one weekly availability window (POST). */
+export const createProfessionalAvailabilityBodySchema = professionalAvailabilityInputSchema;
+
+export type CreateProfessionalAvailabilityBody = z.infer<typeof createProfessionalAvailabilityBodySchema>;
+
+/** Replace fields of one availability row (PATCH). */
+export const patchProfessionalAvailabilityBodySchema = professionalAvailabilityInputSchema;
+
+export type PatchProfessionalAvailabilityBody = z.infer<typeof patchProfessionalAvailabilityBodySchema>;
 
 export const replaceProfessionalAvailabilitiesBodySchema = z
   .array(professionalAvailabilityInputSchema)
@@ -194,3 +267,5 @@ export const professionalAvailabilityRowSchema = z.object({
 export const professionalAvailabilitiesListResponseSchema = z.array(professionalAvailabilityRowSchema);
 
 export type ProfessionalAvailabilitiesListResponse = z.infer<typeof professionalAvailabilitiesListResponseSchema>;
+
+export type ProfessionalAvailabilityRow = z.infer<typeof professionalAvailabilityRowSchema>;

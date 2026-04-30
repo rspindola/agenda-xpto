@@ -64,19 +64,6 @@ export type CreateBlockInput = {
 };
 
 export class AvailabilityRepository {
-  async isEstablishmentOwned(userId: string, establishmentId: string): Promise<boolean> {
-    const row = await prisma.establishment.findFirst({
-      where: {
-        id: establishmentId,
-        userId,
-        deletedAt: null,
-        archivedAt: null,
-      },
-      select: { id: true },
-    });
-    return row !== null;
-  }
-
   async findBusinessHours(establishmentId: string): Promise<BusinessHourRowDto[]> {
     const rows = await prisma.establishmentBusinessHour.findMany({
       where: { establishmentId },
@@ -92,20 +79,35 @@ export class AvailabilityRepository {
     }));
   }
 
-  async replaceBusinessHours(establishmentId: string, openDays: OpenBusinessHourRow[]): Promise<void> {
-    const createData: Prisma.EstablishmentBusinessHourCreateManyInput[] = openDays.map((d) => ({
-      establishmentId,
-      weekday: d.weekday,
-      opensAt: d.opensAt,
-      closesAt: d.closesAt,
-      breakStartsAt: d.breakStartsAt,
-      breakEndsAt: d.breakEndsAt,
-    }));
+  async upsertBusinessHour(establishmentId: string, weekday: Weekday, row: OpenBusinessHourRow): Promise<void> {
+    await prisma.establishmentBusinessHour.upsert({
+      where: {
+        establishmentId_weekday: {
+          establishmentId,
+          weekday,
+        },
+      },
+      create: {
+        establishmentId,
+        weekday,
+        opensAt: row.opensAt,
+        closesAt: row.closesAt,
+        breakStartsAt: row.breakStartsAt,
+        breakEndsAt: row.breakEndsAt,
+      },
+      update: {
+        opensAt: row.opensAt,
+        closesAt: row.closesAt,
+        breakStartsAt: row.breakStartsAt,
+        breakEndsAt: row.breakEndsAt,
+      },
+    });
+  }
 
-    await prisma.$transaction([
-      prisma.establishmentBusinessHour.deleteMany({ where: { establishmentId } }),
-      prisma.establishmentBusinessHour.createMany({ data: createData }),
-    ]);
+  async deleteBusinessHourByWeekday(establishmentId: string, weekday: Weekday): Promise<void> {
+    await prisma.establishmentBusinessHour.deleteMany({
+      where: { establishmentId, weekday },
+    });
   }
 
   async findHolidays(establishmentId: string): Promise<HolidayRowDto[]> {
@@ -240,5 +242,101 @@ export class AvailabilityRepository {
     ]);
 
     return this.findProfessionalAvailabilities(professionalId);
+  }
+
+  async findProfessionalAvailabilityById(
+    establishmentId: string,
+    professionalId: string,
+    availabilityId: string,
+  ): Promise<ProfessionalAvailabilityRowDto | null> {
+    const row = await prisma.professionalAvailability.findFirst({
+      where: {
+        id: availabilityId,
+        professionalId,
+        professional: { establishmentId, deletedAt: null },
+      },
+    });
+    if (!row) {
+      return null;
+    }
+    return {
+      id: row.id,
+      weekday: row.weekday,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  async createProfessionalAvailability(
+    professionalId: string,
+    window: ProfessionalAvailabilityWindow,
+  ): Promise<ProfessionalAvailabilityRowDto> {
+    const row = await prisma.professionalAvailability.create({
+      data: {
+        professionalId,
+        weekday: window.weekday,
+        startsAt: window.startsAt,
+        endsAt: window.endsAt,
+      },
+    });
+    return {
+      id: row.id,
+      weekday: row.weekday,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  async updateProfessionalAvailability(
+    establishmentId: string,
+    professionalId: string,
+    availabilityId: string,
+    window: ProfessionalAvailabilityWindow,
+  ): Promise<ProfessionalAvailabilityRowDto | null> {
+    const existing = await prisma.professionalAvailability.findFirst({
+      where: {
+        id: availabilityId,
+        professionalId,
+        professional: { establishmentId, deletedAt: null },
+      },
+    });
+    if (!existing) {
+      return null;
+    }
+    const row = await prisma.professionalAvailability.update({
+      where: { id: availabilityId },
+      data: {
+        weekday: window.weekday,
+        startsAt: window.startsAt,
+        endsAt: window.endsAt,
+      },
+    });
+    return {
+      id: row.id,
+      weekday: row.weekday,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  async deleteProfessionalAvailability(
+    establishmentId: string,
+    professionalId: string,
+    availabilityId: string,
+  ): Promise<boolean> {
+    const result = await prisma.professionalAvailability.deleteMany({
+      where: {
+        id: availabilityId,
+        professionalId,
+        professional: { establishmentId, deletedAt: null },
+      },
+    });
+    return result.count > 0;
   }
 }

@@ -8,7 +8,8 @@ import type { BusinessHoursListResponse } from "../availability.schema.js";
 import {
   businessHoursListResponseSchema,
   establishmentIdParamsSchema,
-  replaceBusinessHoursBodySchema,
+  establishmentWeekdayParamsSchema,
+  putBusinessHourBodySchema,
 } from "../availability.schema.js";
 
 const commonErrorResponses = {
@@ -27,7 +28,7 @@ export function createBusinessHoursRoutesPlugin(service: AvailabilityService): F
           tags: ["availability"],
           summary: "List establishment business hours",
           description:
-            "Returns the weekly business-hours template (Mon–Sun). Closed days are represented without clock times.",
+            "Returns the weekly business-hours template (Mon–Sun). Closed days have no row and appear as closed.",
           params: establishmentIdParamsSchema,
           response: {
             200: businessHoursListResponseSchema,
@@ -47,15 +48,15 @@ export function createBusinessHoursRoutesPlugin(service: AvailabilityService): F
     );
 
     fastify.put(
-      "/",
+      "/:weekday",
       {
         schema: {
           tags: ["availability"],
-          summary: "Replace establishment business hours",
+          summary: "Upsert business hours for one weekday",
           description:
-            "Replaces all business-hour rows for the establishment with the provided weekly configuration (US-410).",
-          params: establishmentIdParamsSchema,
-          body: replaceBusinessHoursBodySchema,
+            "Creates or updates the business-hour row for a single weekday. Send closed: true to remove the row (establishment closed that day).",
+          params: establishmentWeekdayParamsSchema,
+          body: putBusinessHourBodySchema,
           response: {
             200: businessHoursListResponseSchema,
             ...commonErrorResponses,
@@ -67,9 +68,33 @@ export function createBusinessHoursRoutesPlugin(service: AvailabilityService): F
         if (!user) {
           throw new AppError(401, "UNAUTHORIZED", "Authentication required.");
         }
-        const { establishmentId } = establishmentIdParamsSchema.parse(request.params);
-        const body = replaceBusinessHoursBodySchema.parse(request.body);
-        return service.replaceBusinessHours(user.id, establishmentId, body);
+        const { establishmentId, weekday } = establishmentWeekdayParamsSchema.parse(request.params);
+        const body = putBusinessHourBodySchema.parse(request.body);
+        return service.putBusinessHourForWeekday(user.id, establishmentId, weekday, body);
+      },
+    );
+
+    fastify.delete(
+      "/:weekday",
+      {
+        schema: {
+          tags: ["availability"],
+          summary: "Remove business hours for one weekday",
+          description: "Deletes the row for that weekday (establishment closed that day).",
+          params: establishmentWeekdayParamsSchema,
+          response: {
+            200: businessHoursListResponseSchema,
+            ...commonErrorResponses,
+          },
+        },
+      },
+      async (request): Promise<BusinessHoursListResponse> => {
+        const user = request.authUser;
+        if (!user) {
+          throw new AppError(401, "UNAUTHORIZED", "Authentication required.");
+        }
+        const { establishmentId, weekday } = establishmentWeekdayParamsSchema.parse(request.params);
+        return service.deleteBusinessHourForWeekday(user.id, establishmentId, weekday);
       },
     );
 

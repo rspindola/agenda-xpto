@@ -1,6 +1,12 @@
 import type { Weekday } from "@prisma/client";
 
+import type {
+  AppointmentsRepository,
+  OverlappingAppointmentRowDto,
+} from "~/modules/appointments/appointments.repository.js";
+import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 import { AppError } from "~/shared/errors/AppError.js";
+import { formatUtcTimeAsHm, minutesSinceMidnightUtc, parseTimeHmToUtcDate } from "~/shared/utils/time-of-day.js";
 
 import type {
   AvailabilityRepository,
@@ -16,37 +22,17 @@ import type {
   BusinessHoursListResponse,
   CreateBlockBody,
   CreateHolidayBody,
+  CreateProfessionalAvailabilityBody,
+  PatchProfessionalAvailabilityBody,
   ProfessionalAvailabilityInput,
-  ReplaceBusinessHoursBody,
+  PutBusinessHourBody,
   ReplaceProfessionalAvailabilitiesBody,
 } from "./availability.schema.js";
 import { WEEKDAY_VALUES } from "./availability.schema.js";
 
-function parseTimeHmToUtcDate(time: string): Date {
-  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time.trim());
-  if (!match) {
-    throw new AppError(400, "VALIDATION_ERROR", "Invalid time format; expected HH:mm.");
-  }
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  return new Date(Date.UTC(1970, 0, 1, hours, minutes, 0, 0));
-}
-
-function formatUtcTimeAsHm(d: Date): string {
-  const h = d.getUTCHours();
-  const m = d.getUTCMinutes();
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-}
-
-function minutesSinceMidnightUtc(d: Date): number {
-  return d.getUTCHours() * 60 + d.getUTCMinutes();
-}
-
 type MinuteSegment = { start: number; end: number };
 
-function establishmentOpenSegmentsForWeekday(
-  row: BusinessHourRowDto | undefined,
-): MinuteSegment[] {
+function establishmentOpenSegmentsForWeekday(row: BusinessHourRowDto | undefined): MinuteSegment[] {
   if (!row) {
     return [];
   }
@@ -159,28 +145,25 @@ function validateOpenBusinessDay(day: BusinessHourDayInput): void {
   }
 }
 
-function mapOpenDaysToRows(body: ReplaceBusinessHoursBody): OpenBusinessHourRow[] {
-  const openDays: OpenBusinessHourRow[] = [];
-  for (const day of body) {
-    if (day.closed) {
-      continue;
-    }
-    if (day.opensAt === undefined || day.closesAt === undefined) {
-      continue;
-    }
-    const breakStartsAt =
-      day.breakStartsAt !== undefined && day.breakStartsAt !== null ? parseTimeHmToUtcDate(day.breakStartsAt) : null;
-    const breakEndsAt =
-      day.breakEndsAt !== undefined && day.breakEndsAt !== null ? parseTimeHmToUtcDate(day.breakEndsAt) : null;
-    openDays.push({
-      weekday: day.weekday,
-      opensAt: parseTimeHmToUtcDate(day.opensAt),
-      closesAt: parseTimeHmToUtcDate(day.closesAt),
-      breakStartsAt,
-      breakEndsAt,
-    });
+function validatePutBusinessHourBody(body: PutBusinessHourBody, weekday: Weekday): void {
+  validateOpenBusinessDay({ ...body, weekday });
+}
+
+function mapPutBodyToOpenRow(body: PutBusinessHourBody, weekday: Weekday): OpenBusinessHourRow {
+  if (body.opensAt === undefined || body.closesAt === undefined) {
+    throw new AppError(400, "VALIDATION_ERROR", "opensAt and closesAt are required when closed is false.");
   }
-  return openDays;
+  const breakStartsAt =
+    body.breakStartsAt !== undefined && body.breakStartsAt !== null ? parseTimeHmToUtcDate(body.breakStartsAt) : null;
+  const breakEndsAt =
+    body.breakEndsAt !== undefined && body.breakEndsAt !== null ? parseTimeHmToUtcDate(body.breakEndsAt) : null;
+  return {
+    weekday,
+    opensAt: parseTimeHmToUtcDate(body.opensAt),
+    closesAt: parseTimeHmToUtcDate(body.closesAt),
+    breakStartsAt,
+    breakEndsAt,
+  };
 }
 
 function mergeBusinessHoursResponse(rows: BusinessHourRowDto[]): BusinessHoursListResponse {
@@ -221,6 +204,22 @@ function mapHoliday(row: HolidayRowDto): {
     reason: row.reason,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+function mapAppointmentConflict(row: OverlappingAppointmentRowDto): {
+  id: string;
+  professionalId: string;
+  startAt: string;
+  endAt: string;
+  clientName: string;
+} {
+  return {
+    id: row.id,
+    professionalId: row.professionalId,
+    startAt: row.startAt.toISOString(),
+    endAt: row.endAt.toISOString(),
+    clientName: row.clientName,
   };
 }
 
@@ -265,41 +264,56 @@ function mapProfessionalAvailability(row: ProfessionalAvailabilityRowDto): {
 }
 
 export class AvailabilityService {
-  constructor(private readonly repository: AvailabilityRepository) {}
+  constructor(
+    private readonly repository: AvailabilityRepository,
+    private readonly establishmentsRepository: EstablishmentsRepository,
+    private readonly appointmentsRepository: AppointmentsRepository,
+  ) {}
 
-  private async ensureEstablishment(userId: string, establishmentId: string): Promise<void> {
-    const ok = await this.repository.isEstablishmentOwned(userId, establishmentId);
-    if (!ok) {
+  private async assertOwnedNonArchivedEstablishment(userId: string, establishmentId: string): Promise<void> {
+    const establishment = await this.establishmentsRepository.findOwnedById(userId, establishmentId);
+    if (!establishment || establishment.archivedAt !== null) {
       throw new AppError(404, "NOT_FOUND", "Establishment not found.");
     }
   }
 
   async getBusinessHours(userId: string, establishmentId: string): Promise<BusinessHoursListResponse> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const rows = await this.repository.findBusinessHours(establishmentId);
     return mergeBusinessHoursResponse(rows);
   }
 
-  async replaceBusinessHours(
+  async putBusinessHourForWeekday(
     userId: string,
     establishmentId: string,
-    body: ReplaceBusinessHoursBody,
+    weekday: Weekday,
+    body: PutBusinessHourBody,
   ): Promise<BusinessHoursListResponse> {
-    await this.ensureEstablishment(userId, establishmentId);
-    for (const day of body) {
-      validateOpenBusinessDay(day);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
+    validatePutBusinessHourBody(body, weekday);
+    if (body.closed) {
+      await this.repository.deleteBusinessHourByWeekday(establishmentId, weekday);
+    } else {
+      const row = mapPutBodyToOpenRow(body, weekday);
+      await this.repository.upsertBusinessHour(establishmentId, weekday, row);
     }
-    const openDays = mapOpenDaysToRows(body);
-    await this.repository.replaceBusinessHours(establishmentId, openDays);
     const rows = await this.repository.findBusinessHours(establishmentId);
     return mergeBusinessHoursResponse(rows);
   }
 
-  async listHolidays(
+  async deleteBusinessHourForWeekday(
     userId: string,
     establishmentId: string,
-  ): Promise<ReturnType<typeof mapHoliday>[]> {
-    await this.ensureEstablishment(userId, establishmentId);
+    weekday: Weekday,
+  ): Promise<BusinessHoursListResponse> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
+    await this.repository.deleteBusinessHourByWeekday(establishmentId, weekday);
+    const rows = await this.repository.findBusinessHours(establishmentId);
+    return mergeBusinessHoursResponse(rows);
+  }
+
+  async listHolidays(userId: string, establishmentId: string): Promise<ReturnType<typeof mapHoliday>[]> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const rows = await this.repository.findHolidays(establishmentId);
     return rows.map(mapHoliday);
   }
@@ -309,7 +323,7 @@ export class AvailabilityService {
     establishmentId: string,
     body: CreateHolidayBody,
   ): Promise<ReturnType<typeof mapHoliday>> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     try {
       const row = await this.repository.createHoliday(establishmentId, body);
       return mapHoliday(row);
@@ -322,7 +336,7 @@ export class AvailabilityService {
   }
 
   async deleteHoliday(userId: string, establishmentId: string, holidayId: string): Promise<void> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const deleted = await this.repository.deleteHoliday(establishmentId, holidayId);
     if (!deleted) {
       throw new AppError(404, "NOT_FOUND", "Holiday not found.");
@@ -330,7 +344,7 @@ export class AvailabilityService {
   }
 
   async listBlocks(userId: string, establishmentId: string): Promise<ReturnType<typeof mapBlock>[]> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const rows = await this.repository.findBlocks(establishmentId);
     return rows.map(mapBlock);
   }
@@ -339,8 +353,8 @@ export class AvailabilityService {
     userId: string,
     establishmentId: string,
     body: CreateBlockBody,
-  ): Promise<ReturnType<typeof mapBlock>> {
-    await this.ensureEstablishment(userId, establishmentId);
+  ): Promise<{ block: ReturnType<typeof mapBlock>; conflicts: ReturnType<typeof mapAppointmentConflict>[] }> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const startsAt = new Date(body.startsAt);
     const endsAt = new Date(body.endsAt);
     if (endsAt <= startsAt) {
@@ -357,6 +371,18 @@ export class AvailabilityService {
         throw new AppError(404, "NOT_FOUND", "Professional not found.");
       }
     }
+
+    const overlapFilter =
+      body.scope === "PROFESSIONAL" && professionalId !== null
+        ? { type: "PROFESSIONAL" as const, professionalId }
+        : { type: "ESTABLISHMENT" as const };
+
+    const conflicts = await this.appointmentsRepository.findConfirmedOverlappingInterval(
+      establishmentId,
+      { startsAt, endsAt },
+      overlapFilter,
+    );
+
     const row = await this.repository.createBlock(establishmentId, {
       scope: body.scope,
       professionalId,
@@ -364,11 +390,15 @@ export class AvailabilityService {
       endsAt,
       reason: body.reason,
     });
-    return mapBlock(row);
+
+    return {
+      block: mapBlock(row),
+      conflicts: conflicts.map(mapAppointmentConflict),
+    };
   }
 
   async deleteBlock(userId: string, establishmentId: string, blockId: string): Promise<void> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const deleted = await this.repository.deleteBlock(establishmentId, blockId);
     if (!deleted) {
       throw new AppError(404, "NOT_FOUND", "Block not found.");
@@ -380,7 +410,7 @@ export class AvailabilityService {
     establishmentId: string,
     professionalId: string,
   ): Promise<ReturnType<typeof mapProfessionalAvailability>[]> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const prof = await this.repository.findProfessionalInEstablishment(establishmentId, professionalId);
     if (!prof) {
       throw new AppError(404, "NOT_FOUND", "Professional not found.");
@@ -395,7 +425,7 @@ export class AvailabilityService {
     professionalId: string,
     body: ReplaceProfessionalAvailabilitiesBody,
   ): Promise<ReturnType<typeof mapProfessionalAvailability>[]> {
-    await this.ensureEstablishment(userId, establishmentId);
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
     const prof = await this.repository.findProfessionalInEstablishment(establishmentId, professionalId);
     if (!prof) {
       throw new AppError(404, "NOT_FOUND", "Professional not found.");
@@ -410,5 +440,101 @@ export class AvailabilityService {
     validateProfessionalWindowsAgainstEstablishment(businessRows, windows);
     const rows = await this.repository.replaceProfessionalAvailabilities(professionalId, windows);
     return rows.map(mapProfessionalAvailability);
+  }
+
+  async createProfessionalAvailability(
+    userId: string,
+    establishmentId: string,
+    professionalId: string,
+    body: CreateProfessionalAvailabilityBody,
+  ): Promise<ReturnType<typeof mapProfessionalAvailability>> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
+    const prof = await this.repository.findProfessionalInEstablishment(establishmentId, professionalId);
+    if (!prof) {
+      throw new AppError(404, "NOT_FOUND", "Professional not found.");
+    }
+    const window: ProfessionalAvailabilityWindow = {
+      weekday: body.weekday,
+      startsAt: parseTimeHmToUtcDate(body.startsAt),
+      endsAt: parseTimeHmToUtcDate(body.endsAt),
+    };
+    const existing = await this.repository.findProfessionalAvailabilities(professionalId);
+    const windows: ProfessionalAvailabilityWindow[] = [
+      ...existing.map((r) => ({ weekday: r.weekday, startsAt: r.startsAt, endsAt: r.endsAt })),
+      window,
+    ];
+    validateNoOverlapSameWeekday(windows);
+    const businessRows = await this.repository.findBusinessHours(establishmentId);
+    validateProfessionalWindowsAgainstEstablishment(businessRows, [window]);
+    const row = await this.repository.createProfessionalAvailability(professionalId, window);
+    return mapProfessionalAvailability(row);
+  }
+
+  async updateProfessionalAvailability(
+    userId: string,
+    establishmentId: string,
+    professionalId: string,
+    availabilityId: string,
+    body: PatchProfessionalAvailabilityBody,
+  ): Promise<ReturnType<typeof mapProfessionalAvailability>> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
+    const prof = await this.repository.findProfessionalInEstablishment(establishmentId, professionalId);
+    if (!prof) {
+      throw new AppError(404, "NOT_FOUND", "Professional not found.");
+    }
+    const existingRow = await this.repository.findProfessionalAvailabilityById(
+      establishmentId,
+      professionalId,
+      availabilityId,
+    );
+    if (!existingRow) {
+      throw new AppError(404, "NOT_FOUND", "Availability not found.");
+    }
+    const window: ProfessionalAvailabilityWindow = {
+      weekday: body.weekday,
+      startsAt: parseTimeHmToUtcDate(body.startsAt),
+      endsAt: parseTimeHmToUtcDate(body.endsAt),
+    };
+    const existing = await this.repository.findProfessionalAvailabilities(professionalId);
+    const windows: ProfessionalAvailabilityWindow[] = [
+      ...existing
+        .filter((r) => r.id !== availabilityId)
+        .map((r) => ({ weekday: r.weekday, startsAt: r.startsAt, endsAt: r.endsAt })),
+      window,
+    ];
+    validateNoOverlapSameWeekday(windows);
+    const businessRows = await this.repository.findBusinessHours(establishmentId);
+    validateProfessionalWindowsAgainstEstablishment(businessRows, [window]);
+    const row = await this.repository.updateProfessionalAvailability(
+      establishmentId,
+      professionalId,
+      availabilityId,
+      window,
+    );
+    if (!row) {
+      throw new AppError(404, "NOT_FOUND", "Availability not found.");
+    }
+    return mapProfessionalAvailability(row);
+  }
+
+  async deleteProfessionalAvailability(
+    userId: string,
+    establishmentId: string,
+    professionalId: string,
+    availabilityId: string,
+  ): Promise<void> {
+    await this.assertOwnedNonArchivedEstablishment(userId, establishmentId);
+    const prof = await this.repository.findProfessionalInEstablishment(establishmentId, professionalId);
+    if (!prof) {
+      throw new AppError(404, "NOT_FOUND", "Professional not found.");
+    }
+    const deleted = await this.repository.deleteProfessionalAvailability(
+      establishmentId,
+      professionalId,
+      availabilityId,
+    );
+    if (!deleted) {
+      throw new AppError(404, "NOT_FOUND", "Availability not found.");
+    }
   }
 }

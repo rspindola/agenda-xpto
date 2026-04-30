@@ -5,12 +5,12 @@ import { AppError } from "~/shared/errors/AppError.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
 import type { AvailabilityService } from "../availability.service.js";
-import type { BlocksListResponse } from "../availability.schema.js";
+import type { BlocksListResponse, CreateBlockResponse } from "../availability.schema.js";
 import {
   blockIdParamsSchema,
-  blockRowSchema,
   blocksListResponseSchema,
   createBlockBodySchema,
+  createBlockResponseSchema,
   establishmentIdParamsSchema,
 } from "../availability.schema.js";
 
@@ -59,20 +59,20 @@ export function createBlocksRoutesPlugin(service: AvailabilityService): FastifyP
           params: establishmentIdParamsSchema,
           body: createBlockBodySchema,
           response: {
-            201: blockRowSchema,
+            201: createBlockResponseSchema,
             ...commonErrorResponses,
           },
         },
       },
-      async (request, reply): Promise<void> => {
+      async (request, reply) => {
         const user = request.authUser;
         if (!user) {
           throw new AppError(401, "UNAUTHORIZED", "Authentication required.");
         }
         const { establishmentId } = establishmentIdParamsSchema.parse(request.params);
         const body = createBlockBodySchema.parse(request.body);
-        const created = await service.createBlock(user.id, establishmentId, body);
-        await reply.status(201).send(created);
+        const created: CreateBlockResponse = await service.createBlock(user.id, establishmentId, body);
+        return reply.status(201).send(created);
       },
     );
 
