@@ -12,6 +12,7 @@ import {
 } from "fastify-type-provider-zod";
 
 import { registerAuthModule } from "~/modules/auth/auth.routes.js";
+import { registerAvailabilityModule } from "~/modules/availability/availability.routes.js";
 import { registerEstablishmentsModule } from "~/modules/establishments/establishments.routes.js";
 
 import { AppError } from "./shared/errors/AppError.js";
@@ -113,6 +114,7 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   registerAuthModule(app);
   registerEstablishmentsModule(app);
+  await registerAvailabilityModule(app);
 
   await app.register(rateLimit, {
     max: 100,
