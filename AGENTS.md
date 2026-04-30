@@ -205,7 +205,7 @@ All coding standards are enforced via `.cursor/rules/`:
 | `typescript-conventions.mdc` | Types, generics, Zod, Prisma typing |
 | `import-organization.mdc` | Import order, path aliases |
 | `testing-tdd.mdc` | TDD workflow, Vitest, coverage |
-| `swagger-docs.mdc` | OpenAPI documentation on every endpoint |
+| `swagger-docs.mdc` | OpenAPI on every endpoint; keep `/docs` in sync when routes change; `@fastify/swagger` before routes in `app.ts` |
 | `database-prisma.mdc` | Prisma patterns, soft delete, transactions |
 | `security.mdc` | Auth, tenant isolation, sensitive data |
 

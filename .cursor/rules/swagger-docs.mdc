@@ -1,6 +1,6 @@
 ---
-description: Enforces complete OpenAPI documentation on every Fastify route using fastify-type-provider-zod
-globs: ["apps/api/src/modules/**/*.routes.ts"]
+description: Enforces complete OpenAPI documentation, Swagger UI verification, and correct @fastify/swagger registration order
+globs: ["apps/api/src/modules/**/*.routes.ts", "apps/api/src/app.ts"]
 alwaysApply: true
 ---
 
@@ -9,11 +9,18 @@ alwaysApply: true
 ## Purpose & Scope
 This rule enforces complete and consistent OpenAPI documentation on every Fastify route using `@fastify/swagger`, `@fastify/swagger-ui`, and `fastify-type-provider-zod`. Documentation is not optional — undocumented endpoints MUST NOT be merged.
 
+Whenever you **add, rename, remove, or change** an HTTP route (path, method, body, query, responses, or auth), you **MUST** update the route `schema`, any `*.schema.ts` types used by OpenAPI, and **manually confirm** the operation appears under the correct tag in Swagger UI (`/docs`) in non-production.
+
 ## Setup Requirements
 - **MUST** use `fastify-type-provider-zod` as the type provider for all routes.
 - **MUST** expose Swagger UI at `/docs` in `development` environment only.
 - **MUST** expose raw OpenAPI JSON at `/docs/json`.
 - **NEVER** expose `/docs` in `production` — gate it with `NODE_ENV` check.
+
+## OpenAPI visibility (`@fastify/swagger` registration order)
+- **MUST** register `@fastify/swagger` **before** any route that must appear in the generated OpenAPI document (see `apps/api/src/app.ts`: CORS → `fastifySwagger` → feature modules such as `registerAuthModule` → `rateLimit` → documented routes like `/health` → `fastifySwaggerUi`).
+- **NEVER** register new `app.get` / `app.post` / `app.all` **above** the `fastifySwagger` block unless those routes are intentionally excluded from `/docs`.
+- If operations disappear from Swagger after a bootstrap refactor, **first** verify registration order before debugging schemas.
 
 ## Route Documentation
 Every route **MUST** include a `schema` object with all of the following fields:
@@ -104,5 +111,13 @@ await fastify.register(swagger, {
 
 ## Validation
 - **MUST** verify that `/docs` loads correctly after adding or modifying any route.
+- **MUST** expand the relevant tag in Swagger UI and confirm the new or updated operation is listed (not only that the page loads).
+- **MUST** run `GET /docs/json` (or open `/docs/json` in the browser) when in doubt and search for the path string to confirm it is present in the spec.
 - **NEVER** merge a PR where `/docs` returns a 500 or shows schema errors.
 - **AVOID** duplicating schema definitions between the Swagger config and Zod schemas — derive one from the other.
+
+## Checklist — endpoint change (copy mentally for every PR)
+1. `schema` on the route: `tags`, `summary`, `description`, `body` / `querystring` / `params` as applicable, `response` for each status.
+2. Named Zod exports in the module `*.schema.ts` (no large anonymous `z.object` inline in the route file).
+3. If bootstrap changed: `@fastify/swagger` still **before** documented routes in `app.ts`.
+4. Local check: `/docs` → correct tag → operation visible; `/docs/json` contains the path.

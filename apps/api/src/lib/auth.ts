@@ -19,9 +19,9 @@ export function initializeAuth(logger: FastifyBaseLogger): ReturnType<typeof bet
     secret: process.env.AUTH_SECRET ?? "",
     baseURL: process.env.AUTH_URL ?? "http://localhost:3001",
     trustedOrigins,
+    // usePlural must stay false: Prisma delegates are `user`, `session`, `account` (singular), even when @@map("users") etc.
     database: prismaAdapter(prisma, {
       provider: "postgresql",
-      usePlural: true,
     }),
     databaseHooks: {
       user: {

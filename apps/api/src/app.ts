@@ -78,8 +78,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
   });
 
-  registerAuthModule(app);
-
+  // @fastify/swagger must load before routes so their schemas are included in OpenAPI.
   if (isNonProduction) {
     await app.register(fastifySwagger, {
       openapi: {
@@ -111,6 +110,8 @@ export async function buildServer(): Promise<FastifyInstance> {
       transform: jsonSchemaTransform,
     });
   }
+
+  registerAuthModule(app);
 
   await app.register(rateLimit, {
     max: 100,
