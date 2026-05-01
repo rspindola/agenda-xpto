@@ -111,6 +111,30 @@ export class BookingRepository {
     return row;
   }
 
+  async findEstablishmentByIdForOwner(
+    establishmentId: string,
+    ownerUserId: string,
+  ): Promise<PublicEstablishmentRow | null> {
+    const row = await prisma.establishment.findFirst({
+      where: {
+        id: establishmentId,
+        userId: ownerUserId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        userId: true,
+        name: true,
+        slug: true,
+        phone: true,
+        address: true,
+        timezone: true,
+        minAdvanceMinutes: true,
+      },
+    });
+    return row;
+  }
+
   async findPublicServices(establishmentId: string): Promise<PublicServiceRow[]> {
     const rows = await prisma.service.findMany({
       where: { establishmentId, deletedAt: null },
@@ -366,6 +390,91 @@ export class BookingRepository {
         clientEmail: appointment.clientEmail,
         clientPhone: appointment.clientPhone,
         cancelToken: appointment.cancelToken,
+      };
+    });
+  }
+
+  async createManualDashboardAppointment(input: {
+    establishmentId: string;
+    createdByUserId: string;
+    professionalId: string;
+    startAt: Date;
+    endAt: Date;
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+    lines: CreatePublicAppointmentLineInput[];
+  }): Promise<{
+    appointmentId: string;
+    professionalId: string;
+    startAt: Date;
+    endAt: Date;
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+  }> {
+    const cancelToken = randomUUID();
+
+    return prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT id FROM professionals WHERE id = ${input.professionalId} FOR UPDATE`;
+
+      const overlapping = await tx.appointment.findMany({
+        where: {
+          establishmentId: input.establishmentId,
+          professionalId: input.professionalId,
+          status: "CONFIRMED",
+          startAt: { lt: input.endAt },
+          endAt: { gt: input.startAt },
+        },
+        select: { id: true },
+        take: 1,
+      });
+
+      if (overlapping.length > 0) {
+        throw new AppError(409, "SLOT_NOT_AVAILABLE", "The selected time slot is no longer available.");
+      }
+
+      const appointment = await tx.appointment.create({
+        data: {
+          establishmentId: input.establishmentId,
+          professionalId: input.professionalId,
+          status: "CONFIRMED",
+          startAt: input.startAt,
+          endAt: input.endAt,
+          clientName: input.clientName,
+          clientEmail: input.clientEmail,
+          clientPhone: input.clientPhone,
+          cancelToken,
+          createdByUserId: input.createdByUserId,
+          appointmentServices: {
+            create: input.lines.map((line) => ({
+              serviceId: line.serviceId,
+              snapshotName: line.snapshotName,
+              snapshotDurationMinutes: line.snapshotDurationMinutes,
+              snapshotPriceCents: line.snapshotPriceCents,
+              sortOrder: line.sortOrder,
+            })),
+          },
+        },
+        select: {
+          id: true,
+          professionalId: true,
+          startAt: true,
+          endAt: true,
+          clientName: true,
+          clientEmail: true,
+          clientPhone: true,
+        },
+      });
+
+      return {
+        appointmentId: appointment.id,
+        professionalId: appointment.professionalId,
+        startAt: appointment.startAt,
+        endAt: appointment.endAt,
+        clientName: appointment.clientName,
+        clientEmail: appointment.clientEmail,
+        clientPhone: appointment.clientPhone,
       };
     });
   }

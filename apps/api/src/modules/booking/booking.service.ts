@@ -8,6 +8,7 @@ import type {
   BookingRepository,
   ConfirmedAppointmentIntervalRow,
   CreatePublicAppointmentLineInput,
+  PublicEstablishmentRow,
   PublicProfessionalRow,
   PublicServiceRow,
 } from "./booking.repository.js";
@@ -119,6 +120,16 @@ export type CancelledPublicAppointmentDto = {
   startAt: string;
   endAt: string;
   clientName: string;
+};
+
+export type CreatedDashboardManualAppointmentDto = {
+  id: string;
+  professionalId: string;
+  startAt: string;
+  endAt: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
 };
 
 export class BookingService {
@@ -260,16 +271,15 @@ export class BookingService {
     return out;
   }
 
-  async createAppointment(
-    slug: string,
+  private async resolvePublicAppointmentCreationContext(
+    establishment: PublicEstablishmentRow,
     body: CreatePublicAppointmentBodyInput,
     now: Date,
-  ): Promise<CreatedPublicAppointmentDto> {
-    const establishment = await this.repository.findEstablishmentBySlug(slug);
-    if (!establishment) {
-      throw new AppError(404, "NOT_FOUND", "Establishment not found.");
-    }
-
+  ): Promise<{
+    startAtJs: Date;
+    endAtJs: Date;
+    lines: CreatePublicAppointmentLineInput[];
+  }> {
     const services = await this.repository.findServicesByIds(establishment.id, body.serviceIds);
     if (services.length !== body.serviceIds.length) {
       throw new AppError(400, "VALIDATION_ERROR", "One or more services are invalid for this establishment.");
@@ -306,7 +316,7 @@ export class BookingService {
     const endAtJs = new Date(startAtJs.getTime() + totalDurationMinutes * 60 * 1000);
 
     const priceMap = await this.repository.findProfessionalServicePrices(body.professionalId, body.serviceIds);
-    const lines: CreatePublicAppointmentLineInput[] = body.serviceIds.map((serviceId, index) => {
+    const lines: CreatePublicAppointmentLineInput[] = body.serviceIds.map((serviceId: string, index: number) => {
       const svc = services.find((s) => s.id === serviceId);
       if (!svc) {
         throw new AppError(400, "VALIDATION_ERROR", "Invalid service in selection.");
@@ -323,6 +333,21 @@ export class BookingService {
         sortOrder: index,
       };
     });
+
+    return { startAtJs, endAtJs, lines };
+  }
+
+  async createAppointment(
+    slug: string,
+    body: CreatePublicAppointmentBodyInput,
+    now: Date,
+  ): Promise<CreatedPublicAppointmentDto> {
+    const establishment = await this.repository.findEstablishmentBySlug(slug);
+    if (!establishment) {
+      throw new AppError(404, "NOT_FOUND", "Establishment not found.");
+    }
+
+    const { startAtJs, endAtJs, lines } = await this.resolvePublicAppointmentCreationContext(establishment, body, now);
 
     const quota = await findSubscriptionQuotaByEstablishmentId(establishment.id);
     if (
@@ -360,6 +385,49 @@ export class BookingService {
       clientPhone: created.clientPhone,
       cancelToken: created.cancelToken,
     };
+  }
+
+  async createManualDashboardAppointment(
+    userId: string,
+    establishmentId: string,
+    body: CreatePublicAppointmentBodyInput,
+    now: Date,
+  ): Promise<CreatedDashboardManualAppointmentDto> {
+    const establishment = await this.repository.findEstablishmentByIdForOwner(establishmentId, userId);
+    if (!establishment) {
+      throw new AppError(404, "NOT_FOUND", "Establishment not found.");
+    }
+
+    const { startAtJs, endAtJs, lines } = await this.resolvePublicAppointmentCreationContext(establishment, body, now);
+
+    const created = await this.repository.createManualDashboardAppointment({
+      establishmentId: establishment.id,
+      createdByUserId: userId,
+      professionalId: body.professionalId,
+      startAt: startAtJs,
+      endAt: endAtJs,
+      clientName: body.clientName,
+      clientEmail: body.clientEmail,
+      clientPhone: body.clientPhone,
+      lines,
+    });
+
+    return {
+      id: created.appointmentId,
+      professionalId: created.professionalId,
+      startAt: created.startAt.toISOString(),
+      endAt: created.endAt.toISOString(),
+      clientName: created.clientName,
+      clientEmail: created.clientEmail,
+      clientPhone: created.clientPhone,
+    };
+  }
+
+  assertStartAtMeetsMinAdvance(minAdvanceMinutes: number, startAtJs: Date, now: Date): void {
+    const earliest = dateToLuxonUtc(now).plus({ minutes: minAdvanceMinutes });
+    if (dateToLuxonUtc(startAtJs) < earliest) {
+      throw new AppError(422, "BOOKING_MIN_ADVANCE_VIOLATION", "The selected start time violates minimum advance rules.");
+    }
   }
 
   async cancelAppointment(cancelToken: string): Promise<CancelledPublicAppointmentDto> {

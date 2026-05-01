@@ -12,6 +12,7 @@ const fixedNow = new Date("2026-05-15T12:00:00.000Z");
 
 const mockRepository: BookingRepository = {
   findEstablishmentBySlug: vi.fn(),
+  findEstablishmentByIdForOwner: vi.fn(),
   findPublicServices: vi.fn(),
   findPublicProfessionals: vi.fn(),
   findServicesByIds: vi.fn(),
@@ -23,6 +24,7 @@ const mockRepository: BookingRepository = {
   findConfirmedAppointmentsInRange: vi.fn(),
   findAvailabilitiesForProfessionalsOnWeekday: vi.fn(),
   createPublicAppointment: vi.fn(),
+  createManualDashboardAppointment: vi.fn(),
   cancelAppointmentByToken: vi.fn(),
   findProfessionalServicePrices: vi.fn(),
 };
@@ -597,6 +599,30 @@ describe("BookingService", () => {
       ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
     });
 
+    it("should throw VALIDATION_ERROR when loaded services omit an id from body.serviceIds", async () => {
+      vi.mocked(mockRepository.findEstablishmentBySlug).mockResolvedValue(establishment);
+      vi.mocked(mockRepository.findServicesByIds).mockResolvedValue([
+        { id: "svc_1", name: "Cut", durationMinutes: 30, priceCents: 5000, catalogCombo: false },
+        { id: "svc_1", name: "Cut dup", durationMinutes: 30, priceCents: 5000, catalogCombo: false },
+      ]);
+      vi.mocked(mockRepository.findProfessionalIdsOfferingAllServices).mockResolvedValue(["prof_1"]);
+      vi.mocked(mockRepository.findProfessionalInEstablishment).mockResolvedValue({ id: "prof_1" });
+      vi.mocked(mockRepository.findProfessionalServicePrices).mockResolvedValue(
+        new Map([
+          ["svc_1", { priceCents: 5000 }],
+          ["svc_2", { priceCents: 3000 }],
+        ]),
+      );
+
+      await expect(
+        service.createAppointment(
+          "shop",
+          { ...body, serviceIds: ["svc_1", "svc_2"] },
+          fixedNow,
+        ),
+      ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    });
+
     it("should create appointment and return cancel token when repository succeeds", async () => {
       vi.mocked(mockRepository.findEstablishmentBySlug).mockResolvedValue(establishment);
       vi.mocked(mockRepository.findServicesByIds).mockResolvedValue([
@@ -625,6 +651,91 @@ describe("BookingService", () => {
       expect(result.id).toBe("appt_new");
       expect(result.cancelToken).toBe("00000000-0000-4000-8000-000000000099");
       expect(vi.mocked(mockRepository.createPublicAppointment)).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("createManualDashboardAppointment", () => {
+    const establishment = {
+      id: "est_1",
+      userId: "user_1",
+      name: "Shop",
+      slug: "shop",
+      phone: null,
+      address: null,
+      timezone: "America/Sao_Paulo",
+      minAdvanceMinutes: 0,
+    };
+
+    const body = {
+      professionalId: "prof_1",
+      serviceIds: ["svc_1"],
+      startAt: "2026-06-01T15:00:00.000Z",
+      clientName: "Test Client",
+      clientEmail: "client@example.com",
+      clientPhone: "+5511999990000",
+    };
+
+    it("should throw NOT_FOUND when establishment is not owned by user", async () => {
+      vi.mocked(mockRepository.findEstablishmentByIdForOwner).mockResolvedValue(null);
+
+      await expect(service.createManualDashboardAppointment("user_1", "est_1", body, fixedNow)).rejects.toMatchObject(
+        { code: "NOT_FOUND" },
+      );
+    });
+
+    it("should succeed without Starter quota check and omit cancel token in response", async () => {
+      vi.mocked(mockRepository.findEstablishmentByIdForOwner).mockResolvedValue(establishment);
+      vi.mocked(mockRepository.findServicesByIds).mockResolvedValue([
+        { id: "svc_1", name: "Cut", durationMinutes: 30, priceCents: 5000, catalogCombo: false },
+      ]);
+      vi.mocked(mockRepository.findProfessionalIdsOfferingAllServices).mockResolvedValue(["prof_1"]);
+      vi.mocked(mockRepository.findProfessionalInEstablishment).mockResolvedValue({ id: "prof_1" });
+      vi.mocked(mockRepository.findProfessionalServicePrices).mockResolvedValue(
+        new Map([["svc_1", { priceCents: 5000 }]]),
+      );
+      vi.mocked(mockRepository.createManualDashboardAppointment).mockResolvedValue({
+        appointmentId: "appt_manual",
+        professionalId: "prof_1",
+        startAt: new Date(body.startAt),
+        endAt: new Date("2026-06-01T15:30:00.000Z"),
+        clientName: body.clientName,
+        clientEmail: body.clientEmail,
+        clientPhone: body.clientPhone,
+      });
+
+      subscriptionQuotaSpy.mockResolvedValue({
+        planType: "STARTER",
+        status: "ACTIVE",
+        starterMonthlyAppointmentsCount: 100,
+      });
+
+      const result = await service.createManualDashboardAppointment("user_1", "est_1", body, fixedNow);
+
+      expect(result.id).toBe("appt_manual");
+      expect("cancelToken" in result).toBe(false);
+      expect(vi.mocked(mockRepository.createManualDashboardAppointment)).toHaveBeenCalledOnce();
+      expect(vi.mocked(mockRepository.createPublicAppointment)).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("assertStartAtMeetsMinAdvance", () => {
+    it("should throw BOOKING_MIN_ADVANCE_VIOLATION when start is before minimum advance", () => {
+      const now = new Date("2026-06-01T12:00:00.000Z");
+      const tooSoon = new Date("2026-06-01T12:30:00.000Z");
+      try {
+        service.assertStartAtMeetsMinAdvance(120, tooSoon, now);
+        expect.fail("expected throw");
+      } catch (error: unknown) {
+        expect(error).toMatchObject({ code: "BOOKING_MIN_ADVANCE_VIOLATION" });
+      }
+    });
+
+    it("should not throw when start respects minimum advance", () => {
+      const now = new Date("2026-06-01T12:00:00.000Z");
+      const ok = new Date("2026-06-01T14:00:00.000Z");
+      expect(() => {
+        service.assertStartAtMeetsMinAdvance(120, ok, now);
+      }).not.toThrow();
     });
   });
 
