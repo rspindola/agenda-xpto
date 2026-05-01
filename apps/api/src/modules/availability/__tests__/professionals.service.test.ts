@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 
-import type { ProfessionalsRepository } from "../professionals.repository.js";
-import { ProfessionalsService } from "../professionals.service.js";
+import type { ProfessionalsRepository } from "~/modules/availability/professionals.repository.js";
+import { ProfessionalsService } from "~/modules/availability/professionals.service.js";
 
 const establishment = {
   id: "est_1",

@@ -4,13 +4,13 @@ import type { EstablishmentsRepository } from "~/modules/establishments/establis
 import type { SubscriptionRow } from "~/modules/plans/subscription.repository.js";
 import { AppError } from "~/shared/errors/AppError.js";
 
-import type { ProfessionalsRepository } from "./professionals.repository.js";
+import type { ProfessionalsRepository } from "~/modules/availability/professionals.repository.js";
 import type {
   CreateProfessionalBody,
   PatchProfessionalBody,
   ProfessionalPublic,
   ReplaceProfessionalServicesBody,
-} from "./professionals.schema.js";
+} from "~/modules/availability/professionals.schema.js";
 
 function requireSubscriptionForMutation(subscription: SubscriptionRow | null): SubscriptionRow {
   if (subscription === null) {

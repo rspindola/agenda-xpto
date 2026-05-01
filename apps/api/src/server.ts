@@ -17,8 +17,8 @@ import { registerAvailabilityModule } from "~/modules/availability/availability.
 import { registerBookingModule } from "~/modules/booking/booking.routes.js";
 import { registerEstablishmentsModule } from "~/modules/establishments/establishments.routes.js";
 
-import { AppError } from "./shared/errors/AppError.js";
-import { healthResponseSchema } from "./shared/schemas/health.schema.js";
+import { AppError } from "~/shared/errors/AppError.js";
+import { healthResponseSchema } from "~/shared/schemas/health.schema.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? "3001", 10);
 const API_BASE_URL = process.env.API_URL ?? `http://localhost:${String(PORT)}`;

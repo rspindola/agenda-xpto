@@ -3,7 +3,7 @@ import type { FastifyPluginCallback } from "fastify";
 import { AppError } from "~/shared/errors/AppError.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
-import type { AppointmentsService } from "../appointments.service.js";
+import type { AppointmentsService } from "~/modules/appointments/appointments.service.js";
 import {
   type CancelAppointmentResponse,
   type GetAppointmentResponse,
@@ -21,7 +21,7 @@ import {
   markStatusResponseSchema,
   rescheduleAppointmentBodySchema,
   rescheduleAppointmentResponseSchema,
-} from "../appointments.schema.js";
+} from "~/modules/appointments/appointments.schema.js";
 
 const commonErrorResponses = {
   400: errorResponseSchema,

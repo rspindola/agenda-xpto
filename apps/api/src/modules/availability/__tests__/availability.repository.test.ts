@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "~/lib/prisma.js";
 
-import { AvailabilityRepository } from "../availability.repository.js";
+import { AvailabilityRepository } from "~/modules/availability/availability.repository.js";
 
 const repository = new AvailabilityRepository();
 

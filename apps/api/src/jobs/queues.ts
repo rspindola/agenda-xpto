@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { bullmqConnection } from "../lib/bullmq.js";
+import { bullmqConnection } from "~/lib/bullmq.js";
 
 /** Outbound e-mails and reminders (ARCHITECTURE §7). */
 export const notificationsQueue = new Queue("notifications", {

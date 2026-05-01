@@ -3,7 +3,7 @@ import { AppointmentStatus } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma.js";
 
-import type { CreateProfessionalBody, PatchProfessionalBody } from "./professionals.schema.js";
+import type { CreateProfessionalBody, PatchProfessionalBody } from "~/modules/availability/professionals.schema.js";
 
 export type ProfessionalRow = {
   id: string;

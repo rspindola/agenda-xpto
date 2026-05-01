@@ -4,17 +4,17 @@ import { z } from "zod";
 import { AppError } from "~/shared/errors/AppError.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
-import type { ProfessionalsService } from "../professionals.service.js";
+import type { ProfessionalsService } from "~/modules/availability/professionals.service.js";
 import {
   createProfessionalBodySchema,
   establishmentIdParamsSchema,
-  type ProfessionalPublic,
   patchProfessionalBodySchema,
   professionalIdParamsSchema,
   professionalPublicSchema,
   professionalsListResponseSchema,
   replaceProfessionalServicesBodySchema,
-} from "../professionals.schema.js";
+  type ProfessionalPublic,
+} from "~/modules/availability/professionals.schema.js";
 
 const commonErrorResponses = {
   400: errorResponseSchema,

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method -- repository methods are vi.fn() mocks */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { EstablishmentsRepository } from "../establishments.repository.js";
-import { EstablishmentsService, generateSlugFromName } from "../establishments.service.js";
+import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import { EstablishmentsService, generateSlugFromName } from "~/modules/establishments/establishments.service.js";
 
 const publicDto = {
   id: "est_1",

@@ -4,7 +4,7 @@ globs: ["apps/api/src/**/*.ts", "packages/**/*.ts"]
 alwaysApply: true
 ---
 
-# Import Organization Standards - Agenda XPTO API - Version: 1.0.0
+# Import Organization Standards - Agenda XPTO API - Version: 1.1.0
 
 ## Purpose & Scope
 This rule defines import organization for the Agenda XPTO backend, including correct usage of path aliases and standardized import ordering across all TypeScript files. **ALL responses must be provided in Brazilian Portuguese.**
@@ -15,9 +15,10 @@ This rule defines import organization for the Agenda XPTO backend, including cor
 1. **Node.js built-ins** — `node:crypto`, `node:path`, etc.
 2. **External libraries** — `fastify`, `zod`, `@prisma/client`, `bullmq`, etc.
 3. **Internal packages** — `@agenda-xpto/types`, `@agenda-xpto/validations`
-4. **Path aliases** — `~/lib/*`, `~/shared/*`, `~/jobs/*`
-5. **Relative imports** — only within the same module folder (`./*.schema`, `./*.repository`)
-6. **Type-only imports** — `import type` at the end of each group or as a separate group
+4. **Path aliases** — `~/lib/*`, `~/shared/*`, `~/jobs/*`, `~/modules/*`
+5. **Type-only imports** — `import type` ao final de cada grupo ou como grupo separado
+
+> ⚠️ **Imports relativos (`./*`, `../*`) são TOTALMENTE PROIBIDOS.** Sempre use path aliases, inclusive para arquivos do mesmo módulo.
 
 ```typescript
 // ✅ DO: correct import order with blank lines between groups
@@ -31,15 +32,15 @@ import type { EstablishmentPublic } from '@agenda-xpto/types';
 import { prisma } from '~/lib/prisma';
 import { AppError } from '~/shared/errors/AppError';
 import { notificationsQueue } from '~/jobs/queues';
-
-import { type CreateAppointmentBody, createAppointmentBodySchema } from './appointments.schema';
-import { AppointmentsRepository } from './appointments.repository';
+import { createAppointmentBodySchema } from '~/modules/appointments/appointments.schema';
+import { AppointmentsRepository } from '~/modules/appointments/appointments.repository';
+import type { CreateAppointmentBody } from '~/modules/appointments/appointments.schema';
 ```
 
 ## Path Aliases
-- **MUST** use path aliases for all imports outside the current module folder.
-- **NEVER** use relative paths with more than one level (`../../`).
-- **NEVER** mix relative and alias imports for the same category.
+- **MUST** use path aliases for **todos** os imports, incluindo arquivos do mesmo módulo.
+- **NEVER** use imports relativos (`./*` ou `../*`) em qualquer situação.
+- **NEVER** misturar imports relativos com aliases.
 
 ### Available Aliases
 | Alias | Resolves to | Usage |
@@ -47,20 +48,23 @@ import { AppointmentsRepository } from './appointments.repository';
 | `~/lib/*` | `apps/api/src/lib/*` | `~/lib/prisma`, `~/lib/redis`, `~/lib/email` |
 | `~/shared/*` | `apps/api/src/shared/*` | `~/shared/errors/AppError`, `~/shared/schemas/error.schema` |
 | `~/jobs/*` | `apps/api/src/jobs/*` | `~/jobs/queues` |
-| `~/modules/*` | `apps/api/src/modules/*` | Only when one module needs a type from another |
+| `~/modules/*` | `apps/api/src/modules/*` | Para todos os arquivos dentro de módulos |
 | `@agenda-xpto/types` | `packages/types/src` | Shared domain types |
 | `@agenda-xpto/validations` | `packages/validations/src` | Shared Zod schemas |
 
 ```typescript
-// ✅ DO: use aliases
+// ✅ DO: use aliases sempre, inclusive no mesmo módulo
 import { prisma } from '~/lib/prisma';
 import { AppError } from '~/shared/errors/AppError';
 import { notificationsQueue } from '~/jobs/queues';
+import { AppointmentsRepository } from '~/modules/appointments/appointments.repository';
 import type { EstablishmentPublic } from '@agenda-xpto/types';
 
-// ❌ DON'T: relative paths outside module folder
+// ❌ DON'T: qualquer import relativo é proibido
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../../shared/errors/AppError';
+import { AppointmentsRepository } from './appointments.repository';
+import { createAppointmentBodySchema } from '../appointments/appointments.schema';
 ```
 
 ## Type Imports
@@ -76,11 +80,11 @@ import type { ZodSchema } from 'zod';
 import { AppError } from '~/shared/errors/AppError';
 import type { AppErrorOptions } from '~/shared/errors/AppError';
 
-import type { CreateAppointmentBody } from './appointments.schema';
-import { AppointmentsRepository } from './appointments.repository';
+import { AppointmentsRepository } from '~/modules/appointments/appointments.repository';
+import type { CreateAppointmentBody } from '~/modules/appointments/appointments.schema';
 
 // ❌ DON'T: import types as values
-import { CreateAppointmentBody } from './appointments.schema'; // type-only, use import type
+import { CreateAppointmentBody } from '~/modules/appointments/appointments.schema'; // type-only, use import type
 ```
 
 ## Named vs Default Imports
@@ -89,12 +93,13 @@ import { CreateAppointmentBody } from './appointments.schema'; // type-only, use
 
 ```typescript
 // ✅ DO: named imports
-import { createAppointmentBodySchema, type CreateAppointmentBody } from './appointments.schema';
-import { AppointmentsService } from './appointments.service';
+import { createAppointmentBodySchema } from '~/modules/appointments/appointments.schema';
+import type { CreateAppointmentBody } from '~/modules/appointments/appointments.schema';
+import { AppointmentsService } from '~/modules/appointments/appointments.service';
 
 // ❌ DON'T: default imports or namespace imports
-import AppointmentsService from './appointments.service'; // no default exports
-import * as appointmentsSchema from './appointments.schema'; // import only what you need
+import AppointmentsService from '~/modules/appointments/appointments.service'; // no default exports
+import * as appointmentsSchema from '~/modules/appointments/appointments.schema'; // import only what you need
 ```
 
 ## Unused Imports
@@ -109,18 +114,18 @@ import * as appointmentsSchema from './appointments.schema'; // import only what
 import type { FastifyInstance } from 'fastify';
 
 import { AppError } from '~/shared/errors/AppError';
-
-import { type CreateEstablishmentBody, createEstablishmentBodySchema } from './establishments.schema';
-import { EstablishmentsService } from './establishments.service';
-import { EstablishmentsRepository } from './establishments.repository';
+import { createEstablishmentBodySchema } from '~/modules/establishments/establishments.schema';
+import { EstablishmentsService } from '~/modules/establishments/establishments.service';
+import { EstablishmentsRepository } from '~/modules/establishments/establishments.repository';
+import type { CreateEstablishmentBody } from '~/modules/establishments/establishments.schema';
 ```
 
 ### Service files (`*.service.ts`)
 ```typescript
 import { AppError } from '~/shared/errors/AppError';
 
-import type { CreateEstablishmentBody } from './establishments.schema';
-import type { EstablishmentsRepository } from './establishments.repository';
+import type { CreateEstablishmentBody } from '~/modules/establishments/establishments.schema';
+import type { EstablishmentsRepository } from '~/modules/establishments/establishments.repository';
 ```
 
 ### Repository files (`*.repository.ts`)
@@ -129,7 +134,7 @@ import type { Prisma } from '@prisma/client';
 
 import { prisma } from '~/lib/prisma';
 
-import type { CreateEstablishmentBody } from './establishments.schema';
+import type { CreateEstablishmentBody } from '~/modules/establishments/establishments.schema';
 ```
 
 ### Schema files (`*.schema.ts`)
@@ -144,14 +149,14 @@ import type { EstablishmentPublic } from '@agenda-xpto/types';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AppError } from '~/shared/errors/AppError';
-
-import type { CreateEstablishmentBody } from '../establishments.schema';
-import { EstablishmentsService } from '../establishments.service';
-import type { EstablishmentsRepository } from '../establishments.repository';
+import { EstablishmentsService } from '~/modules/establishments/establishments.service';
+import type { CreateEstablishmentBody } from '~/modules/establishments/establishments.schema';
+import type { EstablishmentsRepository } from '~/modules/establishments/establishments.repository';
 ```
 
 ## Restrictions
-- **MUST NOT** use relative paths when path aliases are available.
+- **MUST NOT** use imports relativos (`./*` ou `../*`) em nenhuma situação.
+- **MUST NOT** usar `../../` ou qualquer variação de caminho relativo com múltiplos níveis.
 - **MUST NOT** import from barrel files (`index.ts`) that re-export everything.
 - **MUST NOT** keep unused imports in any file.
 - **MUST NOT** use default exports or default imports anywhere.

@@ -5,10 +5,10 @@ import { BookingService } from "~/modules/booking/booking.service.js";
 import { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 import { requireSession } from "~/shared/middlewares/requireSession.js";
 
-import { AppointmentsRepository } from "./appointments.repository.js";
-import { AppointmentsService } from "./appointments.service.js";
-import { createBulkCancelAppointmentsRoutesPlugin } from "./plugins/bulk-cancel.plugin.js";
-import { createDashboardAppointmentsRoutesPlugin } from "./plugins/dashboard-appointments.plugin.js";
+import { AppointmentsRepository } from "~/modules/appointments/appointments.repository.js";
+import { AppointmentsService } from "~/modules/appointments/appointments.service.js";
+import { createBulkCancelAppointmentsRoutesPlugin } from "~/modules/appointments/plugins/bulk-cancel.plugin.js";
+import { createDashboardAppointmentsRoutesPlugin } from "~/modules/appointments/plugins/dashboard-appointments.plugin.js";
 
 export const appointmentsModulePlugin: FastifyPluginAsync = async (fastify): Promise<void> => {
   fastify.addHook("preHandler", requireSession);

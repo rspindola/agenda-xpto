@@ -20,7 +20,7 @@ import {
   signUpEmailBodySchema,
   signUpEmailResponseSchema,
   verifyEmailQuerySchema,
-} from "./auth.schema.js";
+} from "~/modules/auth/auth.schema.js";
 
 const BETTER_AUTH_EMAIL_PASSWORD_DOCS =
   "https://www.better-auth.com/docs/authentication/email-password";

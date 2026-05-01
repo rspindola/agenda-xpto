@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 
-import { availabilityModulePlugin } from "./availability.plugin.js";
+import { availabilityModulePlugin } from "~/modules/availability/availability.plugin.js";
 
 /**
  * Registers availability HTTP routes under `/api/v1/establishments` using a composable plugin tree.

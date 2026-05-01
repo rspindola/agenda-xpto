@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "~/lib/prisma.js";
 
-import { EstablishmentsRepository } from "../establishments.repository.js";
+import { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 
 const repository = new EstablishmentsRepository();
 

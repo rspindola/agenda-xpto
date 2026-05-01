@@ -13,7 +13,7 @@ vi.mock("better-auth/node", () => ({
   fromNodeHeaders: vi.fn(() => ({})),
 }));
 
-import { requireSession } from "../requireSession.js";
+import { requireSession } from "~/shared/middlewares/requireSession.js";
 
 describe("requireSession", () => {
   beforeEach(() => {

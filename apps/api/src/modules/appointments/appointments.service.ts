@@ -9,16 +9,16 @@ import type {
   AppointmentListRowDto,
   AppointmentsRepository,
   ListAppointmentsFilter,
-} from "./appointments.repository.js";
-import type { BulkCancelAppointmentsBody } from "./appointments.schema.js";
+} from "~/modules/appointments/appointments.repository.js";
 import type {
+  BulkCancelAppointmentsBody,
   CreateManualAppointmentBody,
   CreateManualAppointmentResponse,
   GetAppointmentResponse,
   ListAppointmentsQuery,
   ListAppointmentsResponse,
   RescheduleAppointmentBody,
-} from "./appointments.schema.js";
+} from "~/modules/appointments/appointments.schema.js";
 
 type EstablishmentPublic = NonNullable<Awaited<ReturnType<EstablishmentsRepository["findOwnedById"]>>>;
 

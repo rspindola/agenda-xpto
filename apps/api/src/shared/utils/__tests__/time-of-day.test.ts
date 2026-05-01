@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AppError } from "~/shared/errors/AppError.js";
 
-import { formatUtcTimeAsHm, minutesSinceMidnightUtc, parseTimeHmToUtcDate } from "../time-of-day.js";
+import { formatUtcTimeAsHm, minutesSinceMidnightUtc, parseTimeHmToUtcDate } from "~/shared/utils/time-of-day.js";
 
 describe("parseTimeHmToUtcDate", () => {
   it("should parse valid HH:mm to UTC Date on 1970-01-01", () => {

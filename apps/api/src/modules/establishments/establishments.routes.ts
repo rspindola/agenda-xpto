@@ -6,7 +6,7 @@ import { AppError } from "~/shared/errors/AppError.js";
 import { requireSession } from "~/shared/middlewares/requireSession.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
-import { EstablishmentsRepository } from "./establishments.repository.js";
+import { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 import {
   createEstablishmentBodySchema,
   type EstablishmentPublic,
@@ -14,8 +14,8 @@ import {
   establishmentListResponseSchema,
   establishmentPublicSchema,
   patchEstablishmentBodySchema,
-} from "./establishments.schema.js";
-import { EstablishmentsService } from "./establishments.service.js";
+} from "~/modules/establishments/establishments.schema.js";
+import { EstablishmentsService } from "~/modules/establishments/establishments.service.js";
 
 const commonErrorResponses = {
   400: errorResponseSchema,

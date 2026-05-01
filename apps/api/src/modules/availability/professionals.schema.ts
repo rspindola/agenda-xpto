@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { establishmentIdParamsSchema, professionalIdParamsSchema } from "./availability.schema.js";
+import { establishmentIdParamsSchema, professionalIdParamsSchema } from "~/modules/availability/availability.schema.js";
 
 export const createProfessionalBodySchema = z.object({
   name: z.string().min(1).max(200).describe("Professional display name"),

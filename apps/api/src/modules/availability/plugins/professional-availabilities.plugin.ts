@@ -4,8 +4,7 @@ import { z } from "zod";
 import { AppError } from "~/shared/errors/AppError.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
-import type { AvailabilityService } from "../availability.service.js";
-import type { ProfessionalAvailabilitiesListResponse } from "../availability.schema.js";
+import type { AvailabilityService } from "~/modules/availability/availability.service.js";
 import {
   createProfessionalAvailabilityBodySchema,
   patchProfessionalAvailabilityBodySchema,
@@ -14,7 +13,8 @@ import {
   professionalAvailabilityRowSchema,
   professionalIdParamsSchema,
   replaceProfessionalAvailabilitiesBodySchema,
-} from "../availability.schema.js";
+  type ProfessionalAvailabilitiesListResponse,
+} from "~/modules/availability/availability.schema.js";
 
 const commonErrorResponses = {
   400: errorResponseSchema,

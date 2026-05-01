@@ -4,15 +4,15 @@ import { z } from "zod";
 import { AppError } from "~/shared/errors/AppError.js";
 import { errorResponseSchema } from "~/shared/schemas/error.schema.js";
 
-import type { AvailabilityService } from "../availability.service.js";
-import type { HolidaysListResponse } from "../availability.schema.js";
+import type { AvailabilityService } from "~/modules/availability/availability.service.js";
 import {
   createHolidayBodySchema,
   establishmentIdParamsSchema,
   holidayIdParamsSchema,
   holidayRowSchema,
   holidaysListResponseSchema,
-} from "../availability.schema.js";
+  type HolidaysListResponse,
+} from "~/modules/availability/availability.schema.js";
 
 const commonErrorResponses = {
   400: errorResponseSchema,

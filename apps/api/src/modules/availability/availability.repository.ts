@@ -2,7 +2,7 @@ import type { BlockScope, Prisma, Weekday } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma.js";
 
-import type { CreateHolidayBody } from "./availability.schema.js";
+import type { CreateHolidayBody } from "~/modules/availability/availability.schema.js";
 
 export type BusinessHourRowDto = {
   id: string;

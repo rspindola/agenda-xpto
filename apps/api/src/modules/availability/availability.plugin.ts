@@ -5,14 +5,14 @@ import { EstablishmentsRepository } from "~/modules/establishments/establishment
 import { findSubscriptionByUserId } from "~/modules/plans/subscription.repository.js";
 import { requireSession } from "~/shared/middlewares/requireSession.js";
 
-import { AvailabilityRepository } from "./availability.repository.js";
-import { AvailabilityService } from "./availability.service.js";
-import { ProfessionalsRepository } from "./professionals.repository.js";
-import { ProfessionalsService } from "./professionals.service.js";
-import { createBlocksRoutesPlugin } from "./plugins/blocks.plugin.js";
-import { createBusinessHoursRoutesPlugin } from "./plugins/business-hours.plugin.js";
-import { createProfessionalAvailabilitiesRoutesPlugin } from "./plugins/professional-availabilities.plugin.js";
-import { createProfessionalsRoutesPlugin } from "./plugins/professionals.plugin.js";
+import { AvailabilityRepository } from "~/modules/availability/availability.repository.js";
+import { AvailabilityService } from "~/modules/availability/availability.service.js";
+import { createBlocksRoutesPlugin } from "~/modules/availability/plugins/blocks.plugin.js";
+import { createBusinessHoursRoutesPlugin } from "~/modules/availability/plugins/business-hours.plugin.js";
+import { createProfessionalAvailabilitiesRoutesPlugin } from "~/modules/availability/plugins/professional-availabilities.plugin.js";
+import { createProfessionalsRoutesPlugin } from "~/modules/availability/plugins/professionals.plugin.js";
+import { ProfessionalsRepository } from "~/modules/availability/professionals.repository.js";
+import { ProfessionalsService } from "~/modules/availability/professionals.service.js";
 
 /**
  * Encapsulated availability module: session is required for all nested route plugins.

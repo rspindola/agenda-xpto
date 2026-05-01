@@ -2,7 +2,7 @@ import type { Establishment, Prisma } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma.js";
 
-import type { CreateEstablishmentBody, PatchEstablishmentBody } from "./establishments.schema.js";
+import type { CreateEstablishmentBody, PatchEstablishmentBody } from "~/modules/establishments/establishments.schema.js";
 
 export type EstablishmentRecord = Establishment;
 

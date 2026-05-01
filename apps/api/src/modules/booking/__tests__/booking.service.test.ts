@@ -5,8 +5,8 @@ import * as subscriptionRepository from "~/modules/plans/subscription.repository
 import type { SubscriptionQuotaRow } from "~/modules/plans/subscription.repository.js";
 import { AppError } from "~/shared/errors/AppError.js";
 
-import type { BookingRepository } from "../booking.repository.js";
-import { BookingService } from "../booking.service.js";
+import type { BookingRepository } from "~/modules/booking/booking.repository.js";
+import { BookingService } from "~/modules/booking/booking.service.js";
 
 const fixedNow = new Date("2026-05-15T12:00:00.000Z");
 

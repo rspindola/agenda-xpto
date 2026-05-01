@@ -5,7 +5,7 @@ import type { FastifyBaseLogger } from "fastify";
 import { sendAuthTransactionalEmail } from "~/lib/auth-mail.js";
 import { onUserCreated } from "~/modules/auth/auth.service.js";
 
-import { prisma } from "./prisma.js";
+import { prisma } from "~/lib/prisma.js";
 
 let authInstance: ReturnType<typeof betterAuth> | null = null;
 

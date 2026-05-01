@@ -1,4 +1,4 @@
-import { buildServer } from "./server.js";
+import { buildServer } from "~/server.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? "3001", 10);
 

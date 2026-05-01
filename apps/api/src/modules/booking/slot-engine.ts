@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 
 import { minutesSinceMidnightUtc } from "~/shared/utils/time-of-day.js";
 
-import type { BusinessHourBookingRow } from "./booking.repository.js";
+import type { BusinessHourBookingRow } from "~/modules/booking/booking.repository.js";
 
 /** Same values as Prisma `Weekday` — kept here so this file does not import generated `@prisma/client` types. */
 export type PrismaWeekday = "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN";

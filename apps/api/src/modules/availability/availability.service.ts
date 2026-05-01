@@ -16,7 +16,7 @@ import type {
   OpenBusinessHourRow,
   ProfessionalAvailabilityRowDto,
   ProfessionalAvailabilityWindow,
-} from "./availability.repository.js";
+} from "~/modules/availability/availability.repository.js";
 import type {
   BusinessHourDayInput,
   BusinessHoursListResponse,
@@ -27,8 +27,8 @@ import type {
   ProfessionalAvailabilityInput,
   PutBusinessHourBody,
   ReplaceProfessionalAvailabilitiesBody,
-} from "./availability.schema.js";
-import { WEEKDAY_VALUES } from "./availability.schema.js";
+} from "~/modules/availability/availability.schema.js";
+import { WEEKDAY_VALUES } from "~/modules/availability/availability.schema.js";
 
 type MinuteSegment = { start: number; end: number };
 

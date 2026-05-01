@@ -11,8 +11,8 @@ import type {
   PublicEstablishmentRow,
   PublicProfessionalRow,
   PublicServiceRow,
-} from "./booking.repository.js";
-import type { CreatePublicAppointmentBody as CreatePublicAppointmentBodyInput } from "./booking.schema.js";
+} from "~/modules/booking/booking.repository.js";
+import type { CreatePublicAppointmentBody as CreatePublicAppointmentBodyInput } from "~/modules/booking/booking.schema.js";
 import {
   enumerateSlotsInFreeIntervals,
   establishmentOpenMinuteSegments,
@@ -22,7 +22,7 @@ import {
   minuteSegmentsToLuxonIntervals,
   subtractLuxonIntervals,
   type MinuteSegment,
-} from "./slot-engine.js";
+} from "~/modules/booking/slot-engine.js";
 
 const SLOT_STEP_MINUTES = 15;
 

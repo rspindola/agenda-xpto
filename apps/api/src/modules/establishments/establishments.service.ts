@@ -1,10 +1,9 @@
 import { PlanType, SubscriptionStatus } from "@prisma/client";
 
-import { AppError } from "~/shared/errors/AppError.js";
-
-import type { EstablishmentsRepository } from "./establishments.repository.js";
-import type { CreateEstablishmentBody, PatchEstablishmentBody } from "./establishments.schema.js";
+import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import type { CreateEstablishmentBody, PatchEstablishmentBody } from "~/modules/establishments/establishments.schema.js";
 import type { SubscriptionRow } from "~/modules/plans/subscription.repository.js";
+import { AppError } from "~/shared/errors/AppError.js";
 
 export type EstablishmentPublicDto = {
   id: string;

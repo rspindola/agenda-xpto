@@ -1,5 +1,5 @@
-import * as authRepository from "./auth.repository.js";
+import { createTrialSubscriptionIfMissing } from "~/modules/auth/auth.repository.js";
 
 export async function onUserCreated(userId: string): Promise<void> {
-  await authRepository.createTrialSubscriptionIfMissing(userId);
+  await createTrialSubscriptionIfMissing(userId);
 }

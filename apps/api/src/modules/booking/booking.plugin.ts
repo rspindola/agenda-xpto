@@ -1,7 +1,7 @@
 import type { FastifyPluginCallback } from "fastify";
 
-import { BookingRepository } from "./booking.repository.js";
-import { BookingService } from "./booking.service.js";
+import { BookingRepository } from "~/modules/booking/booking.repository.js";
+import { BookingService } from "~/modules/booking/booking.service.js";
 import {
   cancelAppointmentParamsSchema,
   cancelPublicAppointmentErrorResponses,
@@ -15,7 +15,7 @@ import {
   getAvailableSlotsResponseSchema,
   getPublicEstablishmentErrorResponses,
   getPublicEstablishmentResponseSchema,
-} from "./booking.schema.js";
+} from "~/modules/booking/booking.schema.js";
 
 export const bookingModulePlugin: FastifyPluginCallback = (fastify, _opts, done): void => {
   const repository = new BookingRepository();
