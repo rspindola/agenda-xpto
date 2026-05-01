@@ -273,6 +273,34 @@ describe("AvailabilityService", () => {
         }),
       ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
     });
+
+    it("should throw INVALID_BREAK_HOURS when break end is not after break start", async () => {
+      vi.mocked(mockEstablishments.findOwnedById).mockResolvedValue(establishment);
+
+      await expect(
+        service.putBusinessHourForWeekday("user_1", "est_1", "MON", {
+          closed: false,
+          opensAt: "09:00",
+          closesAt: "18:00",
+          breakStartsAt: "12:00",
+          breakEndsAt: "11:00",
+        }),
+      ).rejects.toMatchObject({ code: "INVALID_BREAK_HOURS" });
+    });
+
+    it("should throw INVALID_BREAK_HOURS when break is not fully inside business hours", async () => {
+      vi.mocked(mockEstablishments.findOwnedById).mockResolvedValue(establishment);
+
+      await expect(
+        service.putBusinessHourForWeekday("user_1", "est_1", "MON", {
+          closed: false,
+          opensAt: "09:00",
+          closesAt: "18:00",
+          breakStartsAt: "08:00",
+          breakEndsAt: "10:00",
+        }),
+      ).rejects.toMatchObject({ code: "INVALID_BREAK_HOURS" });
+    });
   });
 
   describe("getBusinessHours", () => {
@@ -366,6 +394,15 @@ describe("AvailabilityService", () => {
       await expect(
         service.createHoliday("user_1", "est_1", { date: "2026-08-01", reason: "Dup" }),
       ).rejects.toMatchObject({ code: "HOLIDAY_DATE_DUPLICATE" });
+    });
+
+    it("should rethrow non-duplicate errors from repository on createHoliday", async () => {
+      vi.mocked(mockEstablishments.findOwnedById).mockResolvedValue(establishment);
+      vi.mocked(mockRepository.createHoliday).mockRejectedValue(new Error("db unavailable"));
+
+      await expect(
+        service.createHoliday("user_1", "est_1", { date: "2026-08-02", reason: "X" }),
+      ).rejects.toThrow("db unavailable");
     });
 
     it("should delete holiday when repository returns true", async () => {

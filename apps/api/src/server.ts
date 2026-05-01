@@ -14,6 +14,7 @@ import {
 import { registerAuthModule } from "~/modules/auth/auth.routes.js";
 import { registerAppointmentsModule } from "~/modules/appointments/appointments.routes.js";
 import { registerAvailabilityModule } from "~/modules/availability/availability.routes.js";
+import { registerBookingModule } from "~/modules/booking/booking.routes.js";
 import { registerEstablishmentsModule } from "~/modules/establishments/establishments.routes.js";
 
 import { AppError } from "./shared/errors/AppError.js";
@@ -40,6 +41,10 @@ function applyRouteRateLimitByTags(routeOptions: RouteOptions): void {
   routeOptions.config = routeOptions.config ?? {};
   if (tags.includes("auth")) {
     routeOptions.config.rateLimit = { max: 10, timeWindow: "1 minute" };
+    return;
+  }
+  if (tags.includes("booking-write")) {
+    routeOptions.config.rateLimit = { max: 5, timeWindow: "1 minute" };
     return;
   }
   if (tags.includes("booking")) {
@@ -117,6 +122,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   registerEstablishmentsModule(app);
   await registerAvailabilityModule(app);
   await registerAppointmentsModule(app);
+  await registerBookingModule(app);
 
   await app.register(rateLimit, {
     max: 100,

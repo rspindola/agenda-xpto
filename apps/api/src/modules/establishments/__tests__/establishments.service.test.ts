@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/unbound-method -- repository methods are vi.fn() mocks */
-import { PlanType, SubscriptionStatus } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EstablishmentsRepository } from "../establishments.repository.js";
@@ -59,8 +58,8 @@ describe("EstablishmentsService", () => {
   describe("create", () => {
     it("should create an establishment when active count is below plan limit", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.PRO,
-        status: SubscriptionStatus.TRIALING,
+        planType: "PRO",
+        status: "TRIALING",
       });
       vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
       vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
@@ -78,8 +77,8 @@ describe("EstablishmentsService", () => {
 
     it("should throw PLAN_LIMIT_REACHED when active count reaches plan limit", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.STARTER,
-        status: SubscriptionStatus.ACTIVE,
+        planType: "STARTER",
+        status: "ACTIVE",
       });
       vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(1);
 
@@ -95,8 +94,8 @@ describe("EstablishmentsService", () => {
 
     it("should generate slug from name when slug is omitted", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.PRO,
-        status: SubscriptionStatus.ACTIVE,
+        planType: "PRO",
+        status: "ACTIVE",
       });
       vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
       vi.mocked(mockRepository.findBySlug).mockResolvedValueOnce({ id: "other" }).mockResolvedValueOnce(null);
@@ -114,10 +113,30 @@ describe("EstablishmentsService", () => {
       );
     });
 
+    it("should use manual slug when it is available", async () => {
+      findSubscription.mockResolvedValue({
+        planType: "PRO",
+        status: "ACTIVE",
+      });
+      vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
+      vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
+      vi.mocked(mockRepository.create).mockResolvedValue({ ...publicDto, slug: "custom-slug" });
+
+      const result = await service.create("user_1", {
+        name: "Shop",
+        slug: "custom-slug",
+        email: "a@b.com",
+        timezone: "UTC",
+      });
+
+      expect(result.slug).toBe("custom-slug");
+      expect(vi.mocked(mockRepository.findBySlug)).toHaveBeenCalledWith("custom-slug");
+    });
+
     it("should throw SLUG_ALREADY_TAKEN when manual slug already exists", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.BUSINESS,
-        status: SubscriptionStatus.ACTIVE,
+        planType: "BUSINESS",
+        status: "ACTIVE",
       });
       vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
       vi.mocked(mockRepository.findBySlug).mockResolvedValue({ id: "taken" });
@@ -134,8 +153,8 @@ describe("EstablishmentsService", () => {
 
     it("should throw SUBSCRIPTION_NOT_ACTIVE when subscription is PAST_DUE", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.PRO,
-        status: SubscriptionStatus.PAST_DUE,
+        planType: "PRO",
+        status: "PAST_DUE",
       });
 
       await expect(
@@ -161,8 +180,8 @@ describe("EstablishmentsService", () => {
 
     it("should throw SLUG_ALREADY_TAKEN when repository returns P2002", async () => {
       findSubscription.mockResolvedValue({
-        planType: PlanType.PRO,
-        status: SubscriptionStatus.ACTIVE,
+        planType: "PRO",
+        status: "ACTIVE",
       });
       vi.mocked(mockRepository.countActiveByUserId).mockResolvedValue(0);
       vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
