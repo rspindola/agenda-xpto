@@ -186,4 +186,4 @@ Resposta esperada: JSON com `"status": "ok"` e `timestamp` em ISO 8601.
 
 ---
 
-Após o seed, existe utilizador de teste descrito em `prisma/seed.ts` (e-mail **teste@example.com** e palavra-passe definida no próprio script).
+Após o seed, as credenciais de desenvolvimento (e-mail do dono e senha) estão em `prisma/seed.ts` — por padrão **owner@example.com** / **DevSeedPassword123** (ajuste localmente se precisar).

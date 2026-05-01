@@ -1,104 +1,80 @@
 # Agenda XPTO
 
-Monorepo da **Agenda XPTO** (pnpm workspaces + Turborepo). A documentação de domínio em `docs/` pode referir-se ao produto como **AgendaIA** em alguns ficheiros legados.
+Monorepo **Agenda XPTO** em **pnpm workspaces** + **Turborepo**: produto SaaS de agendamento para estabelecimentos de beleza e estética. Em alguns documentos em `docs/` o produto ainda aparece como **AgendaIA** (legado).
+
+## O que há neste repositório
+
+| Área | Descrição |
+|------|-----------|
+| [`apps/api`](apps/api) | Backend HTTP (Fastify, Prisma, Better Auth). Detalhes de stack, scripts e fluxo local: **[`apps/api/README.md`](apps/api/README.md)**. |
+| [`packages/types`](packages/types) | Pacote **`@agenda-xpto/types`** — tipos TypeScript partilhados. |
+| [`packages/validations`](packages/validations) | Pacote **`@agenda-xpto/validations`** — schemas Zod partilhados. |
+| [`docs/`](docs/) | PRD, fluxos por módulo, arquitetura e ADRs. |
+| [`AGENTS.md`](AGENTS.md) | Contexto para humanos e agentes (estrutura, convenções, o que não implementar no MVP). |
+
+A app web em `apps/web` consta na documentação, mas **ainda não** existe neste repositório.
 
 ## Requisitos
 
-- **Node.js** 22.x LTS (ver [`.nvmrc`](.nvmrc) e `engines` em [`package.json`](package.json))
-- **pnpm** 10.x (ver `packageManager` na raiz)
-- **Docker** + Docker Compose (PostgreSQL 16 e Redis 7 locais)
+- **Node.js** 22.x LTS — [`.nvmrc`](.nvmrc) e `engines` em [`package.json`](package.json)
+- **pnpm** 10.x — `packageManager` na raiz
+- **Docker** + Docker Compose — PostgreSQL 16 e Redis 7 locais ([`docker-compose.yml`](docker-compose.yml))
 
-## Estrutura do repositório
+## Início rápido
 
-```
-├── apps/
-│   └── api/                 # API — Fastify 5, Prisma 6, Better Auth (instância), BullMQ, Resend
-├── packages/
-│   ├── types/               # @agenda-xpto/types — tipos partilhados
-│   └── validations/       # @agenda-xpto/validations — schemas Zod partilhados
-├── docs/                   # PRD, fluxos, arquitectura, ADRs
-├── docker-compose.yml
-├── .env.example
-├── turbo.json
-└── package.json
-```
+1. Copiar [`.env.example`](.env.example) para **`apps/api/.env`** e ajustar `DATABASE_URL` / `REDIS_URL` conforme o Compose (ver comentários no `.env.example`).
+2. Subir infra:
 
-O frontend `apps/web` está planeado na documentação mas **ainda não** existe neste repositório.
+   ```bash
+   docker compose up -d
+   ```
 
-## Documentação
+3. Instalar dependências e preparar a base da API:
+
+   ```bash
+   pnpm install
+   pnpm --filter api db:generate
+   pnpm --filter api db:migrate
+   pnpm --filter api db:seed
+   ```
+
+4. Desenvolvimento (Turbo executa `dev` nos pacotes que definem o script — API em watch e pacotes com `tsc --watch`):
+
+   ```bash
+   pnpm dev
+   ```
+
+Variáveis de ambiente, testes com `DATABASE_URL_TEST` e demais scripts da API estão em **[`apps/api/README.md`](apps/api/README.md)**.
+
+## Documentação de produto e arquitetura
 
 | Documento | Conteúdo |
 |-----------|-----------|
-| [docs/flow/00-sustain/ARCHITECTURE.md](docs/flow/00-sustain/ARCHITECTURE.md) | Stack, estrutura prevista do backend e frontend, filas BullMQ, variáveis de ambiente (§9) |
-| [docs/flow/00-sustain/DATABASE.md](docs/flow/00-sustain/DATABASE.md) | Modelo de dados, schema Prisma de referência (§3), seed descrito (§7) |
-| [docs/flow/00-sustain/adr/](docs/flow/00-sustain/adr/) | ADRs (Turborepo, Fastify, Prisma, BullMQ, Better Auth, etc.) |
-
-## Variáveis de ambiente
-
-A lista canónica de chaves está em [ARCHITECTURE.md §9](docs/flow/00-sustain/ARCHITECTURE.md) e espelhada em [`.env.example`](.env.example). Inclui `PORT` (API, por defeito **3001**) usada pela aplicação.
-
-Para desenvolvimento local da API:
-
-1. Copiar `.env.example` para `apps/api/.env` e ajustar valores (o ficheiro `apps/api/.env` não deve ser commitado).
-2. Alinhar `DATABASE_URL` e `POSTGRES_*` com o utilizador, palavra-passe e base definidos no Compose (ver `.env.example`).
-
-## Infra local (Docker)
-
-```bash
-docker compose up -d
-```
-
-Serviços definidos em [`docker-compose.yml`](docker-compose.yml):
-
-- **PostgreSQL 16** — porta `127.0.0.1:5432`, variáveis `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (valores por defeito `agenda_xpto` — ver `.env.example`)
-- **Redis 7** — persistência AOF, porta `127.0.0.1:6379`
+| [docs/PRD.md](docs/PRD.md) | Escopo e modelo de negócio |
+| [docs/flow/00-sustain/ARCHITECTURE.md](docs/flow/00-sustain/ARCHITECTURE.md) | Stack, filas, variáveis de ambiente (seção 9) |
+| [docs/flow/00-sustain/DATABASE.md](docs/flow/00-sustain/DATABASE.md) | Modelo de dados e seed de referência (seção 7) |
+| [docs/flow/00-sustain/adr/](docs/flow/00-sustain/adr/) | Decisões de arquitetura |
 
 ## Scripts na raiz
 
 | Comando | Descrição |
 |---------|-----------|
 | `pnpm install` | Instala dependências de todos os workspaces |
-| `pnpm dev` | `turbo run dev` (API em `tsx watch`, packages em `tsc --watch` onde aplicável) |
-| `pnpm build` | Compilação com cache e ordem topológica |
-| `pnpm lint` | ESLint nos pacotes que definem o script |
-| `pnpm db:migrate` | Encaminha para o script `db:migrate` da API (`prisma migrate dev`) |
-| `pnpm db:seed` | Encaminha para o script `db:seed` da API (`prisma db seed`) |
+| `pnpm dev` | `turbo run dev` |
+| `pnpm build` | `turbo run build` |
+| `pnpm lint` | `turbo run lint` |
+| `pnpm typecheck` | `turbo run typecheck` |
+| `pnpm db:migrate` | Encaminha para `db:migrate` da API (`prisma migrate dev`) |
+| `pnpm db:seed` | Encaminha para `db:seed` da API (`prisma db seed`) |
 
-## API (`apps/api`)
+Comandos Prisma e testes (`pnpm --filter api test`, etc.) ficam no pacote **`api`** — ver tabela em [`apps/api/README.md`](apps/api/README.md).
 
-Scripts principais (ver [`apps/api/package.json`](apps/api/package.json)):
+## Health check (API)
 
-| Script | Comando |
-|--------|---------|
-| `dev` | `tsx watch src/app.ts` |
-| `build` / `start` | `tsc` / `node dist/app.js` |
-| `db:generate` | `prisma generate` |
-| `db:migrate` | `prisma migrate dev` |
-| `db:seed` | `prisma db seed` (executa `prisma/seed.ts` via `tsx`) |
-| `db:studio` | `prisma studio` |
-| `lint` | `eslint .` |
+Com a API na porta configurada (`PORT`, por padrão **3001**):
 
-Fluxo típico após o Docker estar a correr:
+`GET http://localhost:3001/health` → JSON com `status: "ok"` e `timestamp` em ISO.
 
-```bash
-pnpm install
-pnpm --filter api db:generate
-pnpm --filter api db:migrate
-pnpm --filter api db:seed
-pnpm dev
-```
+## Credenciais de desenvolvimento (seed)
 
-**Health check:** `GET http://localhost:3001/health` → resposta JSON com `status: "ok"` e `timestamp` ISO.
-
-O seed de desenvolvimento cria dados de exemplo; utilizador de teste descrito no código do seed: **teste@example.com** (palavra-passe definida em [`apps/api/prisma/seed.ts`](apps/api/prisma/seed.ts)).
-
-## Stack da API (resumo)
-
-Conforme [ARCHITECTURE.md §3.2](docs/flow/00-sustain/ARCHITECTURE.md): Node.js, **Fastify v5**, TypeScript, **Prisma** (PostgreSQL), **Zod**, **Better Auth**, **BullMQ** + **Redis**, **Resend**. O pacote `@fastify/jwt` está instalado; o registo no servidor fica para quando as rotas o precisarem (rotas Better Auth `/api/auth/*` estão planeadas no módulo `auth`).
-
-## Pacotes partilhados
-
-- **`@agenda-xpto/types`** — [`packages/types`](packages/types)
-- **`@agenda-xpto/validations`** — [`packages/validations`](packages/validations)
-
-Os `paths` no [`tsconfig.json`](tsconfig.json) da raiz apontam para estes pacotes para resolução no editor; a API declara-os como dependências `workspace:*`.
+O usuário e a senha de teste gerados por [`apps/api/prisma/seed.ts`](apps/api/prisma/seed.ts) ficam nas constantes no início de `main()` (por padrão **owner@example.com** / **DevSeedPassword123**). Confira o arquivo se alterares o seed localmente.

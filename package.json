@@ -16,7 +16,7 @@
     "db:seed": "turbo run db:seed"
   },
   "lint-staged": {
-    "apps/api/**/*.ts": "pnpm --filter api exec eslint --max-warnings=0 --"
+    "apps/api/**/*.ts": "pnpm --filter api exec eslint --max-warnings=0 --no-warn-ignored --"
   },
   "devDependencies": {
     "husky": "^9.1.7",

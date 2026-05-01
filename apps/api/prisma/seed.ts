@@ -1,6 +1,7 @@
 import {
   AppointmentStatus,
   BlockScope,
+  CancelledBy,
   NotificationStatus,
   NotificationType,
   PlanType,
@@ -13,14 +14,14 @@ import { randomUUID } from "node:crypto";
 
 const prisma = new PrismaClient();
 
-/** PostgreSQL TIME(6): usar data base UTC e só hora (DATABASE.md notas). */
+/** PostgreSQL TIME(6): use a fixed UTC date and time-only fields (see DATABASE.md). */
 function time(h: number, m: number, s = 0, ms = 0): Date {
   return new Date(Date.UTC(1970, 0, 1, h, m, s, ms));
 }
 
-async function main() {
-  const email = "teste@example.com";
-  const passwordPlain = "senha-teste-123";
+async function main(): Promise<void> {
+  const email = "owner@example.com";
+  const passwordPlain = "DevSeedPassword123";
 
   await prisma.notification.deleteMany();
   await prisma.appointmentService.deleteMany();
@@ -45,7 +46,7 @@ async function main() {
     data: {
       email,
       emailVerified: true,
-      name: "Utilizador Demo",
+      name: "Demo User",
     },
   });
 
@@ -73,8 +74,8 @@ async function main() {
   const establishment = await prisma.establishment.create({
     data: {
       userId: user.id,
-      name: "Demo Salão",
-      slug: "demo-salao",
+      name: "Demo Salon",
+      slug: "demo-salon",
       email,
       timezone: "America/Sao_Paulo",
       minAdvanceMinutes: 120,
@@ -117,14 +118,14 @@ async function main() {
     data: {
       establishmentId: establishment.id,
       date: new Date("2030-12-25T00:00:00.000Z"),
-      reason: "Teste feriado",
+      reason: "Holiday seed fixture",
     },
   });
 
   const serviceCorte = await prisma.service.create({
     data: {
       establishmentId: establishment.id,
-      name: "Corte",
+      name: "Haircut",
       durationMinutes: 45,
       priceCents: 5000,
       catalogCombo: false,
@@ -134,7 +135,7 @@ async function main() {
   const serviceBarba = await prisma.service.create({
     data: {
       establishmentId: establishment.id,
-      name: "Barba",
+      name: "Beard trim",
       durationMinutes: 30,
       priceCents: 3000,
       catalogCombo: false,
@@ -144,7 +145,7 @@ async function main() {
   const serviceCombo = await prisma.service.create({
     data: {
       establishmentId: establishment.id,
-      name: "Combo Corte+Barba",
+      name: "Haircut + beard combo",
       durationMinutes: 75,
       priceCents: 7500,
       catalogCombo: true,
@@ -154,7 +155,7 @@ async function main() {
   const profA = await prisma.professional.create({
     data: {
       establishmentId: establishment.id,
-      name: "Profissional A",
+      name: "Professional A",
       email: "prof-a@example.com",
     },
   });
@@ -162,7 +163,7 @@ async function main() {
   const profB = await prisma.professional.create({
     data: {
       establishmentId: establishment.id,
-      name: "Profissional B",
+      name: "Professional B",
       email: "prof-b@example.com",
     },
   });
@@ -203,6 +204,27 @@ async function main() {
     ],
   });
 
+  await prisma.block.createMany({
+    data: [
+      {
+        establishmentId: establishment.id,
+        scope: BlockScope.ESTABLISHMENT,
+        professionalId: null,
+        startsAt: new Date("2026-06-01T14:00:00.000Z"),
+        endsAt: new Date("2026-06-01T18:00:00.000Z"),
+        reason: "Venue maintenance",
+      },
+      {
+        establishmentId: establishment.id,
+        scope: BlockScope.PROFESSIONAL,
+        professionalId: profA.id,
+        startsAt: new Date("2026-06-02T13:00:00.000Z"),
+        endsAt: new Date("2026-06-02T15:00:00.000Z"),
+        reason: "Personal time off",
+      },
+    ],
+  });
+
   const start1 = new Date("2026-05-01T14:00:00.000Z");
   const end1 = new Date(start1.getTime() + 45 * 60 * 1000);
 
@@ -213,9 +235,9 @@ async function main() {
       status: AppointmentStatus.CONFIRMED,
       startAt: start1,
       endAt: end1,
-      clientName: "Cliente Um",
+      clientName: "Client One",
       clientPhone: "+5511999990001",
-      clientEmail: "cliente1@example.com",
+      clientEmail: "client1@example.com",
       cancelToken: randomUUID(),
       createdByUserId: user.id,
     },
@@ -242,9 +264,9 @@ async function main() {
       status: AppointmentStatus.CONFIRMED,
       startAt: start2,
       endAt: end2,
-      clientName: "Cliente Dois",
+      clientName: "Client Two",
       clientPhone: "+5511999990002",
-      clientEmail: "cliente2@example.com",
+      clientEmail: "client2@example.com",
       cancelToken: randomUUID(),
       createdByUserId: user.id,
     },
@@ -271,6 +293,38 @@ async function main() {
     ],
   });
 
+  const cancelledStart = new Date("2026-05-10T16:00:00.000Z");
+  const cancelledEnd = new Date(cancelledStart.getTime() + 30 * 60 * 1000);
+  const cancelledAt = new Date("2026-05-08T10:00:00.000Z");
+
+  const apptCancelled = await prisma.appointment.create({
+    data: {
+      establishmentId: establishment.id,
+      professionalId: profB.id,
+      status: AppointmentStatus.CANCELLED,
+      startAt: cancelledStart,
+      endAt: cancelledEnd,
+      clientName: "Client Three",
+      clientPhone: "+5511999990003",
+      clientEmail: "client3@example.com",
+      cancelToken: randomUUID(),
+      cancelledAt,
+      cancelledBy: CancelledBy.OWNER,
+      createdByUserId: user.id,
+    },
+  });
+
+  await prisma.appointmentService.create({
+    data: {
+      appointmentId: apptCancelled.id,
+      serviceId: serviceBarba.id,
+      snapshotName: serviceBarba.name,
+      snapshotDurationMinutes: 30,
+      snapshotPriceCents: 3000,
+      sortOrder: 0,
+    },
+  });
+
   await prisma.notification.createMany({
     data: [
       {
@@ -278,7 +332,7 @@ async function main() {
         appointmentId: appt1.id,
         type: NotificationType.APPOINTMENT_CONFIRMATION,
         status: NotificationStatus.SENT,
-        recipientEmail: "cliente1@example.com",
+        recipientEmail: "client1@example.com",
         sentAt: new Date(),
         idempotencyKey: `seed-confirm-${appt1.id}`,
       },
@@ -287,7 +341,7 @@ async function main() {
         appointmentId: appt2.id,
         type: NotificationType.REMINDER_24H,
         status: NotificationStatus.PENDING,
-        recipientEmail: "cliente2@example.com",
+        recipientEmail: "client2@example.com",
         scheduledFor: new Date("2026-05-01T12:00:00.000Z"),
         idempotencyKey: `seed-reminder-${appt2.id}`,
       },
@@ -302,13 +356,17 @@ async function main() {
     ],
   });
 
-  // eslint-disable-next-line no-console -- script de seed
-  console.log("Seed OK:", { user: email, establishment: establishment.slug });
+  // eslint-disable-next-line no-console -- seed script
+  console.log("Seed OK:", {
+    ownerEmail: email,
+    ownerPassword: passwordPlain,
+    establishmentSlug: establishment.slug,
+  });
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error: unknown) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {

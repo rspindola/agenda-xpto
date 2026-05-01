@@ -72,19 +72,34 @@ export const getAvailableSlotsResponseSchema = z.object({
 
 export type GetAvailableSlotsResponse = z.infer<typeof getAvailableSlotsResponseSchema>;
 
-export const createPublicAppointmentBodySchema = z.object({
-  professionalId: z.string().min(1).describe("Professional performing the services (cuid2)"),
-  serviceIds: z
-    .array(z.string().min(1))
-    .min(1)
-    .describe("Services to book in execution order (cuid2 identifiers)"),
-  startAt: z
-    .iso.datetime()
-    .describe("Appointment start in ISO 8601 UTC, e.g. 2026-05-20T14:00:00.000Z"),
-  clientName: z.string().min(2).max(100).describe("Client full name"),
-  clientEmail: z.email().describe("Client email for confirmation"),
-  clientPhone: z.string().min(8).max(20).describe("Client phone with country code"),
-});
+/** Realistic OpenAPI example; replace IDs with values from `GET .../establishments/:slug`. */
+const createPublicAppointmentBodyExample = {
+  professionalId: "qmx7k2n9p4w1r8s3t6v0y5z8b2h4",
+  serviceIds: ["fjv4k8n2p0m7s1t9w3x6y0z5q2h8", "nbk3m7w9p2r5s8t1v4x7y0z3a6c9"],
+  startAt: "2026-05-20T14:00:00.000Z",
+  clientName: "Jane Doe",
+  clientEmail: "jane.doe@example.com",
+  clientPhone: "+5511999990000",
+} as const;
+
+export const createPublicAppointmentBodySchema = z
+  .object({
+    professionalId: z
+      .string()
+      .min(1)
+      .describe("Professional performing the services (cuid2 from the establishment payload)"),
+    serviceIds: z
+      .array(z.string().min(1))
+      .min(1)
+      .describe("Services to book in execution order (catalog service IDs)"),
+    startAt: z
+      .iso.datetime()
+      .describe("Appointment start in ISO 8601 UTC, e.g. 2026-05-20T14:00:00.000Z"),
+    clientName: z.string().min(2).max(100).describe("Client full name"),
+    clientEmail: z.email().describe("Client email for confirmation"),
+    clientPhone: z.string().min(8).max(20).describe("Client phone with country code"),
+  })
+  .meta({ examples: [createPublicAppointmentBodyExample] });
 
 export type CreatePublicAppointmentBody = z.infer<typeof createPublicAppointmentBodySchema>;
 

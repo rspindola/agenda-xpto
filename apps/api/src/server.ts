@@ -78,8 +78,21 @@ export async function buildServer(): Promise<FastifyInstance> {
   });
 
   const webOrigin = process.env.WEB_URL ?? "http://localhost:5173";
+  // Swagger UI is served from this API origin; the browser sends Origin: http://localhost:PORT
+  // for "Try it out", which must be allowed alongside the SPA (WEB_URL) or requests fail with "Failed to fetch".
+  const corsOrigin = isNonProduction
+    ? Array.from(
+        new Set<string>([
+          webOrigin,
+          API_BASE_URL,
+          `http://localhost:${String(PORT)}`,
+          `http://127.0.0.1:${String(PORT)}`,
+        ]),
+      )
+    : webOrigin;
+
   await app.register(cors, {
-    origin: webOrigin,
+    origin: corsOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
