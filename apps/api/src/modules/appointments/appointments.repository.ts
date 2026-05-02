@@ -371,8 +371,6 @@ export class AppointmentsRepository {
       },
     });
 
-    // TODO: enqueue notification via module 07 (owner cancellation)
-
     return { id: row.id, status: "CANCELLED" };
   }
 
@@ -403,8 +401,6 @@ export class AppointmentsRepository {
       where: { id: row.id },
       data: { status: nextStatus },
     });
-
-    // TODO: enqueue notification via module 07 (completion / no-show)
 
     return { id: row.id, status: nextStatus };
   }
@@ -449,8 +445,6 @@ export class AppointmentsRepository {
           cancelledBy: "OWNER",
         },
       });
-
-      // TODO: enqueue notification via module 07 (cancellation emails per appointment)
 
       return { cancelledIds: appointmentIds };
     });

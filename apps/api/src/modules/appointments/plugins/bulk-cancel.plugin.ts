@@ -43,16 +43,7 @@ export function createBulkCancelAppointmentsRoutesPlugin(service: AppointmentsSe
         }
         const { establishmentId } = bulkCancelAppointmentsParamsSchema.parse(request.params);
         const body = bulkCancelAppointmentsBodySchema.parse(request.body);
-        const result = await service.bulkCancelConfirmed(user.id, establishmentId, body);
-
-        if (result.cancelledIds.length > 0) {
-          fastify.log.warn(
-            { establishmentId, cancelledAppointmentCount: result.cancelledIds.length },
-            "Bulk-cancelled confirmed appointments; notifications not yet enqueued.",
-          );
-        }
-
-        return result;
+        return service.bulkCancelConfirmed(user.id, establishmentId, body);
       },
     );
 

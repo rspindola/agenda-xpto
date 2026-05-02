@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import type { BookingService } from "~/modules/booking/booking.service.js";
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import type { NotificationsService } from "~/modules/notifications/notifications.service.js";
 
 import type { AppointmentsRepository, ListAppointmentsFilter } from "~/modules/appointments/appointments.repository.js";
 import { AppointmentsService } from "~/modules/appointments/appointments.service.js";
@@ -49,10 +50,23 @@ function buildBookingService(): BookingService {
   } as unknown as BookingService;
 }
 
+function buildNotificationsService(): NotificationsService {
+  return {
+    scheduleAfterBooking: vi.fn(),
+    onClientCancelledAppointment: vi.fn(),
+    onOwnerCancelledAppointment: vi.fn(),
+    onOwnerBulkCancelled: vi.fn(),
+    onTerminalAppointmentStatus: vi.fn(),
+    onAppointmentRescheduled: vi.fn(),
+    listNotificationLogs: vi.fn(),
+  } as unknown as NotificationsService;
+}
+
 describe("AppointmentsService", () => {
   let mockRepository: AppointmentsRepository;
   let mockEstablishments: EstablishmentsRepository;
   let mockBooking: BookingService;
+  let mockNotifications: NotificationsService;
   let service: AppointmentsService;
 
   beforeEach(() => {
@@ -60,7 +74,8 @@ describe("AppointmentsService", () => {
     mockRepository = buildMockRepository();
     mockEstablishments = buildEstablishmentsRepo();
     mockBooking = buildBookingService();
-    service = new AppointmentsService(mockRepository, mockEstablishments, mockBooking);
+    mockNotifications = buildNotificationsService();
+    service = new AppointmentsService(mockRepository, mockEstablishments, mockBooking, mockNotifications);
   });
 
   describe("list", () => {

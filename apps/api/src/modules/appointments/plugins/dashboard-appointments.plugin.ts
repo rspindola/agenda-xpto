@@ -110,10 +110,6 @@ export function createDashboardAppointmentsRoutesPlugin(service: AppointmentsSer
         const { establishmentId } = listAppointmentsParamsSchema.parse(request.params);
         const body = createManualAppointmentBodySchema.parse(request.body);
         const created = await service.createManual(user.id, establishmentId, body, new Date());
-        fastify.log.info(
-          { module: "appointments", event: "notifications_enqueue_placeholder", appointmentId: created.id },
-          "TODO enqueue appointment confirmation email (module 07).",
-        );
         await reply.status(201).send(created);
       },
     );

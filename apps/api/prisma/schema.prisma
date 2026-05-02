@@ -31,6 +31,7 @@ enum NotificationType {
   REMINDER_2H
   CANCELLATION_CLIENT
   CANCELLATION_OWNER
+  OWNER_NOTIFICATION_FAIL
   NO_SHOW_CLIENT
   TRIAL_EXPIRY_ALERT
   PLAN_CHANGED
@@ -333,6 +334,10 @@ model Appointment {
   clientEmail        String             @map("client_email")
   cancelToken        String             @unique @map("cancel_token")
   cancelTokenUsedAt  DateTime?          @map("cancel_token_used_at")
+  /// BullMQ job id for T-24h reminder (`reminder-24h:{appointmentId}`); persisted for removal after restarts.
+  reminder24hJobId   String?            @map("reminder_24h_job_id")
+  /// BullMQ job id for T-2h reminder (`reminder-2h:{appointmentId}`); persisted for removal after restarts.
+  reminder2hJobId  String?            @map("reminder_2h_job_id")
   cancelledAt        DateTime?          @map("cancelled_at")
   cancelledBy        CancelledBy?       @map("cancelled_by")
   createdByUserId    String?            @map("created_by_user_id")

@@ -24,6 +24,7 @@ on:
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agenda_xpto_test
   DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/agenda_xpto_test
+  REDIS_URL: redis://localhost:6379
 
 jobs:
   ci:

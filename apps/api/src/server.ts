@@ -11,11 +11,17 @@ import {
   validatorCompiler,
 } from "fastify-type-provider-zod";
 
+import { startNotificationAndReminderWorkers } from "~/jobs/notification-workers.js";
+import { notificationsQueue, remindersQueue } from "~/jobs/queues.js";
 import { registerAuthModule } from "~/modules/auth/auth.routes.js";
 import { registerAppointmentsModule } from "~/modules/appointments/appointments.routes.js";
 import { registerAvailabilityModule } from "~/modules/availability/availability.routes.js";
 import { registerBookingModule } from "~/modules/booking/booking.routes.js";
+import { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 import { registerEstablishmentsModule } from "~/modules/establishments/establishments.routes.js";
+import { NotificationsRepository } from "~/modules/notifications/notifications.repository.js";
+import { registerNotificationsModule } from "~/modules/notifications/notifications.routes.js";
+import { NotificationsService } from "~/modules/notifications/notifications.service.js";
 
 import { AppError } from "~/shared/errors/AppError.js";
 import { healthResponseSchema } from "~/shared/schemas/health.schema.js";
@@ -54,6 +60,33 @@ function applyRouteRateLimitByTags(routeOptions: RouteOptions): void {
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+
+  const notificationsRepository = new NotificationsRepository();
+  const establishmentsRepositoryForNotifications = new EstablishmentsRepository();
+  const notificationsService = new NotificationsService(
+    notificationsRepository,
+    establishmentsRepositoryForNotifications,
+    notificationsQueue,
+    remindersQueue,
+    API_BASE_URL,
+  );
+
+  let closeNotificationWorkers: (() => Promise<void>) | null = null;
+  app.addHook("onReady", () => {
+    if (process.env.VITEST === "true") {
+      return;
+    }
+    closeNotificationWorkers = startNotificationAndReminderWorkers({
+      logger: app.log,
+      notificationsRepository,
+      notificationsService,
+    });
+  });
+  app.addHook("onClose", async () => {
+    if (closeNotificationWorkers !== null) {
+      await closeNotificationWorkers();
+    }
+  });
 
   app.setValidatorCompiler(validatorCompiler);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- boundary with fastify-type-provider-zod
@@ -134,8 +167,9 @@ export async function buildServer(): Promise<FastifyInstance> {
   registerAuthModule(app);
   registerEstablishmentsModule(app);
   await registerAvailabilityModule(app);
-  await registerAppointmentsModule(app);
-  await registerBookingModule(app);
+  await registerAppointmentsModule(app, { notificationsService });
+  await registerNotificationsModule(app, { notificationsService });
+  await registerBookingModule(app, { notificationsService });
 
   await app.register(rateLimit, {
     max: 100,

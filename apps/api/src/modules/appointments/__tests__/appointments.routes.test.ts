@@ -62,6 +62,7 @@ describe("Appointments routes (HTTP)", () => {
     expect(pathKeys).toContain(`${detailPath}/cancel`);
     expect(pathKeys).toContain(`${detailPath}/mark-completed`);
     expect(pathKeys).toContain(`${detailPath}/mark-no-show`);
+    expect(pathKeys).toContain("/api/v1/establishments/{establishmentId}/notifications");
 
     const listEntry = specUnknown.paths[listPath];
     const detailEntry = specUnknown.paths[detailPath];

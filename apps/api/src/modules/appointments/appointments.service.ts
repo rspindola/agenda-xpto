@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 
 import type { BookingService } from "~/modules/booking/booking.service.js";
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import type { NotificationsService } from "~/modules/notifications/notifications.service.js";
 import { AppError } from "~/shared/errors/AppError.js";
 
 import type {
@@ -27,6 +28,7 @@ export class AppointmentsService {
     private readonly repository: AppointmentsRepository,
     private readonly establishmentsRepository: EstablishmentsRepository,
     private readonly bookingService: BookingService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async requireOwnedEstablishment(
@@ -162,7 +164,7 @@ export class AppointmentsService {
   ): Promise<CreateManualAppointmentResponse> {
     await this.requireOwnedEstablishment(userId, establishmentId);
     const created = await this.bookingService.createManualDashboardAppointment(userId, establishmentId, body, now);
-    // TODO: enqueue notification via module 07 (manual appointment confirmation)
+    await this.notificationsService.scheduleAfterBooking(created.id);
     return created;
   }
 
@@ -172,7 +174,9 @@ export class AppointmentsService {
     appointmentId: string,
   ): Promise<{ id: string; status: "CANCELLED" }> {
     await this.requireOwnedEstablishment(userId, establishmentId);
-    return this.repository.cancelConfirmedByOwner(establishmentId, appointmentId);
+    const out = await this.repository.cancelConfirmedByOwner(establishmentId, appointmentId);
+    await this.notificationsService.onOwnerCancelledAppointment(appointmentId);
+    return out;
   }
 
   async markCompleted(
@@ -181,7 +185,9 @@ export class AppointmentsService {
     appointmentId: string,
   ): Promise<{ id: string; status: "COMPLETED" }> {
     await this.requireOwnedEstablishment(userId, establishmentId);
-    return this.repository.markConfirmedStatus(establishmentId, appointmentId, "COMPLETED");
+    const out = await this.repository.markConfirmedStatus(establishmentId, appointmentId, "COMPLETED");
+    await this.notificationsService.onTerminalAppointmentStatus(appointmentId);
+    return out;
   }
 
   async markNoShow(
@@ -190,7 +196,9 @@ export class AppointmentsService {
     appointmentId: string,
   ): Promise<{ id: string; status: "NO_SHOW" }> {
     await this.requireOwnedEstablishment(userId, establishmentId);
-    return this.repository.markConfirmedStatus(establishmentId, appointmentId, "NO_SHOW");
+    const out = await this.repository.markConfirmedStatus(establishmentId, appointmentId, "NO_SHOW");
+    await this.notificationsService.onTerminalAppointmentStatus(appointmentId);
+    return out;
   }
 
   async reschedule(
@@ -226,7 +234,7 @@ export class AppointmentsService {
       newEndAt,
     });
 
-    // TODO: enqueue notification via module 07 (appointment rescheduled)
+    await this.notificationsService.onAppointmentRescheduled(appointmentId);
 
     return {
       id: updated.id,
@@ -246,6 +254,8 @@ export class AppointmentsService {
     }
 
     const uniqueIds = [...new Set(body.appointmentIds)];
-    return this.repository.bulkCancelConfirmedInTransaction(establishmentId, uniqueIds);
+    const result = await this.repository.bulkCancelConfirmedInTransaction(establishmentId, uniqueIds);
+    await this.notificationsService.onOwnerBulkCancelled(result.cancelledIds);
+    return result;
   }
 }
