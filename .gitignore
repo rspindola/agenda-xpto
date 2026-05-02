@@ -9,3 +9,4 @@ apps/api/.env
 .DS_Store
 coverage
 *.tsbuildinfo
+apps/api/cookies.txt
