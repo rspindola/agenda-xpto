@@ -62,3 +62,111 @@ export async function incrementStarterMonthlyCountIfEligible(
     });
   }
 }
+
+/**
+ * Counts active (non-deleted, non-archived) establishments owned by a user.
+ */
+export async function countActiveEstablishmentsByUserId(userId: string): Promise<number> {
+  return prisma.establishment.count({
+    where: {
+      userId,
+      deletedAt: null,
+      archivedAt: null,
+    },
+  });
+}
+
+/**
+ * Counts active (non-soft-deleted) professionals in an establishment.
+ */
+export async function countActiveProfessionalsByEstablishmentId(establishmentId: string): Promise<number> {
+  return prisma.professional.count({
+    where: {
+      establishmentId,
+      deletedAt: null,
+    },
+  });
+}
+
+/**
+ * Finds all subscriptions with trial expiration date in the past and status TRIALING.
+ * Used for cron job: trial-expiry.
+ */
+export async function findAllSubscriptionsWithTrialExpired(now: Date): Promise<Array<{ userId: string; planType: PlanType }>> {
+  const rows = await prisma.subscription.findMany({
+    where: {
+      status: "TRIALING",
+      trialEndsAt: {
+        lt: now,
+      },
+    },
+    select: {
+      userId: true,
+      planType: true,
+    },
+  });
+  return rows;
+}
+
+/**
+ * Updates subscription after trial conversion to paid plan.
+ * Sets status to ACTIVE and currentPeriodStart/End (30 days).
+ */
+export async function updateSubscriptionAfterConversion(
+  userId: string,
+  planType: PlanType,
+  currentPeriodStart: Date,
+  currentPeriodEnd: Date,
+): Promise<void> {
+  await prisma.subscription.update({
+    where: { userId },
+    data: {
+      planType,
+      status: "ACTIVE",
+      currentPeriodStart,
+      currentPeriodEnd,
+      starterMonthlyAppointmentsCount: 0,
+    },
+  });
+}
+
+/**
+ * Updates subscription after downgrade (e.g., downgrade confirm or trial expiry → STARTER).
+ * Sets planType and status to ACTIVE; resets Starter counter if destination is STARTER.
+ */
+export async function updateSubscriptionAfterDowngrade(
+  userId: string,
+  targetPlanType: PlanType,
+): Promise<void> {
+  const data: Record<string, unknown> = {
+    planType: targetPlanType,
+    status: "ACTIVE",
+  };
+  if (targetPlanType === "STARTER") {
+    data.starterMonthlyAppointmentsCount = 0;
+    data.starterQuotaPeriodStart = new Date(); // Reset to today UTC
+  }
+  await prisma.subscription.update({
+    where: { userId },
+    data,
+  });
+}
+
+/**
+ * Resets starterMonthlyAppointmentsCount to 0 for all STARTER + ACTIVE subscriptions.
+ * Called by cron job reset-monthly-quota at 03:00 UTC (midnight America/Sao_Paulo).
+ * Returns count of subscriptions updated.
+ */
+export async function resetMonthlyQuotaForStarterAccounts(): Promise<number> {
+  const result = await prisma.subscription.updateMany({
+    where: {
+      planType: "STARTER",
+      status: "ACTIVE",
+    },
+    data: {
+      starterMonthlyAppointmentsCount: 0,
+      starterQuotaPeriodStart: new Date(),
+    },
+  });
+  return result.count;
+}

@@ -184,6 +184,147 @@ async function findWithServices(id: string): Promise<AppointmentWithServices | n
 }
 ```
 
+## Common Lint Errors to Avoid
+
+This section documents the most common ESLint errors found in the project and how to avoid them.
+
+### 1. Template Literals with Numbers
+Never include untyped numbers directly in template literals — convert to string first.
+
+```typescript
+// ❌ DON'T: number in template literal
+const duration = 120; // number
+const message = `Duration: ${duration}ms`; // @typescript-eslint/restrict-template-expressions
+
+// ✅ DO: convert to string
+const duration = 120;
+const message = `Duration: ${String(duration)}ms`;
+// or
+const message = `Duration: ${duration.toString()}ms`;
+```
+
+### 2. Type-Only Imports
+Use `import type` when importing types that are only used for type annotations, never at runtime.
+
+```typescript
+// ❌ DON'T: import type without 'type' keyword
+import { EstablishmentPublic } from '@agenda-xpto/types';
+const result: EstablishmentPublic = { ... };
+
+// ✅ DO: use 'type' keyword
+import type { EstablishmentPublic } from '@agenda-xpto/types';
+const result: EstablishmentPublic = { ... };
+
+// ✅ Also OK: named imports if mixed (both type and value)
+import type { EstablishmentPublic } from '@agenda-xpto/types';
+import { establishmentSchema } from '@agenda-xpto/validations';
+```
+
+### 3. Unnecessary Type Conversions
+Avoid converting values that are already the target type.
+
+```typescript
+// ❌ DON'T: String() on already-string value
+const name: string = "John";
+const message = String(name); // @typescript-eslint/no-unnecessary-type-conversion
+
+// ✅ DO: use the value directly
+const name: string = "John";
+const message = name;
+
+// ❌ DON'T: nullish coalescing when left side cannot be null/undefined
+const value: string = "default";
+const result = value ?? "fallback"; // @typescript-eslint/no-unnecessary-condition
+
+// ✅ DO: trust the type
+const value: string = "default";
+const result = value;
+```
+
+### 4. Promise Rejections
+Always reject with an `Error` object, not a bare string.
+
+```typescript
+// ❌ DON'T: reject with string
+return new Promise((resolve, reject) => {
+  if (error) {
+    reject('Something failed'); // @typescript-eslint/prefer-promise-reject-errors
+  }
+});
+
+// ✅ DO: reject with Error instance
+return new Promise((resolve, reject) => {
+  if (error) {
+    reject(new Error('Something failed'));
+  }
+});
+```
+
+### 5. Mocks in Tests with `any`
+Avoid using `as any` for mocks — use `vi.fn()` with generics or explicit typing.
+
+```typescript
+// ❌ DON'T: any in test mocks
+const mockRepository = {
+  findById: async () => ({ id: '1', name: 'Test' }),
+} as any; // @typescript-eslint/no-explicit-any
+
+// ✅ DO: use vi.fn() with proper typing
+type MockRepository = {
+  findById: (id: string) => Promise<{ id: string; name: string }>;
+};
+
+const mockRepository: MockRepository = {
+  findById: vi.fn(async () => ({ id: '1', name: 'Test' })),
+};
+
+// ✅ Also OK: cast with explicit type guard
+const mockRepository = {
+  findById: vi.fn<[string], Promise<{ id: string; name: string }>>(
+    async () => ({ id: '1', name: 'Test' })
+  ),
+};
+```
+
+### 6. Async Without Await
+Remove `async` keyword from functions that don't use `await`, or add `await` where appropriate.
+
+```typescript
+// ❌ DON'T: async without await
+export async function handler(fastify: FastifyInstance): void {
+  return setupRoutes(fastify);
+  // @typescript-eslint/require-await
+}
+
+// ✅ DO: remove async if not needed
+export function handler(fastify: FastifyInstance): void {
+  return setupRoutes(fastify);
+}
+
+// ✅ Also OK: add await if async is truly needed
+export async function handler(fastify: FastifyInstance): Promise<void> {
+  await setupRoutes(fastify);
+}
+```
+
+### 7. Unused Variables and Imports
+Remove unused imports and variables; prefix with underscore if deliberately keeping something.
+
+```typescript
+// ❌ DON'T: unused imports
+import { TypeA, TypeB, TypeC } from './module'; // TypeB and TypeC unused
+const user = getUserData();
+const address = user.address; // address unused
+
+// ✅ DO: remove unused
+import { TypeA } from './module';
+const user = getUserData();
+
+// ✅ Also OK: prefix with _ if intentionally unused (e.g., keeping for future use)
+import type { TypeB as _TypeB } from './module'; // kept for reference
+const _address = user.address; // reserved for future
+```
+
 ## Naming Conventions
 | Element | Convention | Example |
 |---|---|---|
@@ -196,3 +337,8 @@ async function findWithServices(id: string): Promise<AppointmentWithServices | n
 | Prisma models | PascalCase (generated) | `Appointment` |
 | Zod schemas | camelCase + Schema suffix | `createAppointmentBodySchema` |
 | Inferred types | PascalCase | `CreateAppointmentBody` |
+
+---
+
+**📌 Before committing, always run `pnpm --filter api lint` locally.**
+**The pre-commit hook will block commits with lint errors.**

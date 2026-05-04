@@ -12,7 +12,7 @@ import {
 } from "fastify-type-provider-zod";
 
 import { startNotificationAndReminderWorkers } from "~/jobs/notification-workers.js";
-import { notificationsQueue, remindersQueue } from "~/jobs/queues.js";
+import { notificationsQueue, remindersQueue, systemQueue } from "~/jobs/queues.js";
 import { registerAuthModule } from "~/modules/auth/auth.routes.js";
 import { registerAppointmentsModule } from "~/modules/appointments/appointments.routes.js";
 import { registerAvailabilityModule } from "~/modules/availability/availability.routes.js";
@@ -23,6 +23,8 @@ import { NotificationsRepository } from "~/modules/notifications/notifications.r
 import { registerNotificationsModule } from "~/modules/notifications/notifications.routes.js";
 import { NotificationsService } from "~/modules/notifications/notifications.service.js";
 import { registerReportsModule } from "~/modules/reports/reports.routes.js";
+import { registerPlansModule } from "~/modules/plans/plans.plugin.js";
+import { registerPlansJobs } from "~/modules/plans/jobs/index.js";
 
 import { AppError } from "~/shared/errors/AppError.js";
 import { healthResponseSchema } from "~/shared/schemas/health.schema.js";
@@ -172,6 +174,12 @@ export async function buildServer(): Promise<FastifyInstance> {
   await registerNotificationsModule(app, { notificationsService });
   await registerBookingModule(app, { notificationsService });
   await registerReportsModule(app);
+  await registerPlansModule(app);
+
+  // Register BullMQ cron jobs for plans module
+  if (process.env.VITEST !== "true") {
+    await registerPlansJobs(systemQueue);
+  }
 
   await app.register(rateLimit, {
     max: 100,
