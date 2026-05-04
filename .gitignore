@@ -10,3 +10,4 @@ apps/api/.env
 coverage
 *.tsbuildinfo
 apps/api/cookies.txt
+.pnpm-store

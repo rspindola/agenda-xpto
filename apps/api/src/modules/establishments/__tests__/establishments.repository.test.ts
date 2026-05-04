@@ -37,6 +37,7 @@ describe("EstablishmentsRepository", () => {
   });
 
   afterEach(async () => {
+    // Delete in correct order: establishments before subscription before user (FK dependencies)
     await prisma.establishment.deleteMany({ where: { userId } });
     await prisma.subscription.deleteMany({ where: { userId } });
     await prisma.user.deleteMany({ where: { id: userId } });

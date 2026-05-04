@@ -48,6 +48,11 @@ export default defineConfig({
           environment: "node",
           include: ["src/**/*.repository.test.ts"],
           setupFiles: ["./vitest.setup.integration.ts"],
+          // Run integration tests with a single thread to avoid database connection pool conflicts
+          pool: "forks",
+          poolOptions: {
+            forks: { singleFork: true },
+          },
         },
       },
     ],

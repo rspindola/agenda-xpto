@@ -22,6 +22,7 @@ import { registerEstablishmentsModule } from "~/modules/establishments/establish
 import { NotificationsRepository } from "~/modules/notifications/notifications.repository.js";
 import { registerNotificationsModule } from "~/modules/notifications/notifications.routes.js";
 import { NotificationsService } from "~/modules/notifications/notifications.service.js";
+import { registerReportsModule } from "~/modules/reports/reports.routes.js";
 
 import { AppError } from "~/shared/errors/AppError.js";
 import { healthResponseSchema } from "~/shared/schemas/health.schema.js";
@@ -170,6 +171,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   await registerAppointmentsModule(app, { notificationsService });
   await registerNotificationsModule(app, { notificationsService });
   await registerBookingModule(app, { notificationsService });
+  await registerReportsModule(app);
 
   await app.register(rateLimit, {
     max: 100,
