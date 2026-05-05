@@ -1,4 +1,5 @@
 import { buildServer } from "~/server.js";
+import { logger } from "~/lib/logger.js";
 
 const PORT = Number.parseInt(process.env.PORT ?? "3001", 10);
 
@@ -18,7 +19,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  // eslint-disable-next-line no-console -- fatal startup path only
-  console.error(err);
+  logger.error({ err }, "Fatal startup error");
   process.exit(1);
 });

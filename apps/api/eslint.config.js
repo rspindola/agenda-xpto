@@ -46,6 +46,10 @@ export default tseslint.config(
     files: ["**/*.test.ts", "**/*.repository.test.ts", "**/*.service.test.ts"],
     rules: {
       "@typescript-eslint/explicit-function-return-type": "off",
+      // Vitest: vi.mocked(mock.method) passes unbound method refs; binding is irrelevant for mocks.
+      "@typescript-eslint/unbound-method": "off",
+      // Mock factories often need `as unknown as Repository` when the compiler cannot prove exhaustiveness.
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
   {

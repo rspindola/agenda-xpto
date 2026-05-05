@@ -1,5 +1,6 @@
 import type { Queue } from "bullmq";
 
+import { logger } from "~/lib/logger.js";
 import { handleResetMonthlyQuotaJob } from "~/modules/plans/jobs/reset-monthly-quota.job.js";
 import { handleTrialExpiryJob } from "~/modules/plans/jobs/trial-expiry.job.js";
 
@@ -34,8 +35,8 @@ export async function registerPlansJobs(systemQueue: Queue): Promise<void> {
     },
   );
 
-  // eslint-disable-next-line no-console
-  console.log("[registerPlansJobs] Registered reset-monthly-quota and trial-expiry cron jobs.");
+   
+  logger.info("Registered reset-monthly-quota and trial-expiry cron jobs");
 }
 
 /**
@@ -48,7 +49,7 @@ export async function handlePlansSystemJob(jobName: string): Promise<void> {
   } else if (jobName === "trial-expiry") {
     await handleTrialExpiryJob();
   } else {
-    // eslint-disable-next-line no-console
-    console.warn(`[plans] Unknown job name: ${jobName}`);
+     
+    logger.warn({ jobName }, "Unknown job name");
   }
 }

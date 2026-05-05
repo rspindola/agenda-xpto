@@ -1,11 +1,11 @@
-import type { FastifyInstance, FastifyPluginAsync } from "fastify";
+import type { FastifyInstance, FastifyPluginCallback } from "fastify";
 
 import { registerPlansRoutes } from "~/modules/plans/plans.routes.js";
 
-function createPlansRoutesPlugin(): FastifyPluginAsync {
-  // eslint-disable-next-line @typescript-eslint/require-await
-  return async (fastify): Promise<void> => {
+function createPlansRoutesPlugin(): FastifyPluginCallback {
+  return (fastify, _opts, done) => {
     registerPlansRoutes(fastify);
+    done();
   };
 }
 

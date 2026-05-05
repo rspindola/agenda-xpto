@@ -1,3 +1,4 @@
+import { logger } from "~/lib/logger.js";
 import { plansService } from "~/modules/plans/plans.service.js";
 
 /**
@@ -13,11 +14,9 @@ import { plansService } from "~/modules/plans/plans.service.js";
  * Action: Zeros starterMonthlyAppointmentsCount for all STARTER + ACTIVE subscriptions.
  */
 export async function handleResetMonthlyQuotaJob(): Promise<void> {
-  // eslint-disable-next-line no-console
-  console.log("[reset-monthly-quota] Starting monthly quota reset...");
+  logger.info("Starting monthly quota reset");
 
   const count = await plansService.resetMonthlyQuotaForStarterAccounts();
 
-  // eslint-disable-next-line no-console
-  console.log(`[reset-monthly-quota] Reset complete. Updated ${String(count)} Starter subscription(s).`);
+  logger.info({ count }, "Monthly quota reset complete");
 }

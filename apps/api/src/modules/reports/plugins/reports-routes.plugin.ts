@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyPluginCallback, FastifyRequest, FastifyReply } from "fastify";
 import type { ReportsService } from "~/modules/reports/reports.service.js";
 import {
   reportParamsSchema,
@@ -10,9 +10,8 @@ import {
 import { formatReportCsv } from "~/lib/csv-formatter.js";
 import { generateReportPdf } from "~/lib/pdf-generator.js";
 
-export function createReportsRoutesPlugin(service: ReportsService): FastifyPluginAsync {
-  // eslint-disable-next-line @typescript-eslint/require-await
-  return async (fastify): Promise<void> => {
+export function createReportsRoutesPlugin(service: ReportsService): FastifyPluginCallback {
+  return (fastify, _opts, done) => {
     // GET JSON report
     fastify.get(
       "/:reportType",
@@ -133,5 +132,6 @@ export function createReportsRoutesPlugin(service: ReportsService): FastifyPlugi
           .send(pdfBuffer);
       },
     );
+    done();
   };
 }

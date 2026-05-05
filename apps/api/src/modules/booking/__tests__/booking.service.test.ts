@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- repository methods are vi.fn() mocks */
 import { describe, it, expect, vi, beforeEach, beforeAll, type MockInstance } from "vitest";
 
 import * as subscriptionRepository from "~/modules/plans/subscription.repository.js";
@@ -27,7 +26,7 @@ const mockRepository: BookingRepository = {
   createManualDashboardAppointment: vi.fn(),
   cancelAppointmentByToken: vi.fn(),
   findProfessionalServicePrices: vi.fn(),
-};
+} as unknown as BookingRepository;
 
 type FindSubscriptionQuotaByEstablishmentId = (
   establishmentId: string,

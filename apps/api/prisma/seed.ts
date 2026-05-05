@@ -11,8 +11,10 @@ import {
 } from "@prisma/client";
 import { hashPassword } from "better-auth/crypto";
 import { randomUUID } from "node:crypto";
+import pino from "pino";
 
 const prisma = new PrismaClient();
+const logger = pino();
 
 /** PostgreSQL TIME(6): use a fixed UTC date and time-only fields (see DATABASE.md). */
 function time(h: number, m: number, s = 0, ms = 0): Date {
@@ -356,17 +358,15 @@ async function main(): Promise<void> {
     ],
   });
 
-  // eslint-disable-next-line no-console -- seed script
-  console.log("Seed OK:", {
-    ownerEmail: email,
-    ownerPassword: passwordPlain,
-    establishmentSlug: establishment.slug,
-  });
+  logger.info(
+    { ownerEmail: email, ownerPassword: passwordPlain, establishmentSlug: establishment.slug },
+    "Seed completed",
+  );
 }
 
 main()
   .catch((error: unknown) => {
-    console.error(error);
+    logger.error({ err: error }, "Seed failed");
     process.exit(1);
   })
   .finally(async () => {
