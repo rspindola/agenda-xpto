@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unnecessary-type-assertion -- partial repository mocks */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import type { AppointmentsRepository } from "~/modules/appointments/appointments.repository.js";

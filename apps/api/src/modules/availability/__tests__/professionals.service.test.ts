@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unnecessary-type-assertion -- partial repository mocks */
 import { PlanType, SubscriptionStatus } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion -- partial repository mocks */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { ReportsService } from "~/modules/reports/reports.service.js";
-import type { ReportsRepository } from "~/modules/reports/reports.repository.js";
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import type { SubscriptionRow } from "~/modules/plans/subscription.repository.js";
 import * as subscriptionRepository from "~/modules/plans/subscription.repository.js";
+import type { ReportsRepository } from "~/modules/reports/reports.repository.js";
+import { ReportsService } from "~/modules/reports/reports.service.js";
 
 const establishment = {
   id: "est_1",
@@ -39,25 +39,28 @@ describe("ReportsService", () => {
   let mockRepository: ReportsRepository;
   let mockEstablishments: EstablishmentsRepository;
   let service: ReportsService;
-  let findSubSpy: unknown;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockRepository = buildMockRepository();
     mockEstablishments = buildMockEstablishmentsRepository();
-    findSubSpy = vi.spyOn(subscriptionRepository, "findSubscriptionByUserId");
-    // Mock Pro subscription by default
-    (findSubSpy as Record<string, (value: unknown) => unknown>).mockResolvedValue({ planType: "PRO", status: "ACTIVE" } as never);
+    vi.spyOn(subscriptionRepository, "findSubscriptionByUserId").mockResolvedValue({
+      planType: "PRO",
+      status: "ACTIVE",
+    } satisfies SubscriptionRow);
     service = new ReportsService(mockRepository, mockEstablishments, subscriptionRepository);
   });
 
   afterEach(() => {
-    (findSubSpy as Record<string, () => void>).mockRestore();
+    vi.restoreAllMocks();
   });
 
   describe("getReport", () => {
     it("should throw REPORT_REQUIRES_UPGRADE for Starter plan on no-show-rate", async () => {
-      (findSubSpy as Record<string, (value: unknown) => unknown>).mockResolvedValueOnce({ planType: "STARTER", status: "ACTIVE" } as never);
+      vi.mocked(subscriptionRepository.findSubscriptionByUserId).mockResolvedValueOnce({
+        planType: "STARTER",
+        status: "ACTIVE",
+      });
 
       try {
         await service.getReport("user_1", "est_1", "no-show-rate", {
@@ -76,7 +79,7 @@ describe("ReportsService", () => {
     });
 
     it("should return correct data for appointments-completed report", async () => {
-      (mockRepository.findCompletedInRange as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findCompletedInRange).mockResolvedValueOnce([
         {
           id: "apt_1",
           startAt: new Date("2026-01-15T10:00:00Z"),
@@ -101,7 +104,7 @@ describe("ReportsService", () => {
     });
 
     it("should throw NOT_FOUND when establishmentId does not belong to user", async () => {
-      (mockEstablishments.findOwnedById as unknown as { mockResolvedValueOnce: (value: unknown) => void }).mockResolvedValueOnce(null);
+      vi.mocked(mockEstablishments.findOwnedById).mockResolvedValueOnce(null);
 
       try {
         await service.getReport("user_1", "est_999", "appointments-completed", {
@@ -139,8 +142,8 @@ describe("ReportsService", () => {
 
   describe("calculateNoShowRate", () => {
     it("should return 0 when no appointments in period", async () => {
-      (mockRepository.countAppointmentsInRange as unknown as { mockResolvedValueOnce: (value: number) => void }).mockResolvedValueOnce(0);
-      (mockRepository.findNoShowInRange as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([]);
+      vi.mocked(mockRepository.countAppointmentsInRange).mockResolvedValueOnce(0);
+      vi.mocked(mockRepository.findNoShowInRange).mockResolvedValueOnce([]);
 
       const result = await service.getReport("user_1", "est_1", "appointments-completed", {
         from: "2026-01-01",
@@ -154,8 +157,8 @@ describe("ReportsService", () => {
     });
 
     it("should return correct percentage with no-show appointments", async () => {
-      (mockRepository.findNoShowInRange as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([{ id: "apt_1" }, { id: "apt_2" }]);
-      (mockRepository.countAppointmentsInRange as unknown as { mockResolvedValueOnce: (value: number) => void }).mockResolvedValueOnce(10);
+      vi.mocked(mockRepository.findNoShowInRange).mockResolvedValueOnce([{ id: "apt_1" }, { id: "apt_2" }]);
+      vi.mocked(mockRepository.countAppointmentsInRange).mockResolvedValueOnce(10);
 
       const result = await service.getReport("user_1", "est_1", "no-show-rate", {
         from: "2026-01-01",
@@ -171,7 +174,7 @@ describe("ReportsService", () => {
 
   describe("calculateReturnRate", () => {
     it("should return 0 when all clients are unique", async () => {
-      (mockRepository.findClientAppointments as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findClientAppointments).mockResolvedValueOnce([
         { clientEmail: "client1@example.com", appointmentCount: 1 },
         { clientEmail: "client2@example.com", appointmentCount: 1 },
         { clientEmail: "client3@example.com", appointmentCount: 1 },
@@ -189,7 +192,7 @@ describe("ReportsService", () => {
     });
 
     it("should return correct percentage with returning clients", async () => {
-      (mockRepository.findClientAppointments as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findClientAppointments).mockResolvedValueOnce([
         { clientEmail: "client1@example.com", appointmentCount: 1 },
         { clientEmail: "client2@example.com", appointmentCount: 3 },
         { clientEmail: "client3@example.com", appointmentCount: 2 },
@@ -210,7 +213,7 @@ describe("ReportsService", () => {
 
   describe("peak-hours report", () => {
     it("should return appointments grouped by hour", async () => {
-      (mockRepository.findCompletedInRange as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findCompletedInRange).mockResolvedValueOnce([
         { id: "apt_1", startAt: new Date("2026-01-15T09:00:00Z"), endAt: new Date("2026-01-15T10:00:00Z"), clientEmail: "c1@ex.com", professionalId: "p1", services: [] },
         { id: "apt_2", startAt: new Date("2026-01-15T09:30:00Z"), endAt: new Date("2026-01-15T10:30:00Z"), clientEmail: "c2@ex.com", professionalId: "p1", services: [] },
         { id: "apt_3", startAt: new Date("2026-01-15T14:00:00Z"), endAt: new Date("2026-01-15T15:00:00Z"), clientEmail: "c3@ex.com", professionalId: "p1", services: [] },
@@ -234,7 +237,7 @@ describe("ReportsService", () => {
 
   describe("most-profitable report", () => {
     it("should return services sorted by revenue", async () => {
-      (mockRepository.findAppointmentsByService as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findAppointmentsByService).mockResolvedValueOnce([
         { serviceName: "Haircut", count: 5, totalRevenue: 10000 },
         { serviceName: "Color", count: 3, totalRevenue: 25000 },
         { serviceName: "Styling", count: 2, totalRevenue: 8000 },
@@ -256,7 +259,7 @@ describe("ReportsService", () => {
 
   describe("by-professional report", () => {
     it("should return appointments grouped by professional", async () => {
-      (mockRepository.findAppointmentsByProfessional as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findAppointmentsByProfessional).mockResolvedValueOnce([
         { professionalName: "John", professionalId: "p1", count: 10, totalRevenue: 50000 },
         { professionalName: "Jane", professionalId: "p2", count: 8, totalRevenue: 40000 },
       ]);
@@ -278,7 +281,7 @@ describe("ReportsService", () => {
 
   describe("by-service report", () => {
     it("should return appointments grouped by service", async () => {
-      (mockRepository.findAppointmentsByService as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findAppointmentsByService).mockResolvedValueOnce([
         { serviceName: "Haircut", count: 15, totalRevenue: 75000 },
         { serviceName: "Color", count: 8, totalRevenue: 80000 },
       ]);
@@ -299,7 +302,7 @@ describe("ReportsService", () => {
 
   describe("avg-advance report", () => {
     it("should return N/A when no average minutes", async () => {
-      (mockRepository.getAverageAdvanceMinutes as unknown as { mockResolvedValueOnce: (value: unknown) => void }).mockResolvedValueOnce(null);
+      vi.mocked(mockRepository.getAverageAdvanceMinutes).mockResolvedValueOnce(null);
 
       const result = await service.getReport("user_1", "est_1", "avg-advance", {
         from: "2026-01-01",
@@ -315,7 +318,7 @@ describe("ReportsService", () => {
 
     it("should format days, hours and minutes correctly", async () => {
       // 2 days + 3 hours + 30 minutes = 2*24*60 + 3*60 + 30 = 2880 + 180 + 30 = 3090 minutes
-      (mockRepository.getAverageAdvanceMinutes as unknown as { mockResolvedValueOnce: (value: number) => void }).mockResolvedValueOnce(3090);
+      vi.mocked(mockRepository.getAverageAdvanceMinutes).mockResolvedValueOnce(3090);
 
       const result = await service.getReport("user_1", "est_1", "avg-advance", {
         from: "2026-01-01",
@@ -329,7 +332,7 @@ describe("ReportsService", () => {
 
     it("should format only hours and minutes when no days", async () => {
       // 1 hour 45 minutes = 60 + 45 = 105 minutes
-      (mockRepository.getAverageAdvanceMinutes as unknown as { mockResolvedValueOnce: (value: number) => void }).mockResolvedValueOnce(105);
+      vi.mocked(mockRepository.getAverageAdvanceMinutes).mockResolvedValueOnce(105);
 
       const result = await service.getReport("user_1", "est_1", "avg-advance", {
         from: "2026-01-01",
@@ -342,7 +345,7 @@ describe("ReportsService", () => {
     });
 
     it("should format only minutes when less than an hour", async () => {
-      (mockRepository.getAverageAdvanceMinutes as unknown as { mockResolvedValueOnce: (value: number) => void }).mockResolvedValueOnce(30);
+      vi.mocked(mockRepository.getAverageAdvanceMinutes).mockResolvedValueOnce(30);
 
       const result = await service.getReport("user_1", "est_1", "avg-advance", {
         from: "2026-01-01",
@@ -357,7 +360,7 @@ describe("ReportsService", () => {
 
   describe("cancellation-reasons report", () => {
     it("should return cancellation reasons with counts", async () => {
-      (mockRepository.findCancellationReasons as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findCancellationReasons).mockResolvedValueOnce([
         { reason: "Client requested", count: 5 },
         { reason: "Professional unavailable", count: 3 },
         { reason: "Weather", count: 1 },
@@ -379,7 +382,7 @@ describe("ReportsService", () => {
 
   describe("cancellations report", () => {
     it("should return total cancellations", async () => {
-      (mockRepository.findCancellationsInRange as unknown as { mockResolvedValueOnce: (value: unknown[]) => void }).mockResolvedValueOnce([
+      vi.mocked(mockRepository.findCancellationsInRange).mockResolvedValueOnce([
         { id: "apt_1", startAt: new Date("2026-01-15T10:00:00Z"), clientEmail: "c1@ex.com", cancelledBy: "CLIENT" },
         { id: "apt_2", startAt: new Date("2026-01-15T14:00:00Z"), clientEmail: "c2@ex.com", cancelledBy: "PROFESSIONAL" },
       ]);

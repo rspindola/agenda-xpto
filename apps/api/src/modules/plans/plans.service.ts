@@ -1,9 +1,9 @@
 import type { PlanType } from "@prisma/client";
 
-import { AppError } from "~/shared/errors/AppError.js";
-import * as subscriptionRepository from "~/modules/plans/subscription.repository.js";
-import type { DowngradeConflict } from "~/modules/plans/plans.schema.js";
 import { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
+import type { DowngradeConflict } from "~/modules/plans/plans.schema.js";
+import * as subscriptionRepository from "~/modules/plans/subscription.repository.js";
+import { AppError } from "~/shared/errors/AppError.js";
 
 const planLimits = {
   STARTER: { maxEstablishments: 1, maxProfessionalsPerEstablishment: 2, maxAppointmentsMonth: 100 },
@@ -11,9 +11,23 @@ const planLimits = {
   BUSINESS: { maxEstablishments: 10, maxProfessionalsPerEstablishment: -1, maxAppointmentsMonth: -1 },
 } as const;
 
+export type PlansSubscriptionRepository = Pick<
+  typeof subscriptionRepository,
+  | "findSubscriptionByUserId"
+  | "countActiveEstablishmentsByUserId"
+  | "findSubscriptionQuotaByEstablishmentId"
+  | "updateSubscriptionAfterConversion"
+  | "updateSubscriptionAfterDowngrade"
+  | "countActiveProfessionalsByEstablishmentId"
+  | "resetMonthlyQuotaForStarterAccounts"
+  | "findAllSubscriptionsWithTrialExpired"
+>;
+
 export class PlansService {
-  // Protected for testing purposes — allows unit tests to mock this dependency
-  protected establishmentsRepository = new EstablishmentsRepository();
+  constructor(
+    private readonly subscriptionRepository: PlansSubscriptionRepository,
+    private readonly establishmentsRepository: Pick<EstablishmentsRepository, "findAllActiveByUserId">,
+  ) {}
 
   /**
    * Retrieves current plan details: type, status, limits, usage, and Starter quota.
@@ -36,13 +50,13 @@ export class PlansService {
     starterMonthlyCount?: number;
     starterMonthlyLimit?: number;
   }> {
-    const subscription = await subscriptionRepository.findSubscriptionByUserId(userId);
+    const subscription = await this.subscriptionRepository.findSubscriptionByUserId(userId);
     if (!subscription) {
       throw new AppError(404, "SUBSCRIPTION_NOT_FOUND", "Subscription not found for this user.");
     }
 
     const limits = planLimits[subscription.planType];
-    const activeEstablishments = await subscriptionRepository.countActiveEstablishmentsByUserId(userId);
+    const activeEstablishments = await this.subscriptionRepository.countActiveEstablishmentsByUserId(userId);
 
     // Placeholder: simplified usage calculation
     const maxProfessionalsInAnyEstablishment = 0; // Would need per-establishment query in full impl
@@ -89,7 +103,7 @@ export class PlansService {
     alertLevel: "WARNING_80" | "WARNING_90" | "LIMIT_REACHED" | null;
     message?: string;
   }> {
-    const quota = await subscriptionRepository.findSubscriptionQuotaByEstablishmentId(establishmentId);
+    const quota = await this.subscriptionRepository.findSubscriptionQuotaByEstablishmentId(establishmentId);
     if (!quota || quota.planType !== "STARTER") {
       return {
         count: 0,
@@ -123,7 +137,7 @@ export class PlansService {
    * Only allowed from TRIALING status.
    */
   async convertTrial(userId: string, targetPlanType: PlanType): Promise<void> {
-    const current = await subscriptionRepository.findSubscriptionByUserId(userId);
+    const current = await this.subscriptionRepository.findSubscriptionByUserId(userId);
     if (!current) {
       throw new AppError(404, "SUBSCRIPTION_NOT_FOUND", "Subscription not found.");
     }
@@ -136,7 +150,7 @@ export class PlansService {
     const periodEnd = new Date(now);
     periodEnd.setUTCDate(periodEnd.getUTCDate() + 30); // 30-day period
 
-    await subscriptionRepository.updateSubscriptionAfterConversion(userId, targetPlanType, now, periodEnd);
+    await this.subscriptionRepository.updateSubscriptionAfterConversion(userId, targetPlanType, now, periodEnd);
   }
 
   /**
@@ -144,7 +158,7 @@ export class PlansService {
    * Throws error if targetPlanType is lower than current.
    */
   async upgradeImmediate(userId: string, targetPlanType: PlanType): Promise<void> {
-    const current = await subscriptionRepository.findSubscriptionByUserId(userId);
+    const current = await this.subscriptionRepository.findSubscriptionByUserId(userId);
     if (!current) {
       throw new AppError(404, "SUBSCRIPTION_NOT_FOUND", "Subscription not found.");
     }
@@ -159,7 +173,7 @@ export class PlansService {
     const periodEnd = new Date(now);
     periodEnd.setUTCDate(periodEnd.getUTCDate() + 30);
 
-    await subscriptionRepository.updateSubscriptionAfterConversion(userId, targetPlanType, now, periodEnd);
+    await this.subscriptionRepository.updateSubscriptionAfterConversion(userId, targetPlanType, now, periodEnd);
   }
 
   /**
@@ -167,7 +181,7 @@ export class PlansService {
    * Returns array of conflicts (if any) that must be resolved before confirming.
    */
   async downgradeWithConflictCheck(userId: string, targetPlanType: PlanType): Promise<DowngradeConflict[]> {
-    const current = await subscriptionRepository.findSubscriptionByUserId(userId);
+    const current = await this.subscriptionRepository.findSubscriptionByUserId(userId);
     if (!current) {
       throw new AppError(404, "SUBSCRIPTION_NOT_FOUND", "Subscription not found.");
     }
@@ -179,7 +193,7 @@ export class PlansService {
 
     const conflicts: DowngradeConflict[] = [];
 
-    const activeEstablishments = await subscriptionRepository.countActiveEstablishmentsByUserId(userId);
+    const activeEstablishments = await this.subscriptionRepository.countActiveEstablishmentsByUserId(userId);
     const targetLimits = planLimits[targetPlanType];
 
     if (activeEstablishments > targetLimits.maxEstablishments) {
@@ -196,7 +210,7 @@ export class PlansService {
     const establishments = await this.establishmentsRepository.findAllActiveByUserId(userId);
     let maxProfessionalsInAny = 0;
     for (const est of establishments) {
-      const count = await subscriptionRepository.countActiveProfessionalsByEstablishmentId(est.id);
+      const count = await this.subscriptionRepository.countActiveProfessionalsByEstablishmentId(est.id);
       if (count > maxProfessionalsInAny) {
         maxProfessionalsInAny = count;
       }
@@ -228,7 +242,7 @@ export class PlansService {
     }
 
     // Proceed with downgrade
-    await subscriptionRepository.updateSubscriptionAfterDowngrade(userId, targetPlanType);
+    await this.subscriptionRepository.updateSubscriptionAfterDowngrade(userId, targetPlanType);
   }
 
   /**
@@ -236,7 +250,7 @@ export class PlansService {
    * Called by BullMQ cron job: reset-monthly-quota at 03:00 UTC (midnight America/Sao_Paulo).
    */
   async resetMonthlyQuotaForStarterAccounts(): Promise<number> {
-    return subscriptionRepository.resetMonthlyQuotaForStarterAccounts();
+    return this.subscriptionRepository.resetMonthlyQuotaForStarterAccounts();
   }
 
   /**
@@ -246,12 +260,12 @@ export class PlansService {
    */
   async expireTrialsToStarter(): Promise<number> {
     const now = new Date();
-    const expiredTrials = await subscriptionRepository.findAllSubscriptionsWithTrialExpired(now);
+    const expiredTrials = await this.subscriptionRepository.findAllSubscriptionsWithTrialExpired(now);
 
     let count = 0;
     for (const trial of expiredTrials) {
       // Downgrade to STARTER
-      await subscriptionRepository.updateSubscriptionAfterDowngrade(trial.userId, "STARTER");
+      await this.subscriptionRepository.updateSubscriptionAfterDowngrade(trial.userId, "STARTER");
       count++;
 
       // In full implementation, would enqueue PLAN_CHANGED notification here
@@ -262,4 +276,4 @@ export class PlansService {
   }
 }
 
-export const plansService = new PlansService();
+export const plansService = new PlansService(subscriptionRepository, new EstablishmentsRepository());

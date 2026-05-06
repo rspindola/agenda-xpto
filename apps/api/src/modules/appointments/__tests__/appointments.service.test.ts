@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unnecessary-type-assertion -- partial repository mocks */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import type { BookingService } from "~/modules/booking/booking.service.js";
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
 import type { NotificationsService } from "~/modules/notifications/notifications.service.js";
 
-import type { AppointmentsRepository, ListAppointmentsFilter } from "~/modules/appointments/appointments.repository.js";
+import type { AppointmentsRepository } from "~/modules/appointments/appointments.repository.js";
 import { AppointmentsService } from "~/modules/appointments/appointments.service.js";
 
 const establishment = {
@@ -135,8 +134,9 @@ describe("AppointmentsService", () => {
       await service.list("user_1", "est_1", { to: "2026-06-30", page: 1, pageSize: 20 });
 
       expect(vi.mocked(mockRepository.listForEstablishment)).toHaveBeenCalledOnce();
-      // Mock call tuple is loosely typed; the service always passes ListAppointmentsFilter here.
-      const filter = vi.mocked(mockRepository.listForEstablishment).mock.calls[0][0] as ListAppointmentsFilter;
+      const calls = vi.mocked(mockRepository.listForEstablishment).mock.calls;
+      expect(calls).toHaveLength(1);
+      const filter = calls[0][0];
       expect(filter.rangeStartUtcInclusive).toBeUndefined();
       expect(filter.rangeEndUtcExclusive).toBeInstanceOf(Date);
     });

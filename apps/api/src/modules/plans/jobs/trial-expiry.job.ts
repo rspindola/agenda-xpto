@@ -1,3 +1,4 @@
+import { logger } from "~/lib/logger.js";
 import { plansService } from "~/modules/plans/plans.service.js";
 
 /**
@@ -14,13 +15,9 @@ import { plansService } from "~/modules/plans/plans.service.js";
  * Manual upgrade/downgrade do NOT trigger notifications (users have UI feedback).
  */
 export async function handleTrialExpiryJob(): Promise<void> {
-  // eslint-disable-next-line no-console
-  console.log("[trial-expiry] Starting trial expiry check...");
+  logger.info("Starting trial expiry check");
 
   const count = await plansService.expireTrialsToStarter();
 
-  // eslint-disable-next-line no-console
-  console.log(
-    `[trial-expiry] Trial expiry check complete. Downgraded ${String(count)} subscription(s) to STARTER.`,
-  );
+  logger.info({ count }, "Trial expiry check complete");
 }

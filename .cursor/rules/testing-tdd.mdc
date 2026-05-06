@@ -39,11 +39,18 @@ This rule enforces Test-Driven Development (TDD) practices across all modules us
 - **NEVER** use vague descriptions like `it('works')` or `it('test 1')`.
 
 ## Service Tests (Unit)
-- **MUST** mock the repository using `vi.mock()` or manual mocks.
+- **MUST** mock the repository with **manual typed mocks** (`vi.fn()` objects passed to the service constructor). Prefer constructor injection over `vi.mock()` on whole modules — module-level `vi.mock()` strips types and leads to `any` / `eslint-disable`.
 - **MUST** test every public method of the service.
 - **MUST** test both the happy path and all error cases (`AppError` throws).
 - **MUST** assert the exact `AppError.code` when testing error scenarios.
 - **NEVER** connect to the database in service tests.
+
+## Approved mock patterns (no eslint-disable)
+- **MUST NOT** add `eslint-disable` / `eslint-disable-next-line` in tests to hide type-safety problems — fix the types, use `vi.mocked()`, or extend `apps/api/eslint.config.js` overrides for patterns that legitimately apply to all test files (e.g. Vitest `unbound-method`).
+- **MUST** use `vi.mocked(repository.method)` to configure and assert mocks — **NEVER** cast methods to `{ mockResolvedValueOnce: ... }`, and **NEVER** use `as any` or `as never` on mock payloads; use proper DTO/row types (e.g. exported `SubscriptionRow`) or `satisfies`.
+- **MUST** read mock call arguments via typed `mock.calls` (e.g. `const [firstCall] = vi.mocked(fn).mock.calls` then `firstCall?.[0]`) instead of `as any`.
+- **SHOULD** use `as unknown as FullRepository` only inside mock factory helpers when the fake is intentionally partial; ESLint disables `@typescript-eslint/no-unnecessary-type-assertion` for `*.test.ts` for this builder pattern.
+- **`@typescript-eslint/unbound-method`** is intentionally **off** for `*.test.ts` in the API ESLint config — `vi.mocked(mock.method)` is idiomatic; do not re-enable it per file with comments.
 
 ```typescript
 // src/modules/establishments/tests/establishments.service.test.ts
@@ -69,7 +76,7 @@ describe('EstablishmentsService', () => {
   describe('create', () => {
     it('should create an establishment when slug is available', async () => {
       vi.mocked(mockRepository.findBySlug).mockResolvedValue(null);
-      vi.mocked(mockRepository.create).mockResolvedValue({ id: 'est_1', slug: 'my-salon' } as any);
+      vi.mocked(mockRepository.create).mockResolvedValue({ id: 'est_1', slug: 'my-salon', name: 'My Salon', email: 'a@b.com', timezone: 'UTC', minAdvanceMinutes: 60, isActive: true, operationalEmail: null, phone: null, address: null, archivedAt: null, createdAt: '', updatedAt: '' });
 
       const result = await service.create('user_1', { name: 'My Salon', slug: 'my-salon' });
 
@@ -78,7 +85,7 @@ describe('EstablishmentsService', () => {
     });
 
     it('should throw SLUG_ALREADY_TAKEN when slug is in use', async () => {
-      vi.mocked(mockRepository.findBySlug).mockResolvedValue({ id: 'est_2' } as any);
+      vi.mocked(mockRepository.findBySlug).mockResolvedValue({ id: 'est_2' });
 
       await expect(
         service.create('user_1', { name: 'My Salon', slug: 'taken-slug' }),

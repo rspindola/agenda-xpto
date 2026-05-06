@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- repository methods are vi.fn() mocks */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EstablishmentsRepository } from "~/modules/establishments/establishments.repository.js";
@@ -30,7 +29,7 @@ function buildMockRepository(): EstablishmentsRepository {
     create: vi.fn(),
     update: vi.fn(),
     setArchivedAt: vi.fn(),
-  };
+  } as unknown as EstablishmentsRepository;
 }
 
 describe("generateSlugFromName", () => {

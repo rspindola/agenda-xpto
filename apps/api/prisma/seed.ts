@@ -11,8 +11,10 @@ import {
 } from "@prisma/client";
 import { hashPassword } from "better-auth/crypto";
 import { randomUUID } from "node:crypto";
+import pino from "pino";
 
 const prisma = new PrismaClient();
+const logger = pino();
 
 /** PostgreSQL TIME(6): use a fixed UTC date and time-only fields (see DATABASE.md). */
 function time(h: number, m: number, s = 0, ms = 0): Date {
@@ -78,7 +80,8 @@ async function main(): Promise<void> {
       slug: "demo-salon",
       email,
       timezone: "America/Sao_Paulo",
-      minAdvanceMinutes: 120,
+      // Lower advance for local manual E2E; production establishments typically use 60–120+.
+      minAdvanceMinutes: 30,
       operationalEmail: email,
     },
   });
@@ -187,22 +190,29 @@ async function main(): Promise<void> {
     });
   }
 
-  await prisma.professionalAvailability.createMany({
-    data: [
-      {
-        professionalId: profA.id,
-        weekday: Weekday.MON,
-        startsAt: time(9, 0),
-        endsAt: time(12, 0),
-      },
-      {
-        professionalId: profA.id,
-        weekday: Weekday.MON,
-        startsAt: time(14, 0),
-        endsAt: time(18, 0),
-      },
-    ],
-  });
+  // Two windows per weekday (matches business lunch break 12–13); both pros bookable Mon–Fri.
+  const weekdayTwoWindows = [
+    Weekday.MON,
+    Weekday.TUE,
+    Weekday.WED,
+    Weekday.THU,
+    Weekday.FRI,
+  ] as const;
+  const availabilityRows: Array<{
+    professionalId: string;
+    weekday: Weekday;
+    startsAt: Date;
+    endsAt: Date;
+  }> = [];
+  for (const weekday of weekdayTwoWindows) {
+    for (const prof of [profA, profB]) {
+      availabilityRows.push(
+        { professionalId: prof.id, weekday, startsAt: time(9, 0), endsAt: time(12, 0) },
+        { professionalId: prof.id, weekday, startsAt: time(14, 0), endsAt: time(18, 0) },
+      );
+    }
+  }
+  await prisma.professionalAvailability.createMany({ data: availabilityRows });
 
   await prisma.block.createMany({
     data: [
@@ -356,17 +366,26 @@ async function main(): Promise<void> {
     ],
   });
 
-  // eslint-disable-next-line no-console -- seed script
-  console.log("Seed OK:", {
-    ownerEmail: email,
-    ownerPassword: passwordPlain,
-    establishmentSlug: establishment.slug,
-  });
+  logger.info(
+    {
+      ownerEmail: email,
+      ownerPassword: passwordPlain,
+      establishmentId: establishment.id,
+      establishmentSlug: establishment.slug,
+      professionalAId: profA.id,
+      professionalBId: profB.id,
+      serviceHaircutId: serviceCorte.id,
+      serviceBeardId: serviceBarba.id,
+      serviceComboId: serviceCombo.id,
+      note: "Use GET /api/v1/public/booking/establishments/demo-salon for fresh IDs after re-seed. Avoid slot dates 2026-06-01–02 (seed blocks). Holiday fixture: 2030-12-25.",
+    },
+    "Seed completed",
+  );
 }
 
 main()
   .catch((error: unknown) => {
-    console.error(error);
+    logger.error({ err: error }, "Seed failed");
     process.exit(1);
   })
   .finally(async () => {

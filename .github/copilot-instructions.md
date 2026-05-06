@@ -301,6 +301,8 @@ return prisma.$transaction(async (tx) => {
 
 ## Testing & TDD
 
+**Full rule set:** [.cursor/rules/testing-tdd.mdc](../.cursor/rules/testing-tdd.mdc) (Vitest, mocks, ESLint for tests).
+
 ### Workflow (Red → Green → Refactor)
 1. Write failing test that describes expected behavior
 2. Write minimum code to make test pass
@@ -321,10 +323,17 @@ describe('ModuleName', () => {
 ```
 
 ### Service Tests (Unit)
-- Mock repository with `vi.mock()` or manual mocks
+- **MUST** mock the repository with **manual typed mocks** (`vi.fn()` passed into the service constructor). Prefer constructor injection over `vi.mock()` on whole application modules — module-level `vi.mock()` strips types and encourages `any` / `eslint-disable`.
 - Test every public method + all error cases
 - Assert exact `AppError.code` when testing errors
 - Never connect to database
+
+### Approved mock patterns (no eslint-disable)
+- **MUST NOT** use `eslint-disable` / `eslint-disable-next-line` in tests to hide type issues — fix types, use `vi.mocked()`, or extend `apps/api/eslint.config.js` for rules that legitimately apply to all test files (e.g. `@typescript-eslint/unbound-method` is **off** for `*.test.ts` so `vi.mocked(mock.method)` stays idiomatic).
+- **MUST** use `vi.mocked(repository.method)` for `mockResolvedValue*` / assertions — **NEVER** cast repo methods to `{ mockResolvedValueOnce: ... }`, and **NEVER** use `as any` or `as never` on mock payloads; use exported row/DTO types or `satisfies`.
+- **MUST** read `mock.calls` in a typed way (e.g. assert `calls.length`, then use `calls[0][0]`) instead of `as any` on call arguments.
+- **SHOULD** use `as unknown as FullRepository` only inside mock factory helpers when the fake is intentionally partial; `@typescript-eslint/no-unnecessary-type-assertion` is **off** for `*.test.ts` in `apps/api/eslint.config.js` for that pattern.
+- For thrown `AppError`, prefer `await expect(promise).rejects.toMatchObject({ code: '...' })` over `rejects.toThrow(expect.objectContaining(...))` to avoid unsafe-argument issues on matchers.
 
 ### Repository Tests (Integration)
 - Real PostgreSQL test database

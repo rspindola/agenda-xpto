@@ -92,8 +92,8 @@ export async function buildServer(): Promise<FastifyInstance> {
   });
 
   app.setValidatorCompiler(validatorCompiler);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- boundary with fastify-type-provider-zod
-  app.setSerializerCompiler(serializerCompiler);
+  // Known generic inference gap between fastify-type-provider-zod and Fastify's setSerializerCompiler signature.
+  app.setSerializerCompiler(serializerCompiler as Parameters<typeof app.setSerializerCompiler>[0]);
 
   app.addHook("onRoute", applyRouteRateLimitByTags);
 

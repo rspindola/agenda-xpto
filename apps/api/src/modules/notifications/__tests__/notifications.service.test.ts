@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unnecessary-type-assertion -- queue and repository mocks */
 import { Prisma } from "@prisma/client";
 import type { Queue } from "bullmq";
 import { describe, it, expect, vi, beforeEach } from "vitest";
