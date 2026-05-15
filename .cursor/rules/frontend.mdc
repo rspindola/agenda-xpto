@@ -1,0 +1,168 @@
+---
+description: Enforces frontend architecture, component patterns and testing standards for Agenda XPTO web app
+globs: ["apps/web/src/**/*.{ts,tsx}", "apps/web/**/*.stories.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Frontend Architecture - Agenda XPTO Web - Version: 1.0.0
+
+## Purpose & Scope
+This rule defines frontend conventions for the Agenda XPTO web application built with React 19, Vite 6, TanStack Router, TanStack Query, Zustand, Tailwind CSS v4, and Storybook 8. **ALL responses must be provided in Brazilian Portuguese.**
+
+## Module Structure
+- **MUST** organize every feature inside `src/modules/<module-name>/` following this structure:
+  ```
+  src/modules/<module>/
+  ├── components/          # componentes específicos do módulo
+  ├── hooks/               # hooks específicos do módulo
+  ├── pages/               # páginas/rotas do módulo
+  ├── stores/              # Zustand stores do módulo (se necessário)
+  ├── schemas/             # schemas Zod específicos do módulo
+  └── __tests__/           # testes do módulo
+  ```
+- **MUST** use kebab-case for all file names.
+- **MUST** use PascalCase for React component names and their files: `EstablishmentCard.tsx`
+- **NEVER** put business logic inside page components — delegate to hooks
+- **NEVER** import from another module directly — use shared components or hooks
+
+## Components
+- **MUST** place reusable base components (Button, Input, Modal) in `src/components/ui/`
+- **MUST** place business components (AppointmentCard, PlanBadge) in `src/components/shared/`
+- **MUST** write every component with explicit prop types using `type` (not `interface`)
+- **MUST** export every component as named export — no default exports
+- **NEVER** use `any` in component props
+- **AVOID** components longer than 150 lines — split into smaller components
+
+```typescript
+// ✅ CORRECT
+type ButtonProps = {
+  label: string;
+  variant?: 'primary' | 'secondary' | 'danger';
+  disabled?: boolean;
+  onClick?: () => void;
+};
+
+export const Button = ({ label, variant = 'primary', disabled, onClick }: ButtonProps) => {
+  return (
+    <button
+      className={cn(buttonVariants({ variant }), disabled && 'opacity-50 cursor-not-allowed')}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+};
+```
+
+## Tailwind CSS
+- **MUST** use Tailwind utility classes — no inline styles
+- **MUST** use `cn()` helper (clsx + tailwind-merge) for conditional classes
+- **NEVER** use arbitrary values like `w-[347px]` unless absolutely necessary
+- **NEVER** create custom CSS files for component styling — Tailwind only
+- **AVOID** repeating the same class combinations — extract to a variant with `cva()`
+
+## TanStack Router
+- **MUST** define all routes in `src/router/` using file-based or code-based routing
+- **MUST** use layouts: `AuthLayout` for public pages, `DashboardLayout` for admin panel
+- **MUST** protect admin routes with auth guard
+- **NEVER** use `useNavigate` for programmatic navigation inside components — use router hooks
+- Route structure:
+  ```
+  /                     → redirect to /dashboard or /login
+  /login                → AuthLayout
+  /signup               → AuthLayout
+  /forgot-password      → AuthLayout
+  /dashboard            → DashboardLayout
+  /dashboard/...        → DashboardLayout (nested)
+  /b/:slug              → PublicLayout (booking page)
+  ```
+
+## TanStack Query
+- **MUST** define all query keys in a `queryKeys.ts` file per module
+- **MUST** use `useQuery` for reads and `useMutation` for writes
+- **MUST** invalidate relevant queries after mutations
+- **NEVER** fetch data directly in components — always use custom hooks wrapping `useQuery`
+- **AVOID** using `enabled: false` without a clear reason
+
+```typescript
+// ✅ CORRECT: custom hook wrapping useQuery
+export const useEstablishments = () => {
+  return useQuery({
+    queryKey: establishmentKeys.all,
+    queryFn: () => establishmentsApi.findAll(),
+  });
+};
+```
+
+## Zustand
+- **MUST** create one store per domain: `useAuthStore`, `useEstablishmentStore`
+- **MUST** keep stores small — only UI state that needs to be global
+- **NEVER** put server data in Zustand — use TanStack Query for that
+- **AVOID** stores with more than 5 state properties — split if needed
+
+## Forms
+- **MUST** use React Hook Form + Zod for all forms
+- **MUST** share Zod schemas between frontend and backend via `@agenda-xpto/validations`
+- **MUST** show field-level error messages
+- **NEVER** validate manually with `if` statements — use Zod schema
+
+## Axios
+- **MUST** use the singleton from `~/lib/axios.ts` — never create new Axios instances
+- **MUST** handle auth token refresh in the interceptor — not in individual hooks
+- **NEVER** put base URL or auth headers directly in API calls
+
+## Storybook
+- **MUST** write a story for every component in `src/components/ui/` and `src/components/shared/`
+- **MUST** document all variants and states (default, hover, disabled, error, loading)
+- **MUST** use `@storybook/test` for interactions — not custom event handlers
+- **MUST** use MSW handlers in stories that depend on API calls
+- **NEVER** skip stories for components that have complex visual states
+- Story file naming: `ComponentName.stories.tsx` next to the component
+
+```typescript
+// ✅ CORRECT story structure
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from './Button';
+
+const meta: Meta<typeof Button> = {
+  component: Button,
+  title: 'UI/Button',
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+export const Primary: Story = {
+  args: { label: 'Click me', variant: 'primary' },
+};
+
+export const Disabled: Story = {
+  args: { label: 'Disabled', disabled: true },
+};
+```
+
+## Testing
+- **MUST** use Vitest + Testing Library for unit and integration tests
+- **MUST** use MSW for mocking API calls in tests
+- **MUST** test custom hooks with `renderHook`
+- **NEVER** test implementation details — test behavior
+- **AVOID** duplicating tests already covered by Storybook interactions
+
+## TypeScript
+- **MUST** use `type` instead of `interface` — consistent with backend and Zod inference
+- **MUST** use `import type` for type-only imports
+- **NEVER** use `any` — use `unknown` with type guards
+- **NEVER** use non-null assertion (`!`) without a comment
+
+## Imports
+- **MUST** use path aliases: `~/components`, `~/hooks`, `~/lib`, `~/stores`, `~/modules`
+- **NEVER** use relative imports with more than one level (`../../`)
+- **MUST** use `import type` for type-only imports
+- Import order: React → external libraries → internal aliases → relative
+
+## Code Language
+- **MUST** write all variable names, function names, and comments in English
+- **MUST** write all Storybook titles and descriptions in English
+- **NEVER** use Portuguese words in code identifiers

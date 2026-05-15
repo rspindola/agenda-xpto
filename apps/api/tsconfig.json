@@ -8,10 +8,19 @@
     "moduleResolution": "NodeNext",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"],
-      "@agenda-xpto/types": ["../../packages/types/src/index.ts"],
-      "@agenda-xpto/validations": ["../../packages/validations/src/index.ts"]
+      "~/*": [
+        "./src/*"
+      ],
+      "@agenda-xpto/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@agenda-xpto/validations": [
+        "../../packages/validations/src/index.ts"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts"
+  ]
 }
