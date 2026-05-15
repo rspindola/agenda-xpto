@@ -271,19 +271,21 @@ src/modules/<module>/
 
 ---
 
-## Cursor Rules
+## Agent Rules
 
-| Rule file | Covers |
-|---|---|
-| `language-standards.mdc` | PT-BR responses, English code |
-| `architecture.mdc` | Backend module structure |
-| `typescript-conventions.mdc` | Types, Zod, Prisma typing |
-| `import-organization.mdc` | Import order, aliases |
-| `testing-tdd.mdc` | TDD, Vitest, coverage |
-| `swagger-docs.mdc` | OpenAPI documentation |
-| `database-prisma.mdc` | Prisma patterns |
-| `security.mdc` | Auth, tenant isolation |
-| `frontend.mdc` | Frontend architecture, Storybook |
+As regras de comportamento para agentes (Cursor, Antigravity, Claude, Gemini) estão em `.agents/rules/` e devem ser seguidas rigorosamente:
+
+| Rule file | Path | Covers |
+|---|---|---|
+| `language-standards.md` | `.agents/rules/language-standards.md` | PT-BR responses, English code |
+| `architecture.md` | `.agents/rules/architecture.md` | Backend module structure |
+| `typescript-conventions.md` | `.agents/rules/typescript-conventions.md` | Types, Zod, Prisma typing |
+| `import-organization.md` | `.agents/rules/import-organization.md` | Import order, aliases |
+| `testing-tdd.md` | `.agents/rules/testing-tdd.md` | TDD, Vitest, coverage |
+| `swagger-docs.md` | `.agents/rules/swagger-docs.md` | OpenAPI documentation |
+| `database-prisma.md` | `.agents/rules/database-prisma.md` | Prisma patterns |
+| `security.md` | `.agents/rules/security.md` | Auth, tenant isolation |
+| `frontend.md` | `.agents/rules/frontend.md` | Frontend architecture, Storybook |
 
 ---
 
