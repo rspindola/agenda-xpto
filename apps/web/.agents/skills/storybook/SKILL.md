@@ -4,7 +4,7 @@ description: "Storybook 스토리 작성 및 CSF 3.0 베스트 프랙티스 스�
 license: MIT
 metadata:
   author: DaleStudy
-  version: "1.1.0"
+  version: '1.1.0'
 ---
 
 # Storybook
@@ -20,13 +20,13 @@ metadata:
 export default {
   title: 'Components/Button',
   component: Button,
-};
+}
 
-export const Primary = () => <Button variant="primary">Click me</Button>;
+export const Primary = () => <Button variant="primary">Click me</Button>
 
 // ✅ CSF 3.0 (권장)
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
+import type { Meta, StoryObj } from '@storybook/react'
+import { Button } from './Button'
 
 const meta = {
   component: Button,
@@ -35,18 +35,18 @@ const meta = {
     variant: 'primary',
     children: 'Click me',
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
-export const Primary: Story = {};
+export const Primary: Story = {}
 
 export const Secondary: Story = {
   args: {
     variant: 'secondary',
   },
-};
+}
 ```
 
 ### 2. Args 기반 스토리 작성
@@ -60,15 +60,15 @@ export const Secondary: Story = {
 // ❌ 하드코딩된 Props
 export const Disabled: Story = {
   render: () => <Button disabled>Disabled</Button>,
-};
+}
 
 // ❌ 여러 스토리에서 같은 args 중복
 export const Primary: Story = {
   args: { children: 'Click me', variant: 'primary' },
-};
+}
 export const Secondary: Story = {
   args: { children: 'Click me', variant: 'secondary' },
-};
+}
 
 // ✅ Meta에서 공통 args 선언, 스토리에서 차이점만 오버라이드
 const meta = {
@@ -77,17 +77,17 @@ const meta = {
     children: 'Click me',
     variant: 'primary',
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
-export const Primary: Story = {};
+export const Primary: Story = {}
 
 export const Secondary: Story = {
   args: { variant: 'secondary' },
-};
+}
 
 export const Disabled: Story = {
   args: { disabled: true },
-};
+}
 ```
 
 ### 3. title 생략 — 파일 경로 기반 자동 추론
@@ -99,12 +99,12 @@ export const Disabled: Story = {
 const meta = {
   title: 'Components/Button',
   component: Button,
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
 // ✅ title 생략 — 파일 경로에서 자동 추론
 const meta = {
   component: Button,
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 ```
 
 ### 4. 타입 안전한 Meta 정의
@@ -115,7 +115,7 @@ const meta = {
 // ❌ 타입 추론 불가
 const meta: Meta<typeof Button> = {
   component: Button,
-};
+}
 
 // ✅ 타입 체크와 추론 모두 가능
 const meta = {
@@ -124,10 +124,10 @@ const meta = {
     size: 'md',
     variant: 'primary',
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 ```
 
 ### 5. Decorators로 컨텍스트 제공
@@ -144,7 +144,7 @@ export const WithTheme: Story = {
       </ThemeProvider>
     ),
   ],
-};
+}
 
 // 모든 스토리에 Decorator 적용
 const meta = {
@@ -156,7 +156,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 ```
 
 ### 6. Parameters로 동작 커스터마이즈
@@ -174,14 +174,14 @@ const meta = {
       ],
     },
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
 // 개별 스토리에서 오버라이드
 export const OnDark: Story = {
   parameters: {
     backgrounds: { default: 'dark' },
   },
-};
+}
 ```
 
 ### 7. ArgTypes — 자동 추론 우선, 수동 지정 최소화
@@ -211,7 +211,7 @@ const meta = {
       control: 'boolean',
     },
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
 // ✅ 자동 추론에 맡기고, 필요한 경우만 수동 지정
 const meta = {
@@ -220,7 +220,7 @@ const meta = {
     // ReactNode 타입이지만 텍스트 입력이 필요한 경우
     children: { control: 'text' },
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
 // ✅ 특정 스토리에서 prop을 고정할 때 — control: false
 export const Horizontal: Story = {
@@ -228,14 +228,14 @@ export const Horizontal: Story = {
   argTypes: {
     orientation: { control: false }, // 이 스토리에서는 항상 horizontal
   },
-};
+}
 ```
 
 ## 권장 스토리 구조
 
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
+import type { Meta, StoryObj } from '@storybook/react'
+import { Button } from './Button'
 
 // 1. Meta 정의 — title 생략, 공통 args 선언, argTypes는 자동 추론에 위임
 const meta = {
@@ -249,26 +249,26 @@ const meta = {
     size: 'md',
     variant: 'primary',
   },
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof Button>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
 // 2. 기본 스토리 — Meta args를 그대로 사용
-export const Primary: Story = {};
+export const Primary: Story = {}
 
 // 3. 변형 스토리들 — 차이점만 오버라이드
 export const Secondary: Story = {
   args: {
     variant: 'secondary',
   },
-};
+}
 
 export const Disabled: Story = {
   args: {
     disabled: true,
   },
-};
+}
 
 // 4. prop 고정이 필요한 스토리 — control: false 사용
 export const Horizontal: Story = {
@@ -276,7 +276,7 @@ export const Horizontal: Story = {
   argTypes: {
     orientation: { control: false },
   },
-};
+}
 
 // 5. 복잡한 상태나 컨텍스트가 필요한 경우
 export const WithCustomTheme: Story = {
@@ -287,7 +287,7 @@ export const WithCustomTheme: Story = {
       </ThemeProvider>
     ),
   ],
-};
+}
 ```
 
 ## ArgTypes 수동 지정이 필요한 경우 참고
@@ -395,7 +395,7 @@ Component.test.tsx      # 테스트 파일
 
 ```typescript
 // .storybook/main.ts
-import type { StorybookConfig } from '@storybook/react-vite';
+import type { StorybookConfig } from '@storybook/react-vite'
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
@@ -407,9 +407,9 @@ const config: StorybookConfig = {
     name: '@storybook/react-vite',
     options: {},
   },
-};
+}
 
-export default config;
+export default config
 ```
 
 ```typescript

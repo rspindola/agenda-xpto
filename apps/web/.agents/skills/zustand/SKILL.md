@@ -105,26 +105,29 @@ We are migrating slices from plain `StateCreator` objects to **class-based actio
 - Export a `create*Slice` helper that returns a class instance.
 
 ```ts
-type Setter = StoreSetter<HomeStore>;
-export const createRecentSlice = (set: Setter, get: () => HomeStore, _api?: unknown) =>
-  new RecentActionImpl(set, get, _api);
+type Setter = StoreSetter<HomeStore>
+export const createRecentSlice = (
+  set: Setter,
+  get: () => HomeStore,
+  _api?: unknown,
+) => new RecentActionImpl(set, get, _api)
 
 export class RecentActionImpl {
-  readonly #get: () => HomeStore;
-  readonly #set: Setter;
+  readonly #get: () => HomeStore
+  readonly #set: Setter
 
   constructor(set: Setter, get: () => HomeStore, _api?: unknown) {
-    void _api;
-    this.#set = set;
-    this.#get = get;
+    void _api
+    this.#set = set
+    this.#get = get
   }
 
   useFetchRecentTopics = () => {
     // ...
-  };
+  }
 }
 
-export type RecentAction = Pick<RecentActionImpl, keyof RecentActionImpl>;
+export type RecentAction = Pick<RecentActionImpl, keyof RecentActionImpl>
 ```
 
 ### Composition
@@ -133,13 +136,15 @@ export type RecentAction = Pick<RecentActionImpl, keyof RecentActionImpl>;
 - `flattenActions` binds methods to the original class instance and supports prototype methods and class fields.
 
 ```ts
-const createStore: StateCreator<HomeStore, [['zustand/devtools', never]]> = (...params) => ({
+const createStore: StateCreator<HomeStore, [['zustand/devtools', never]]> = (
+  ...params
+) => ({
   ...initialState,
   ...flattenActions<HomeStoreAction>([
     createRecentSlice(...params),
     createHomeInputSlice(...params),
   ]),
-});
+})
 ```
 
 ### Multi-Class Slices
@@ -148,11 +153,14 @@ const createStore: StateCreator<HomeStore, [['zustand/devtools', never]]> = (...
 - Use a local `PublicActions<T>` helper if you need to combine multiple classes and hide private fields.
 
 ```ts
-type PublicActions<T> = { [K in keyof T]: T[K] };
+type PublicActions<T> = { [K in keyof T]: T[K] }
 
 export type ChatGroupAction = PublicActions<
-  ChatGroupInternalAction & ChatGroupLifecycleAction & ChatGroupMemberAction & ChatGroupCurdAction
->;
+  ChatGroupInternalAction &
+    ChatGroupLifecycleAction &
+    ChatGroupMemberAction &
+    ChatGroupCurdAction
+>
 
 export const chatGroupAction: StateCreator<
   ChatGroupStore,
@@ -165,7 +173,7 @@ export const chatGroupAction: StateCreator<
     new ChatGroupLifecycleAction(...params),
     new ChatGroupMemberAction(...params),
     new ChatGroupCurdAction(...params),
-  ]);
+  ])
 ```
 
 ### Store-Access Types
@@ -189,31 +197,34 @@ restore the `#set` field and use it; do not invent a workaround to keep the
 "unused" form.
 
 ```ts
-type Setter = StoreSetter<ConversationStore>;
+type Setter = StoreSetter<ConversationStore>
 
-export const toolSlice = (set: Setter, get: () => ConversationStore, _api?: unknown) =>
-  new ToolActionImpl(set, get, _api);
+export const toolSlice = (
+  set: Setter,
+  get: () => ConversationStore,
+  _api?: unknown,
+) => new ToolActionImpl(set, get, _api)
 
 export class ToolActionImpl {
-  readonly #get: () => ConversationStore;
+  readonly #get: () => ConversationStore
 
   // Mark unused params with `_` prefix and `void _x` so the constructor still
   // matches StateCreator's `(set, get, api)` shape without triggering unused
   // diagnostics.
   constructor(_set: Setter, get: () => ConversationStore, _api?: unknown) {
-    void _set;
-    void _api;
-    this.#get = get;
+    void _set
+    void _api
+    this.#get = get
   }
 
   approveToolCall = async (id: string) => {
-    const { context, hooks } = this.#get();
-    await useChatStore.getState().approveToolCalling(id, '', context);
-    hooks.onToolCallComplete?.(id, undefined);
-  };
+    const { context, hooks } = this.#get()
+    await useChatStore.getState().approveToolCalling(id, '', context)
+    hooks.onToolCallComplete?.(id, undefined)
+  }
 }
 
-export type ToolAction = Pick<ToolActionImpl, keyof ToolActionImpl>;
+export type ToolAction = Pick<ToolActionImpl, keyof ToolActionImpl>
 ```
 
 Rules of thumb:

@@ -90,6 +90,7 @@ cp -r .agents/skills/vitest apps/web/.agents/skills/vitest
 ### 5. Verificar o resultado
 
 Confirme que:
+
 - `.agents/rules/` **não contém mais** `frontend.md`
 - `.agents/skills/` **não contém mais** as pastas movidas
 - `apps/web/.agents/rules/frontend.md` existe
@@ -99,13 +100,13 @@ Confirme que:
 
 ## Critérios de classificação usados
 
-| Critério | Fica na raiz | Vai para apps/web/ |
-|---|---|---|
-| Exclusivo de Fastify/Prisma/BullMQ/Redis | ✅ | |
-| Exclusivo de React/Vite/Tailwind/Storybook | | ✅ |
-| Usado em ambos os contextos (TypeScript, imports, linguagem) | ✅ | |
-| Agnóstico (caveman, writing-plans, executing-plans) | ✅ | |
-| Vitest | ✅ (back) | ✅ copiar (front) |
+| Critério                                                     | Fica na raiz | Vai para apps/web/ |
+| ------------------------------------------------------------ | ------------ | ------------------ |
+| Exclusivo de Fastify/Prisma/BullMQ/Redis                     | ✅           |                    |
+| Exclusivo de React/Vite/Tailwind/Storybook                   |              | ✅                 |
+| Usado em ambos os contextos (TypeScript, imports, linguagem) | ✅           |                    |
+| Agnóstico (caveman, writing-plans, executing-plans)          | ✅           |                    |
+| Vitest                                                       | ✅ (back)    | ✅ copiar (front)  |
 
 ---
 

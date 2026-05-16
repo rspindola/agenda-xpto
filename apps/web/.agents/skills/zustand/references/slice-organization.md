@@ -56,10 +56,10 @@ src/store/chat/slices/
 
 ```typescript
 export interface ChatTopicState {
-  activeTopicId?: string;
-  topicMaps: Record<string, ChatTopic[]>;
-  topicsInit: boolean;
-  topicLoadingIds: string[];
+  activeTopicId?: string
+  topicMaps: Record<string, ChatTopic[]>
+  topicsInit: boolean
+  topicLoadingIds: string[]
 }
 
 export const initialTopicState: ChatTopicState = {
@@ -67,24 +67,25 @@ export const initialTopicState: ChatTopicState = {
   topicMaps: {},
   topicsInit: false,
   topicLoadingIds: [],
-};
+}
 ```
 
 ### selectors.ts
 
 ```typescript
-const currentTopics = (s: ChatStoreState): ChatTopic[] | undefined => s.topicMaps[s.activeId];
+const currentTopics = (s: ChatStoreState): ChatTopic[] | undefined =>
+  s.topicMaps[s.activeId]
 
 const getTopicById =
   (id: string) =>
   (s: ChatStoreState): ChatTopic | undefined =>
-    currentTopics(s)?.find((topic) => topic.id === id);
+    currentTopics(s)?.find((topic) => topic.id === id)
 
 // Core pattern: Use xxxSelectors aggregate
 export const topicSelectors = {
   currentTopics,
   getTopicById,
-};
+}
 ```
 
 ## Complex Actions Sub-directory
@@ -105,8 +106,8 @@ src/store/chat/slices/aiChat/
 ### Map Structure for Associated Data
 
 ```typescript
-topicMaps: Record<string, ChatTopic[]>;
-messagesMap: Record<string, ChatMessage[]>;
+topicMaps: Record<string, ChatTopic[]>
+messagesMap: Record<string, ChatMessage[]>
 ```
 
 ### Arrays for Loading State

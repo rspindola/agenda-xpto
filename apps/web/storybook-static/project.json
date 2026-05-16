@@ -1,0 +1,54 @@
+{
+  "generatedAt": 1778939670789,
+  "userSince": 1759745044227,
+  "hasCustomBabel": false,
+  "hasCustomWebpack": false,
+  "hasStaticDirs": false,
+  "hasStorybookEslint": false,
+  "refCount": 0,
+  "metaFramework": {
+    "name": "tanstack-react",
+    "packageName": "@tanstack/react-router",
+    "version": "1.170.1"
+  },
+  "knownPackages": {
+    "testPackages": {
+      "@testing-library/dom": "10.4.1",
+      "@testing-library/react": "16.3.2",
+      "@testing-library/user-event": "^14.6.1",
+      "msw": "2.14.6",
+      "vitest": "4.1.6"
+    },
+    "stylingPackages": { "tailwindcss": "^4.1.18" },
+    "dataFetchingPackages": {
+      "@tanstack/react-query": "latest",
+      "axios": "^1.16.1"
+    },
+    "routerPackages": { "@tanstack/react-router": "latest" }
+  },
+  "hasRouterPackage": true,
+  "monorepo": "Turborepo",
+  "packageManager": {
+    "type": "pnpm",
+    "version": "10.11.0",
+    "agent": "pnpm",
+    "nodeLinker": "undefined"
+  },
+  "preview": { "usesGlobals": false },
+  "framework": { "name": "@storybook/react-vite", "options": {} },
+  "builder": "@storybook/builder-vite",
+  "renderer": "@storybook/react",
+  "portableStoriesFileCount": 0,
+  "applicationFileCount": 0,
+  "storybookVersion": "10.4.0",
+  "storybookVersionSpecifier": "^10.2.15",
+  "language": "typescript",
+  "storybookPackages": {
+    "@storybook/react-vite": { "version": "10.4.0" },
+    "storybook": {},
+    "@storybook/addon-interactions": { "version": "8.6.14" },
+    "@storybook/test": { "version": "8.6.15" }
+  },
+  "addons": {},
+  "packageJsonType": "module"
+}

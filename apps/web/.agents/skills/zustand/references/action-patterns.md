@@ -66,17 +66,23 @@ internal_removeGenerationTopic: async (id: string) => {
 ```typescript
 // Define in initialState.ts
 export interface ChatMessageState {
-  messageEditingIds: string[];
+  messageEditingIds: string[]
 }
 
 // Manage in action
 toggleMessageEditing: (id, editing) => {
   set(
-    { messageEditingIds: toggleBooleanList(get().messageEditingIds, id, editing) },
+    {
+      messageEditingIds: toggleBooleanList(
+        get().messageEditingIds,
+        id,
+        editing,
+      ),
+    },
     false,
     'toggleMessageEditing',
-  );
-};
+  )
+}
 ```
 
 ## SWR Integration
@@ -104,19 +110,22 @@ refreshMessages: async () => {
 ## Reducer Pattern
 
 ```typescript
-export const messagesReducer = (state: ChatMessage[], payload: MessageDispatch): ChatMessage[] => {
+export const messagesReducer = (
+  state: ChatMessage[],
+  payload: MessageDispatch,
+): ChatMessage[] => {
   switch (payload.type) {
     case 'updateMessage': {
       return produce(state, (draftState) => {
-        const index = draftState.findIndex((i) => i.id === payload.id);
-        if (index < 0) return;
+        const index = draftState.findIndex((i) => i.id === payload.id)
+        if (index < 0) return
         draftState[index] = merge(draftState[index], {
           ...payload.value,
           updatedAt: Date.now(),
-        });
-      });
+        })
+      })
     }
     // ...other cases
   }
-};
+}
 ```

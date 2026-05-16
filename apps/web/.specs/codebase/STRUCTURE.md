@@ -29,10 +29,12 @@ web/
 ## Module Organization
 
 ### src/components/storybook/
+
 **Purpose:** Contains initial UI components with Storybook integration.
 **Key files:** `button.tsx`, `input.tsx`, `dialog.tsx`.
 
 ### src/routes/
+
 **Purpose:** TanStack Router routes.
 **Key files:** `__root.tsx`, `index.tsx`.
 

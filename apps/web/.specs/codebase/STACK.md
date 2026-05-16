@@ -13,10 +13,10 @@
 
 - UI Framework: React 19.x
 - Styling: Tailwind CSS v4.x (CSS-first, @tailwindcss/vite), CVA v0.0.0, clsx, tailwind-merge
-- State Management: 
-    - Server: TanStack Query v5
-    - Atomic: TanStack Store
-    - Global UI: Zustand v5
+- State Management:
+  - Server: TanStack Query v5
+  - Atomic: TanStack Store
+  - Global UI: Zustand v5
 - Form Handling: TanStack Form
 - Routing: TanStack Router v1 (File-based)
 - UI Components: FullCalendar (React), Lucide React (Icons)
