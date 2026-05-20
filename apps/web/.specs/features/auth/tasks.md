@@ -1,7 +1,7 @@
 # Tasks — Authentication & Onboarding Welcome Wizard
 
 **Design**: [design.md](file:///Users/renato.castro/workspace/copilot-test/apps/web/.specs/features/auth/design.md)
-**Status**: Draft
+**Status**: In Progress
 
 ---
 
@@ -48,10 +48,10 @@ T9 ───────┼─→ T11 [P] ─┴─→ T12 ──→ T13 ──�
 **Gate**: Quick (`pnpm test`)
 
 **Done when**:
-- [ ] Zod schema validations successfully defined for login (email/password format constraints).
-- [ ] Zod schemas for onboarding Step 1-4 cover required attributes (Timezones, advance minutes, opening ranges).
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 12 tests passing.
+- [x] Zod schema validations successfully defined for login (email/password format constraints).
+- [x] Zod schemas for onboarding Step 1-4 cover required attributes (Timezones, advance minutes, opening ranges).
+- [x] Gate check passes: `pnpm lint && pnpm test`
+- [x] Test count: 12 tests passing.
 
 **Verify**:
 ```bash
