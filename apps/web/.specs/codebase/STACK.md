@@ -16,7 +16,7 @@
 - State Management:
   - Server: TanStack Query v5
   - Atomic: TanStack Store
-  - Global UI: Zustand v5
+  - Global UI: TanStack Store
 - Form Handling: TanStack Form
 - Routing: TanStack Router v1 (File-based)
 - UI Components: FullCalendar (React), Lucide React (Icons)

@@ -50,7 +50,6 @@ apps/web/.agents/                     ← frontend específico (criar)
     ui-ux-pro-max/                    ← mover de .agents/skills/
     vite/                             ← mover de .agents/skills/
     vitest/                           ← copiar (usado no front também)
-    zustand/                          ← mover de .agents/skills/
 ```
 
 ---
@@ -78,7 +77,6 @@ mv .agents/skills/storybook         apps/web/.agents/skills/storybook
 mv .agents/skills/tailwind-design-system apps/web/.agents/skills/tailwind-design-system
 mv .agents/skills/ui-ux-pro-max     apps/web/.agents/skills/ui-ux-pro-max
 mv .agents/skills/vite              apps/web/.agents/skills/vite
-mv .agents/skills/zustand           apps/web/.agents/skills/zustand
 ```
 
 ### 4. Copiar vitest para o frontend (também usada no back — não remover da raiz)
@@ -119,10 +117,40 @@ Confirme que:
 
 ---
 
+## ESLint Conventions
+
+### Type Imports
+
+- SEMPRE top-level type imports separados, nunca inline
+- ✅ import type { VariantProps } from 'class-variance-authority'
+- ✅ import { cva } from 'class-variance-authority'
+- ❌ import { cva, type VariantProps } from 'class-variance-authority'
+
+### Ignores obrigatorios no eslint.config.js
+
+- storybook-static/ (build gerado — nunca lintar)
+- dist/, .output/, .turbo/
+
+### Hooks em Stories
+
+- Nunca usar hooks diretamente no corpo de uma story
+- Usar componente wrapper quando precisar de estado
+- ✅ const Demo = () => { const [open, setOpen] = useState(false); return ... }
+- export const Default: Story = { render: () => <Demo /> }
+- ❌ export const Default: Story = { render: () => { useState(...) } }
+
+### Testes unitarios
+
+- Obrigatorios para hooks, schemas Zod e componentes interativos
+- MSW handler para cada chamada de API mockada
+- Vitest + Testing Library (nunca jest)
+
+---
+
 ## Contexto do projeto
 
 - Monorepo Turborepo + pnpm workspaces
 - Backend em `apps/api/` — Fastify v5, Prisma, BullMQ (✅ completo)
-- Frontend em `apps/web/` — React 19, Vite 6, TanStack Router/Query, Zustand, Tailwind v4 (⏳ em desenvolvimento)
+- Frontend em `apps/web/` — React 19, Vite 6, TanStack Router/Query/Store, Tailwind v4 (⏳ em desenvolvimento)
 - Ferramentas: Cursor + Antigravity (ambos carregam `.agents/` por workspace aberto)
 - Skills seguem o padrão do `agent-skills` (tech-leads-club)

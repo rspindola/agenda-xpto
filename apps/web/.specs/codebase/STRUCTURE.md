@@ -43,5 +43,5 @@ web/
 **UI Components:** `src/components/ui/`
 **Business Components:** `src/components/shared/` or `src/modules/*/components/`
 **Routing:** `src/routes/` and `src/router.tsx`
-**Global State:** `src/stores/` (Zustand)
+**Global State:** `src/stores/` (TanStack Store)
 **Server State:** `src/integrations/tanstack-query/`
