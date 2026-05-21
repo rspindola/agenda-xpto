@@ -24,7 +24,7 @@ apps/web/src/modules/auth/
 │       └── Step5Summary.tsx     # Step 5: Summary & Confirmation
 ├── hooks/                       # Feature-specific hooks
 │   ├── useAuth.ts               # Login, Signup, Session query hooks
-│   └── useOnboarding.ts         # Hook linking Zustand store and API mutations
+│   ├── useOnboarding.ts         # Hook consuming onboardingStore and exposing mutations
 ├── pages/                       # Route components
 │   ├── LoginPage.tsx
 │   ├── SignUpPage.tsx
@@ -35,8 +35,8 @@ apps/web/src/modules/auth/
 ├── schemas/                     # Validation schemas
 │   ├── auth.schema.ts           # Login, Signup, Reset schemas
 │   └── onboarding.schema.ts     # Business, Professional, Service, Hours schemas
-└── stores/                      # Onboarding and session stores
-    └── onboardingStore.ts       # Zustand store with LocalStorage persistence
+└── stores/                      # Onboarding state stores
+    └── onboardingStore.ts       # TanStack Store with LocalStorage persistence
 ```
 
 ---
@@ -74,12 +74,17 @@ We will create a unified `useAuth` hook powered by **TanStack Query** to query c
 
 ---
 
-## 4. Onboarding State Management (Zustand Store)
+## 4. Onboarding State Management (TanStack Store)
 
-To ensure **Zero Data Loss** and progress preservation (`AUTH-12`), the onboarding wizard uses a Zustand store (`onboardingStore.ts`) with the `persist` middleware.
+To ensure **Zero Data Loss** and progress preservation (`AUTH-12`), the onboarding wizard uses TanStack Store (`onboardingStore.ts`) with custom LocalStorage synchronization.
 
-### Store Schema (`OnboardingState`)
+### Store Architecture and Types
+We define the onboarding types and instantiate `@tanstack/store`'s `Store` class, initializing it with values retrieved from `localStorage` (or standard defaults) and subscribing to state updates to persist them back.
+
 ```typescript
+import { Store } from '@tanstack/store'
+import { useStore } from '@tanstack/react-store'
+
 type Step1Data = {
   name: string
   slug?: string
@@ -112,7 +117,7 @@ type Step4Data = {
   }>
 }
 
-type OnboardingStore = {
+type OnboardingState = {
   // Wizard Progress
   currentStep: number
   establishmentId: string | null
@@ -128,15 +133,81 @@ type OnboardingStore = {
   // Status
   completedSteps: number[] // e.g. [1, 2]
   skippedSteps: number[]
+}
 
-  // Actions
-  setStep: (step: number) => void
-  saveStep1: (data: Step1Data, establishmentId: string) => void
-  saveStep2: (data: Step2Data, professionalId: string) => void
-  saveStep3: (data: Step3Data, serviceId: string) => void
-  saveStep4: (data: Step4Data) => void
-  skipStep: (step: number) => void
-  resetOnboarding: () => void
+const DEFAULT_STATE: OnboardingState = {
+  currentStep: 1,
+  establishmentId: null,
+  professionalId: null,
+  serviceId: null,
+  step1: null,
+  step2: null,
+  step3: null,
+  step4: null,
+  completedSteps: [],
+  skippedSteps: [],
+}
+
+const LOCAL_STORAGE_KEY = 'agenda-xpto-onboarding-progress'
+
+const loadInitialState = (): OnboardingState => {
+  if (typeof window === 'undefined') return DEFAULT_STATE
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
+  return saved ? JSON.parse(saved) : DEFAULT_STATE
+}
+
+export const onboardingStore = new Store<OnboardingState>(loadInitialState())
+
+// Subscribe to store updates to sync to LocalStorage
+onboardingStore.subscribe((state) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state))
+})
+
+// Actions
+export const onboardingActions = {
+  setStep: (step: number) => {
+    onboardingStore.setState((state) => ({ ...state, currentStep: step }))
+  },
+  saveStep1: (data: Step1Data, establishmentId: string) => {
+    onboardingStore.setState((state) => ({
+      ...state,
+      step1: data,
+      establishmentId,
+      completedSteps: Array.from(new Set([...state.completedSteps, 1])),
+    }))
+  },
+  saveStep2: (data: Step2Data, professionalId: string) => {
+    onboardingStore.setState((state) => ({
+      ...state,
+      step2: data,
+      professionalId,
+      completedSteps: Array.from(new Set([...state.completedSteps, 2])),
+    }))
+  },
+  saveStep3: (data: Step3Data, serviceId: string) => {
+    onboardingStore.setState((state) => ({
+      ...state,
+      step3: data,
+      serviceId,
+      completedSteps: Array.from(new Set([...state.completedSteps, 3])),
+    }))
+  },
+  saveStep4: (data: Step4Data) => {
+    onboardingStore.setState((state) => ({
+      ...state,
+      step4: data,
+      completedSteps: Array.from(new Set([...state.completedSteps, 4])),
+    }))
+  },
+  skipStep: (step: number) => {
+    onboardingStore.setState((state) => ({
+      ...state,
+      skippedSteps: Array.from(new Set([...state.skippedSteps, step])),
+    }))
+  },
+  resetOnboarding: () => {
+    onboardingStore.setState(() => DEFAULT_STATE)
+  }
 }
 ```
 
@@ -148,7 +219,7 @@ type OnboardingStore = {
 1. **User input**: As the user types in any step, the form values are validated locally via Zod.
 2. **Next click**: On submitting a step:
    - Perform API calls to save changes to the real PostgreSQL database.
-   - Cache data in `onboardingStore` (persisted to LocalStorage).
+   - Cache data in `onboardingStore` (automatically persisted to LocalStorage on change).
    - Advance `currentStep` and URL parameter `?step=X`.
 3. **Skipping**: Clicking "Pular" calls `skipStep(step)`, records the step as skipped, caches any partial input, and advances to the next step immediately.
 4. **Resuming**: If the session expires or the user leaves:
@@ -161,7 +232,7 @@ type OnboardingStore = {
   - **Option A (Recommended)**: Create a minimal backend plugin inside `apps/api` (as detailed in section 7) to provide `POST /api/v1/establishments/:id/services` and link the service to the professional.
   - **Option B (Fallback)**: Mock this endpoint in the frontend using MSW (Mock Service Worker) for developer and UI testing.
 - **Step 4 (Working Hours)**: For each selected day, call `PUT /api/v1/establishments/:establishmentId/availability/business-hours/:weekday` with opening/closing/break parameters.
-- **Step 5 (Confirmation)**: Sends a final confirmation email and resets the onboarding cache, then redirects to `/dashboard`.
+- **Step 5 (Confirmation)**: Sends a final confirmation email and resets the onboarding context cache, then redirects to `/dashboard`.
 
 ---
 

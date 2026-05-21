@@ -60,23 +60,23 @@ pnpm test src/modules/auth/schemas/
 
 ---
 
-### T2: Create Onboarding Zustand Store
+### T2: Create Onboarding TanStack Store
 
-**What**: Implement a persisted Zustand store to auto-cache user inputs at each onboarding wizard step and track the current step.
+**What**: Implement a persisted TanStack Store (`onboardingStore.ts`) with utility actions (`onboardingActions`) to manage, auto-cache, and persist wizard inputs to `localStorage` using `@tanstack/store` and `@tanstack/react-store`.
 **Where**: `apps/web/src/modules/auth/stores/onboardingStore.ts`
 **Depends on**: T1
 **Requirement**: `AUTH-12`
 **Tools**:
   - MCP: `filesystem`
-  - Skill: `zustand`
-**Tests**: Unit tests in `onboardingStore.test.ts` verifying step caching and LocalStorage synchronization.
+  - Skill: `vite`
+**Tests**: Unit tests in `onboardingStore.test.ts` verifying step caching, action modifications, and LocalStorage synchronization.
 **Gate**: Quick (`pnpm test`)
 
 **Done when**:
-- [ ] Store state and actions (saveStep1..4, skipStep, reset) successfully written and exported.
-- [ ] LocalStorage persistence middleware is active and correctly recovers wizard state on boot.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 8 tests passing.
+- [x] `onboardingStore` and `onboardingActions` successfully written and exported.
+- [x] LocalStorage subscription is active and correctly recovers wizard state on boot.
+- [x] Gate check passes: `pnpm lint && pnpm test`
+- [x] Test count: 8 tests passing.
 
 **Verify**:
 ```bash
@@ -492,7 +492,7 @@ Validation check to confirm each task is atomic and represents one cohesive unit
 | Task | Scope | Status |
 | --- | --- | --- |
 | **T1**: Create Validation Schemas | 2 validation schema files (Zod) | ✅ Granular |
-| **T2**: Create Onboarding Store | 1 state store file (Zustand) | ✅ Granular |
+| **T2**: Create Onboarding Store | 1 state store file (TanStack Store) | ✅ Granular |
 | **T3**: Configure MSW Mock Setup | 4 infrastructure files (MSW integration) | ✅ Cohesive Infrastructure |
 | **T4**: Create Unified Hooks | 2 hooks files (Query/Mutations) | ✅ Granular |
 | **T5**: Service DB & Repository Layer | 1 Prisma repository file | ✅ Granular |
@@ -542,7 +542,7 @@ Cross-check validating that every task includes testing files matching the codeb
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | --- | --- | --- | --- | --- |
 | **T1** | Validation Schemas | Unit (Vitest) | Unit tests in `*.schema.test.ts` | ✅ Match |
-| **T2** | Zustand Store | Unit (Vitest) | Unit tests in `onboardingStore.test.ts` | ✅ Match |
+| **T2** | TanStack Store | Unit (Vitest) | Unit tests in `onboardingStore.test.ts` | ✅ Match |
 | **T3** | Mock Infrastructure | Integration (Vitest) | Mock handler tests in `setup.ts` | ✅ Match |
 | **T4** | React Hooks | Unit (Vitest) | Hook tests in `useAuth.test.ts` | ✅ Match |
 | **T5** | Prisma Repository | Integration (Vitest) | Repo tests on PostgreSQL | ✅ Match |
