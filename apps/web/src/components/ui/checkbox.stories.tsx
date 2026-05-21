@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    id: 'terms',
+    id: 'termos',
   },
   render: (args) => (
     <div className="flex items-center space-x-2">
