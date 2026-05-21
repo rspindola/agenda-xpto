@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { onboardingStore, onboardingActions } from '../onboardingStore'
+import {
+  onboardingStore,
+  onboardingActions,
+} from '#/modules/auth/stores/onboardingStore'
 
 describe('Onboarding TanStack Store', () => {
   beforeEach(() => {

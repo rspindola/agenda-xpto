@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { step1BusinessSchema, step2ProfessionalSchema, step3ServiceSchema, step4WorkingHoursSchema } from '../onboarding.schema'
+import {
+  step1BusinessSchema,
+  step2ProfessionalSchema,
+  step3ServiceSchema,
+  step4WorkingHoursSchema,
+} from '#/modules/auth/schemas/onboarding.schema'
 
 describe('Onboarding Validation Schemas', () => {
   describe('step1BusinessSchema', () => {
@@ -29,7 +34,11 @@ describe('Onboarding Validation Schemas', () => {
 
   describe('step2ProfessionalSchema', () => {
     it('should validate correct inputs', () => {
-      const valid = { name: 'Dr. John Doe', email: 'john@example.com', phone: '+5511999999999' }
+      const valid = {
+        name: 'Dr. John Doe',
+        email: 'john@example.com',
+        phone: '+5511999999999',
+      }
       const parsed = step2ProfessionalSchema.safeParse(valid)
       expect(parsed.success).toBe(true)
     })
@@ -43,7 +52,11 @@ describe('Onboarding Validation Schemas', () => {
 
   describe('step3ServiceSchema', () => {
     it('should validate correct inputs', () => {
-      const valid = { name: 'Corte de Cabelo', durationMinutes: 30, priceCents: 5000 }
+      const valid = {
+        name: 'Corte de Cabelo',
+        durationMinutes: 30,
+        priceCents: 5000,
+      }
       const parsed = step3ServiceSchema.safeParse(valid)
       expect(parsed.success).toBe(true)
     })
