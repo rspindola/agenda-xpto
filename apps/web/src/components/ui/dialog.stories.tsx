@@ -10,6 +10,11 @@ const meta = {
     layout: 'fullscreen',
   },
   tags: ['autodocs'],
+  argTypes: {
+    ref: {
+      table: { disable: true },
+    },
+  },
   args: {
     open: false,
     onOpenChange: () => {},

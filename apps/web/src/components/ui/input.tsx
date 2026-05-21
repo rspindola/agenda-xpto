@@ -1,5 +1,4 @@
-import { forwardRef } from 'react'
-import type { InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, Ref } from 'react'
 import { cva } from 'class-variance-authority'
 import type { VariantProps } from 'class-variance-authority'
 import { cn } from '#/lib/utils'
@@ -21,19 +20,15 @@ export const inputVariants = cva(
 )
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> &
-  VariantProps<typeof inputVariants>
+  VariantProps<typeof inputVariants> & { ref?: Ref<HTMLInputElement> }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, size, ...props }, ref) => {
-    return (
-      <input
-        type={type}
-        className={cn('flex', inputVariants({ size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  },
-)
-
-Input.displayName = 'Input'
+export const Input = ({ className, type, size, ref, ...props }: InputProps) => {
+  return (
+    <input
+      type={type}
+      className={cn('flex', inputVariants({ size, className }))}
+      ref={ref}
+      {...props}
+    />
+  )
+}

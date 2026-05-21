@@ -7,7 +7,7 @@ import { cn } from '#/lib/utils'
 import { X } from 'lucide-react'
 
 export const dialogVariants = cva(
-  'fixed inset-0 m-auto hidden h-fit w-full max-w-lg gap-4 rounded-lg border bg-background p-6 shadow-lg open:grid backdrop:bg-black/80 backdrop:backdrop-blur-sm',
+  'fixed inset-0 m-auto hidden h-fit w-full max-w-lg gap-4 rounded-lg border bg-background p-6 shadow-lg open:grid backdrop:bg-background/80 backdrop:backdrop-blur-sm',
 )
 
 export type DialogProps = {

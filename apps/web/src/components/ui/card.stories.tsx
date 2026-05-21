@@ -16,6 +16,11 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    ref: {
+      table: { disable: true },
+    },
+  },
 } satisfies Meta<typeof Card>
 
 export default meta

@@ -33,6 +33,32 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-background: oklch(0.145 0.023 205);
+  --color-foreground: oklch(0.985 0 0);
+
+  --color-primary: oklch(0.985 0 0);
+  --color-primary-foreground: oklch(0.205 0.002 343.343);
+
+  --color-secondary: oklch(0.205 0.002 343.343);
+  --color-secondary-foreground: oklch(0.985 0 0);
+
+  --color-muted: oklch(0.205 0.002 343.343);
+  --color-muted-foreground: oklch(0.556 0.001 286.375);
+
+  --color-accent: oklch(0.205 0.002 343.343);
+  --color-accent-foreground: oklch(0.985 0 0);
+
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
+
+  --color-border: oklch(0.205 0.002 343.343);
+  --color-input: oklch(0.205 0.002 343.343);
+  --color-ring: oklch(0.708 0 0);
+}
+
 @layer base {
   * {
     @apply border-border;

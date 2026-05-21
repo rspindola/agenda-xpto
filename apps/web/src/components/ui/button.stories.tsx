@@ -10,6 +10,9 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
+    ref: {
+      table: { disable: true },
+    },
     variant: {
       control: 'select',
       options: [

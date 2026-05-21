@@ -9,6 +9,9 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
+    ref: {
+      table: { disable: true },
+    },
     type: {
       control: 'select',
       options: ['text', 'password', 'email', 'number'],
