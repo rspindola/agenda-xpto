@@ -113,10 +113,10 @@ pnpm test src/modules/auth/stores/
 
 **Done when**:
 
-- [ ] MSW handlers created with base HTTP endpoint responses.
-- [ ] Vitest setup file intercepts and releases active mock ports correctly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 2 tests passing.
+- [x] MSW handlers created with base HTTP endpoint responses.
+- [x] Vitest setup file intercepts and releases active mock ports correctly.
+- [x] Gate check passes: `pnpm lint && pnpm test`
+- [x] Test count: 2 tests passing.
 
 **Verify**:
 
@@ -143,10 +143,10 @@ pnpm test src/mocks/
 
 **Done when**:
 
-- [ ] `useAuth` correctly implements login, signup, current session, and signout flows.
-- [ ] `useOnboarding` triggers API mutations and syncs with the `onboardingStore`.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 10 tests passing.
+- [x] `useAuth` correctly implements login, signup, current session, and signout flows.
+- [x] `useOnboarding` triggers API mutations and syncs with the `onboardingStore`.
+- [x] Gate check passes: `pnpm lint && pnpm test`
+- [x] Test count: 10 tests passing.
 
 **Verify**:
 
@@ -156,25 +156,24 @@ pnpm test src/modules/auth/hooks/
 
 ---
 
-### T5: Service DB & Repository Layer (Option A)
+### T5: Align Auth Session Contract
 
-**What**: Build a Prisma repository layer on the backend to handle create/read/update/delete operations for scheduling services.
-**Where**: `apps/api/src/modules/availability/services.repository.ts`
-**Depends on**: None
-**Requirement**: `AUTH-09`
+**What**: Align frontend session query behavior with backend `/api/v1/me` contract.
+**Where**: `apps/web/src/modules/auth/hooks/useAuth.ts`
+**Depends on**: T4
+**Requirement**: `AUTH-05`, `AUTH-06`
 **Tools**:
 
 - MCP: `filesystem`
-- Skill: `fastify-best-practices`
-  **Tests**: Repository integration tests using real/isolated Docker PostgreSQL database.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+- Skill: `vitest`
+  **Tests**: Hook unit tests using MSW session response.
+  **Gate**: Quick (`pnpm test`)
 
 **Done when**:
 
-- [ ] Service CRUD methods compiled and validated against the schema.prisma model.
-- [ ] Integration test suite successfully creates and query-resolves mock services in the DB.
-- [ ] Gate check passes: `pnpm --filter api test` (specifically services integration)
-- [ ] Test count: 6 tests passing.
+- [x] Session query reads `{ user }` response shape and returns a `SessionUser`.
+- [x] Session types match backend contract (nullable name).
+- [x] Gate check passes: `pnpm test src/modules/auth/hooks/`
 
 **Verify**:
 
@@ -184,24 +183,24 @@ pnpm --filter api test services.repository.test.ts
 
 ---
 
-### T6: Service Business Logic Layer (Option A)
+### T6: Align Verify Email Contract
 
-**What**: Build the Service logic layer enforcing plan constraints (Starter limit of 100 appointments/month) and professional bindings.
-**Where**: `apps/api/src/modules/availability/services.service.ts`
+**What**: Update verify email action to use backend GET contract with token and callback URL.
+**Where**: `apps/web/src/modules/auth/hooks/useAuth.ts`
 **Depends on**: T5
-**Requirement**: `AUTH-09`
+**Requirement**: `AUTH-06`
 **Tools**:
 
 - MCP: `filesystem`
-- Skill: `fastify-best-practices`
-  **Tests**: Unit tests using mocked repository layers.
+- Skill: `vitest`
+  **Tests**: Hook unit tests using MSW verify email handler.
   **Gate**: Quick (`pnpm test`)
 
 **Done when**:
 
-- [ ] Services service successfully limits creation if the client exceeds quota rules.
-- [ ] Gate check passes: `pnpm --filter api test`
-- [ ] Test count: 8 tests passing.
+- [x] Verify email mutation uses GET `/api/auth/verify-email` with query params.
+- [x] Session query invalidates after verification.
+- [x] Gate check passes: `pnpm test src/modules/auth/hooks/`
 
 **Verify**:
 
@@ -233,6 +232,8 @@ pnpm --filter api test services.service.test.ts
 - [ ] Gate check passes: `pnpm --filter api test`
 - [ ] Test count: 8 tests passing.
 
+**Status Note**: Blocked (backend out of scope by instruction; no changes in apps/api).
+
 **Verify**:
 
 ```bash
@@ -241,24 +242,26 @@ pnpm --filter api test
 
 ---
 
-### T8: Service Comprehensive Integration
+### T8: Align MSW Auth Responses
 
-**What**: Verify full end-to-end integration of backend Service endpoints to confirm local DB readiness.
-**Where**: `apps/api/src/modules/availability/__tests__/services.routes.test.ts`
-**Depends on**: T7
-**Requirement**: `AUTH-09`
-**Tools**:
+**What**: Ensure MSW handlers mirror backend auth response shapes for session and verification.
+**Where**:
 
-- MCP: `filesystem`
-- Skill: `vitest`
-  **Tests**: Integration test covering multiple users, duplicate errors, and database commits.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+- `apps/web/src/mocks/handlers.ts`
+- `apps/web/src/mocks/__tests__/msw.test.ts`
+  **Depends on**: T5
+  **Requirement**: `AUTH-05`, `AUTH-06`
+  **Tools**:
+  - MCP: `filesystem`
+  - Skill: `vitest`
+    **Tests**: MSW integration test for `/api/v1/me` shape.
+    **Gate**: Quick (`pnpm test`)
 
 **Done when**:
 
-- [ ] End-to-end service actions execute flawlessly without side effects.
-- [ ] Gate check passes with 100% success.
-- [ ] Test count: 12 tests passing.
+- [x] MSW `/api/v1/me` returns `{ user }` payload and tests validate it.
+- [x] Verify email handler uses GET contract with required token.
+- [x] Gate check passes: `pnpm test src/mocks/`
 
 **Verify**:
 
