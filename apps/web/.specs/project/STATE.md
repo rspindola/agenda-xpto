@@ -12,6 +12,9 @@
 
 ## Decisions
 
+- **Auth session model:** Better Auth cookie sessions via Axios `withCredentials` — not JWT in `localStorage` (legacy docs in `docs/flow/01-auth/` are outdated).
+- **Auth discuss (2026-05-20):** `context.md` — step 3 informational; completion = `establishments.length >= 1`; step 1 mandatory; resend verify + 60s cooldown; Axios authApi (no better-auth on web); duplicate signup = explicit error.
+- [x] Auth tasks.md (24 tasks, T1–T24); next: Execute from T1.
 - Using TanStack Form for all form management to align with the TanStack ecosystem.
 - CVA 0.0.0 is used; need to be careful with API stability.
 - Storybook 10 is the source of truth for component documentation.
@@ -24,6 +27,7 @@
 
 ## TODOs
 
+- [ ] Auth feature: `design.md` → `tasks.md` → implement.
 - [ ] Implement `cn()` utility (`clsx` + `tailwind-merge`).
 - [ ] Configure `Axios` singleton with base URL and auth interceptors.
 - [ ] Migrate/Move components from `src/components/storybook/` to `src/components/ui/` using CVA and the new `cn()` utility.

@@ -6,7 +6,8 @@
 
 ## Key Decisions
 - **Backend Complete:** All 9 core modules are fully implemented and tested in `apps/api`.
-- **Frontend Framework:** React 19 + TanStack Router + TanStack Query.
+- **Frontend Framework:** React 19 + TanStack Router + TanStack Query + TanStack Form + TanStack Start.
+- **State Management (UI/Global):** TanStack Store as the sole manager for global UI state (session, sidebar, theme, notifications). Zustand was completely removed to avoid redundancy in the TanStack ecosystem.
 - **Styling:** Tailwind CSS v4 (no external UI library components used yet).
 
 ## Blockers
