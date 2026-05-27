@@ -1,287 +1,545 @@
-# Technical Design — Authentication & Onboarding
+# Auth Design
 
-This document outlines the technical design for the frontend Authentication and Onboarding Welcome Wizard features in `apps/web`.
+**Spec:** `.specs/features/auth/spec.md`  
+**Context:** `.specs/features/auth/context.md`  
+**Status:** Draft (2026-05-20)
 
 ---
 
-## 1. Directory Structure
+## Architecture Overview
 
-All feature-specific code for authentication and onboarding will live inside `apps/web/src/modules/auth/`. Standard components in `src/components/ui/` will be reused.
+Cookie-based Better Auth session on the API; the web app uses a single **Axios** client (`withCredentials: true`) and **TanStack Query** for session and establishments. **TanStack Router** `beforeLoad` hooks enforce access (authenticated → verified → onboarding complete). No `better-auth` package on the frontend.
 
+```mermaid
+flowchart TB
+  subgraph routes [TanStack Router]
+    Public["/_auth/* public"]
+    Onboarding["/_authenticated/onboarding/*"]
+    Dashboard["/_authenticated/dashboard"]
+  end
+
+  subgraph guards [beforeLoad guards]
+    G1[ensureGuest / redirect if session]
+    G2[ensureSession]
+    G3[ensureEmailVerified]
+    G4[ensureOnboardingPending]
+    G5[ensureOnboardingComplete]
+  end
+
+  subgraph data [TanStack Query]
+    Q1["authKeys.session → GET /api/v1/me"]
+    Q2["establishmentKeys.list → GET /api/v1/establishments"]
+  end
+
+  subgraph api [Axios #lib/axios]
+    A1[authApi]
+    A2[establishmentsApi]
+    A3[onboardingApi]
+  end
+
+  Public --> G1
+  Onboarding --> G2 --> G3 --> G4
+  Dashboard --> G2 --> G3 --> G5
+  G2 --> Q1
+  G4 --> Q2
+  G5 --> Q2
+  Q1 --> A1
+  Q2 --> A2
+  Onboarding --> A2
+  Onboarding --> A3
 ```
-apps/web/src/modules/auth/
-├── components/                  # Feature-specific UI components
-│   ├── AuthLayout.tsx           # Premium layout wrapper (gradients, animations)
-│   ├── LoginForm.tsx            # Login form card
-│   ├── SignUpForm.tsx           # Signup form card
-│   ├── ForgotPasswordForm.tsx   # Request reset form card
-│   ├── ResetPasswordForm.tsx    # Password reset form card
-│   └── onboarding/              # Welcome Wizard steps
-│       ├── Step1Business.tsx    # Step 1: Business Setup Form
-│       ├── Step2Professional.tsx# Step 2: Professional Setup Form
-│       ├── Step3Service.tsx     # Step 3: Service Setup Form
-│       ├── Step4WorkingHours.tsx# Step 4: Working Hours Setup Form
-│       └── Step5Summary.tsx     # Step 5: Summary & Confirmation
-├── hooks/                       # Feature-specific hooks
-│   ├── useAuth.ts               # Login, Signup, Session query hooks
-│   ├── useOnboarding.ts         # Hook consuming onboardingStore and exposing mutations
-├── pages/                       # Route components
-│   ├── LoginPage.tsx
-│   ├── SignUpPage.tsx
-│   ├── ForgotPasswordPage.tsx
-│   ├── ResetPasswordPage.tsx
-│   ├── VerifyEmailPage.tsx
-│   └── WelcomePage.tsx
-├── schemas/                     # Validation schemas
-│   ├── auth.schema.ts           # Login, Signup, Reset schemas
-│   └── onboarding.schema.ts     # Business, Professional, Service, Hours schemas
-└── stores/                      # Onboarding state stores
-    └── onboardingStore.ts       # TanStack Store with LocalStorage persistence
-```
+
+### Session & onboarding state (derived)
+
+| State | Condition | Redirect target |
+| ----- | ----------- | ----------------- |
+| Guest | `GET /me` → 401 | Protected → `/login` |
+| Unverified | `user.emailVerified === false` | Protected → `/verify-email` |
+| Onboarding pending | Verified + `establishments.length === 0` | Non-onboarding protected → `/onboarding/business` |
+| Ready | Verified + `establishments.length >= 1` | `/dashboard`; `/onboarding/*` → `/dashboard` |
+
+No `localStorage` session tokens. No `onboardingCompletedAt` in DB for MVP.
 
 ---
 
-## 2. Route Architecture (TanStack Router)
+## Code Reuse Analysis
 
-TanStack Router is file-based. We will define the following routes under `apps/web/src/routes/`:
+### Existing components to leverage
 
-| Route Path | Component | Auth Policy | Description |
-|---|---|---|---|
-| `/login` | `LoginPage` | Public (Unauthenticated) | Displays premium login card. Redirects to `/dashboard` if already authenticated. |
-| `/signup` | `SignUpPage` | Public (Unauthenticated) | Displays premium sign-up card. Redirects to `/verify-email` on success. |
-| `/forgot-password` | `ForgotPasswordPage` | Public (Unauthenticated) | Password recovery request form. |
-| `/reset-password` | `ResetPasswordPage` | Public (Unauthenticated) | Parses `token` from search parameters. Sets new password. |
-| `/verify-email` | `VerifyEmailPage` | Restricted (Auth Gate) | Prevents users with `emailVerified: false` from accessing the rest of the application. |
-| `/welcome` | `WelcomePage` | Restricted (Auth Gate) | Onboarding wizard page. Requires `emailVerified: true`. |
+| Asset | Location | Use |
+| ----- | -------- | --- |
+| `Button`, `Input`, `Card`, `Toast` | `#/components/ui/` | All auth/onboarding forms |
+| `cn` | `#/lib/utils.ts` | Class composition |
+| `QueryClient` + SSR integration | `#/router.tsx`, `#/integrations/tanstack-query/` | `ensureQueryData` in guards |
+| Design tokens | `#/styles.css`, `#/lib/tokens.ts` | Layouts and forms |
 
-### Onboarding Step Query Param
-To support back/forward browser navigation and direct links, the active step in `/welcome` will be synced with the URL search query parameter `?step=1..5`.
-If no step is defined, it defaults to the `currentStep` stored in the `onboardingStore` (or `step=1` if empty).
+### New shared UI (auth feature)
+
+| Component | Location |
+| --------- | -------- |
+| `PasswordField` | `#/components/ui/password-field.tsx` + stories |
+| `FormError` (optional) | `#/components/ui/form-error.tsx` or inline in `AuthFormCard` |
+
+### Integration points
+
+| System | Method |
+| ------ | ------ |
+| Better Auth | `authApi` → `/api/auth/*` (proxied Fastify) |
+| Session user | `GET /api/v1/me` |
+| Establishments | `POST/GET /api/v1/establishments` |
+| Professionals | `POST .../professionals` |
+| Business hours | `PUT .../availability/business-hours/:weekday` |
+
+### Concerns mitigated (from `CONCERNS.md`)
+
+| Concern | Mitigation |
+| ------- | ---------- |
+| `QueryClient` defaults | Set `staleTime: 60_000` for `session` and `establishments.list` in `getContext()` |
+| SSR + cookies | Document below; validate in first guard implementation |
+| Missing tests | Each hook/API module gets `__tests__`; MSW in route/hook tests |
 
 ---
 
-## 3. Session & Auth Integration
+## Environment & Axios
 
-Authentication session management is powered by **Better Auth** cookies. The frontend calls the API endpoints proxied under `/api/auth/*`.
+### Env vars
 
-### Auth Client Hook (`useAuth`)
-We will create a unified `useAuth` hook powered by **TanStack Query** to query current user session status:
-- **Session Query (`GET /api/v1/me`)**: Retrieves logged-in user profile (`id`, `name`, `email`, `emailVerified`).
-- **Sign In Mutation (`POST /api/auth/sign-in/email`)**: Sets cookies on success, triggers query invalidate, redirects to `/dashboard` (or `/welcome`).
-- **Sign Up Mutation (`POST /api/auth/sign-up/email`)**: Registers the account, redirects to `/verify-email`.
-- **Sign Out Mutation (`POST /api/auth/sign-out`)**: Clears sessions, clears stores, redirects to `/login`.
-- **Verify Email Checker**: Polling query against `/api/v1/me` to automatically transition the user to `/welcome` once they verify their email.
+| Variable | Purpose |
+| -------- | ------- |
+| `VITE_API_URL` | Axios `baseURL` (e.g. `http://localhost:3001`) |
+| `VITE_WEB_URL` | Absolute `callbackURL` / `redirectTo` in auth emails (e.g. `http://localhost:3000`) |
 
----
+Use `import.meta.env.VITE_*` only in `#/lib/axios.ts` and `#/lib/urls.ts` (helper for absolute web URLs).
 
-## 4. Onboarding State Management (TanStack Store)
-
-To ensure **Zero Data Loss** and progress preservation (`AUTH-12`), the onboarding wizard uses TanStack Store (`onboardingStore.ts`) with custom LocalStorage synchronization.
-
-### Store Architecture and Types
-We define the onboarding types and instantiate `@tanstack/store`'s `Store` class, initializing it with values retrieved from `localStorage` (or standard defaults) and subscribing to state updates to persist them back.
+### `#/lib/axios.ts`
 
 ```typescript
-import { Store } from '@tanstack/store'
-import { useStore } from '@tanstack/react-store'
+import axios from 'axios'
 
-type Step1Data = {
-  name: string
-  slug?: string
-  email: string
-  phone?: string
-  address?: string
-  timezone: string
-  minAdvanceMinutes: number
-}
-
-type Step2Data = {
-  name: string
-  email?: string
-  phone?: string
-}
-
-type Step3Data = {
-  name: string
-  durationMinutes: number
-  priceCents?: number
-}
-
-type Step4Data = {
-  activeWeekdays: Record<string, boolean> // e.g. { MON: true, TUE: true, ... }
-  hours: Record<string, {
-    opensAt: string
-    closesAt: string
-    breakStartsAt?: string | null
-    breakEndsAt?: string | null
-  }>
-}
-
-type OnboardingState = {
-  // Wizard Progress
-  currentStep: number
-  establishmentId: string | null
-  professionalId: string | null
-  serviceId: string | null
-
-  // Step Data Cache (Autosaved)
-  step1: Step1Data | null
-  step2: Step2Data | null
-  step3: Step3Data | null
-  step4: Step4Data | null
-
-  // Status
-  completedSteps: number[] // e.g. [1, 2]
-  skippedSteps: number[]
-}
-
-const DEFAULT_STATE: OnboardingState = {
-  currentStep: 1,
-  establishmentId: null,
-  professionalId: null,
-  serviceId: null,
-  step1: null,
-  step2: null,
-  step3: null,
-  step4: null,
-  completedSteps: [],
-  skippedSteps: [],
-}
-
-const LOCAL_STORAGE_KEY = 'agenda-xpto-onboarding-progress'
-
-const loadInitialState = (): OnboardingState => {
-  if (typeof window === 'undefined') return DEFAULT_STATE
-  const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
-  return saved ? JSON.parse(saved) : DEFAULT_STATE
-}
-
-export const onboardingStore = new Store<OnboardingState>(loadInitialState())
-
-// Subscribe to store updates to sync to LocalStorage
-onboardingStore.subscribe((state) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state))
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
 })
 
-// Actions
-export const onboardingActions = {
-  setStep: (step: number) => {
-    onboardingStore.setState((state) => ({ ...state, currentStep: step }))
-  },
-  saveStep1: (data: Step1Data, establishmentId: string) => {
-    onboardingStore.setState((state) => ({
-      ...state,
-      step1: data,
-      establishmentId,
-      completedSteps: Array.from(new Set([...state.completedSteps, 1])),
-    }))
-  },
-  saveStep2: (data: Step2Data, professionalId: string) => {
-    onboardingStore.setState((state) => ({
-      ...state,
-      step2: data,
-      professionalId,
-      completedSteps: Array.from(new Set([...state.completedSteps, 2])),
-    }))
-  },
-  saveStep3: (data: Step3Data, serviceId: string) => {
-    onboardingStore.setState((state) => ({
-      ...state,
-      step3: data,
-      serviceId,
-      completedSteps: Array.from(new Set([...state.completedSteps, 3])),
-    }))
-  },
-  saveStep4: (data: Step4Data) => {
-    onboardingStore.setState((state) => ({
-      ...state,
-      step4: data,
-      completedSteps: Array.from(new Set([...state.completedSteps, 4])),
-    }))
-  },
-  skipStep: (step: number) => {
-    onboardingStore.setState((state) => ({
-      ...state,
-      skippedSteps: Array.from(new Set([...state.skippedSteps, step])),
-    }))
-  },
-  resetOnboarding: () => {
-    onboardingStore.setState(() => DEFAULT_STATE)
-  }
+// Optional: map Better Auth error body without logging credentials
+export type BetterAuthErrorBody = { message: string; code?: string }
+```
+
+**SSR note:** On the server, `beforeLoad` calls must forward the incoming request `Cookie` header to Axios if session is needed during SSR. If not configured in the first task, treat auth routes as **client-safe** (forms work; guards may re-run after hydration). Flag as **verify during AUTH-06 implementation** — do not assume SSR session works without testing.
+
+---
+
+## Query keys
+
+**File:** `#/modules/auth/query-keys.ts` (session) and `#/modules/establishments/query-keys.ts` (establishments), or a single `#/lib/query-keys.ts` if preferred.
+
+```typescript
+export const authKeys = {
+  all: ['auth'] as const,
+  session: () => [...authKeys.all, 'session'] as const,
+}
+
+export const establishmentKeys = {
+  all: ['establishments'] as const,
+  list: () => [...establishmentKeys.all, 'list'] as const,
+  detail: (id: string) => [...establishmentKeys.all, 'detail', id] as const,
 }
 ```
 
----
+### Query options factories
 
-## 5. Verification & Persistence Flows
+**File:** `#/modules/auth/queries/session-queries.ts`
 
-### Autosave and Retention Flow
-1. **User input**: As the user types in any step, the form values are validated locally via Zod.
-2. **Next click**: On submitting a step:
-   - Perform API calls to save changes to the real PostgreSQL database.
-   - Cache data in `onboardingStore` (automatically persisted to LocalStorage on change).
-   - Advance `currentStep` and URL parameter `?step=X`.
-3. **Skipping**: Clicking "Pular" calls `skipStep(step)`, records the step as skipped, caches any partial input, and advances to the next step immediately.
-4. **Resuming**: If the session expires or the user leaves:
-   - On reloading `/welcome`, the store reads `currentStep` from LocalStorage and redirects them to the correct step immediately.
-
-### API Integration Operations
-- **Step 1 (Establishment)**: `POST /api/v1/establishments`. Payload parses `name`, `slug`, `email`, `phone`, `timezone`. Store retains returned `establishmentId`.
-- **Step 2 (Professional)**: `POST /api/v1/establishments/:establishmentId/professionals`. Payload parses `name`, `email`, `phone`. Store retains returned `professionalId`.
-- **Step 3 (Service)**:
-  - **Option A (Recommended)**: Create a minimal backend plugin inside `apps/api` (as detailed in section 7) to provide `POST /api/v1/establishments/:id/services` and link the service to the professional.
-  - **Option B (Fallback)**: Mock this endpoint in the frontend using MSW (Mock Service Worker) for developer and UI testing.
-- **Step 4 (Working Hours)**: For each selected day, call `PUT /api/v1/establishments/:establishmentId/availability/business-hours/:weekday` with opening/closing/break parameters.
-- **Step 5 (Confirmation)**: Sends a final confirmation email and resets the onboarding context cache, then redirects to `/dashboard`.
-
----
-
-## 6. Premium UI/UX Aesthetic Spec
-
-We will build a high-fidelity visual experience using **Tailwind CSS v4** to ensure an extremely premium, state-of-the-art SaaS feel:
-- **Color Palette**: Harmonious dark/light system. Glassmorphism for card containers (`bg-white/70 backdrop-blur-md dark:bg-zinc-950/70 border border-zinc-200/50 dark:border-zinc-800/50`).
-- **Typography**: Modern typography with Google Fonts `Inter` or `Outfit` instead of default browser sans.
-- **Visuals**: Curated gradients (`bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500` for branding accents).
-- **Micro-animations**: Smooth step-to-step transitions (`transition-all duration-300 ease-in-out`), scale-ups on hover, and custom spinner feedback.
-- **No Placeholders**: High-quality SVG icons from Lucide React to create an interactive interface.
-
----
-
-## 7. Option A: Backend Service CRUD Implementation Details
-
-To allow the Welcome Wizard to work fully end-to-end with the real database during local development, we propose implementing a minimal, robust Service CRUD endpoint in the backend.
-
-### 7.1 New Service Schema (`apps/api/src/modules/availability/services.schema.ts`)
 ```typescript
-import { z } from "zod";
-import { establishmentIdParamsSchema } from "~/modules/availability/availability.schema.js";
+export const sessionQueryOptions = () => ({
+  queryKey: authKeys.session(),
+  queryFn: () => authApi.getMe(),
+  retry: false,
+  staleTime: 60_000,
+})
 
-export const createServiceBodySchema = z.object({
-  name: z.string().min(1).max(200).describe("Service name"),
-  snapshotDurationMinutes: z.number().int().min(5).max(1440).describe("Duration in minutes"),
-  priceCents: z.number().int().min(0).optional().describe("Price in cents"),
-});
-
-export type CreateServiceBody = z.infer<typeof createServiceBodySchema>;
-
-export const servicePublicSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  snapshotDurationMinutes: z.number().int(),
-  priceCents: z.number().int().nullable(),
-  isActive: z.boolean(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-});
-
-export type ServicePublic = z.infer<typeof servicePublicSchema>;
+export const establishmentsQueryOptions = () => ({
+  queryKey: establishmentKeys.list(),
+  queryFn: () => establishmentsApi.list(),
+  staleTime: 60_000,
+})
 ```
 
-### 7.2 Register Route (`POST /api/v1/establishments/:establishmentId/services`)
-Registered under the `availabilityModulePlugin` inside `apps/api/src/modules/availability/availability.plugin.ts`:
+### Invalidation matrix
+
+| Mutation | Invalidate |
+| -------- | ---------- |
+| `signUp`, `signIn`, `signOut` | `authKeys.session()` |
+| `signOut` | Also `establishmentKeys.all` (clear tenant cache) |
+| `createEstablishment` (onboarding step 1) | `establishmentKeys.list()` |
+| `createProfessional` | Optional: `establishmentKeys.detail(id)` if used later |
+
+---
+
+## API layer
+
+### `#/modules/auth/api/auth-api.ts`
+
+Thin wrappers — no business logic.
+
+| Function | HTTP | Body / notes |
+| -------- | ---- | ------------- |
+| `signUpEmail` | `POST /api/auth/sign-up/email` | `{ name, email, password, callbackURL }` |
+| `signInEmail` | `POST /api/auth/sign-in/email` | `{ email, password, rememberMe?, callbackURL? }` |
+| `signOut` | `POST /api/auth/sign-out` | `{}` |
+| `sendVerificationEmail` | `POST /api/auth/send-verification-email` | `{ email, callbackURL }` |
+| `requestPasswordReset` | `POST /api/auth/request-password-reset` | `{ email, redirectTo }` |
+| `resetPassword` | `POST /api/auth/reset-password` | `{ newPassword, token }` |
+| `getMe` | `GET /api/v1/me` | Returns `{ user: AuthUser }` |
+
+**Callback URLs (absolute):**
+
 ```typescript
-await fastify.register(createServicesRoutesPlugin(servicesService), {
-  prefix: "/:establishmentId/services",
-});
+// #/lib/urls.ts
+export const webUrls = {
+  verifyEmail: () => `${webOrigin}/verify-email`,
+  onboardingBusiness: () => `${webOrigin}/onboarding/business`,
+  resetPassword: () => `${webOrigin}/reset-password`,
+}
 ```
-This is fully compatible with Fastify's encapsulated scoping and our established architecture.
+
+Signup / resend verification use `callbackURL: webUrls.onboardingBusiness()` so post-verify lands on step 1 (Better Auth `autoSignInAfterVerification`).
+
+### `#/modules/establishments/api/establishments-api.ts`
+
+| Function | HTTP |
+| -------- | ---- |
+| `list` | `GET /api/v1/establishments` |
+| `create` | `POST /api/v1/establishments` |
+
+### `#/modules/onboarding/api/onboarding-api.ts`
+
+Composes domain APIs (no `/onboarding/*` backend):
+
+| Function | Delegates to |
+| -------- | ------------- |
+| `createProfessional` | `POST .../professionals` |
+| `upsertBusinessHour` | `PUT .../business-hours/:weekday` |
+| `upsertBusinessHoursBatch` | `Promise.all(weekdays.map(...))` |
+
+---
+
+## Route guards
+
+**File:** `#/modules/auth/lib/route-guards.ts`
+
+All guards receive `{ context: { queryClient }, location }` from TanStack Router and use `redirect()` from `@tanstack/react-router`.
+
+```typescript
+type AuthUser = {
+  id: string
+  email: string
+  emailVerified: boolean
+  name: string | null
+}
+
+export async function fetchSession(queryClient: QueryClient): Promise<AuthUser | null>
+export async function fetchEstablishments(queryClient: QueryClient): Promise<EstablishmentPublic[]>
+
+export async function ensureGuest({ context, location }): Promise<void>
+export async function ensureSession({ context, location }): Promise<AuthUser>
+export async function ensureEmailVerified(user: AuthUser, location: Location): Promise<void>
+export async function ensureOnboardingPending({ context, location }): Promise<void>
+export async function ensureOnboardingComplete({ context, location }): Promise<void>
+export function resolvePostLoginPath(establishmentsCount: number): '/onboarding/business' | '/dashboard'
+```
+
+### Guard behavior
+
+| Guard | Used on | Logic |
+| ----- | ------- | ----- |
+| `ensureGuest` | `/_auth/*` | If session exists → `resolvePostLoginPath` |
+| `ensureSession` | `/_authenticated/*` | No session → `/login?redirect=...` |
+| `ensureEmailVerified` | After session | `!emailVerified` → `/verify-email?email=...` |
+| `ensureOnboardingPending` | `/onboarding/*` | If `establishments.length >= 1` → `/dashboard` |
+| `ensureOnboardingComplete` | `/dashboard` | If `establishments.length === 0` → `/onboarding/business` |
+
+**Index `/`:** `beforeLoad` → same as guest or authenticated redirect chain.
+
+### Route tree (file-based)
+
+```
+src/routes/
+├── __root.tsx
+├── index.tsx                          # redirect hub
+├── _auth/
+│   ├── route.tsx                      # AuthLayout + ensureGuest
+│   ├── login.tsx
+│   ├── signup.tsx
+│   ├── forgot-password.tsx
+│   ├── reset-password.tsx             # search: { token?: string }
+│   └── verify-email.tsx               # search: { email?: string }
+└── _authenticated/
+    ├── route.tsx                      # ensureSession + ensureEmailVerified
+    ├── dashboard/
+    │   └── index.tsx                  # DashboardLayout stub + ensureOnboardingComplete
+    └── onboarding/
+        ├── route.tsx                  # OnboardingLayout + ensureOnboardingPending
+        ├── business.tsx               # step 1 — no skip
+        ├── professional.tsx
+        ├── service.tsx                # informational only
+        ├── hours.tsx
+        └── done.tsx
+```
+
+`routeTree.gen.ts` is generated by the router plugin — do not edit manually.
+
+---
+
+## Hooks (mutations & UX)
+
+| Hook | File | Responsibility |
+| ---- | ---- | -------------- |
+| `useSession` | `#/modules/auth/hooks/use-session.ts` | `useQuery(sessionQueryOptions)` |
+| `useSignUp` | `#/modules/auth/hooks/use-sign-up.ts` | Mutation + navigate `/verify-email?email=` |
+| `useSignIn` | `#/modules/auth/hooks/use-sign-in.ts` | Mutation + invalidate session + post-login redirect |
+| `useSignOut` | `#/modules/auth/hooks/use-sign-out.ts` | Mutation + clear cache + `/login` |
+| `useRequestPasswordReset` | `#/modules/auth/hooks/use-request-password-reset.ts` | Neutral success UI state |
+| `useResetPassword` | `#/modules/auth/hooks/use-reset-password.ts` | Token from route search |
+| `useResendVerification` | `#/modules/auth/hooks/use-resend-verification.ts` | Mutation + **60s cooldown** state |
+| `useOnboardingEstablishment` | `#/modules/onboarding/hooks/use-onboarding-establishment.ts` | `establishments[0]` from list query |
+| `useCreateEstablishment` | onboarding mutations | Step 1 |
+| `useCreateProfessional` | onboarding mutations | Step 2 |
+| `useUpsertBusinessHours` | onboarding mutations | Step 4 batch |
+
+Forms: **TanStack Form** + Zod schemas in `#/modules/auth/schemas/` and `#/modules/onboarding/schemas/`.
+
+---
+
+## Onboarding wizard flow
+
+```mermaid
+stateDiagram-v2
+  [*] --> business: verify email / login zero establishments
+  business --> professional: POST establishment OK
+  professional --> service: Próximo or Pular
+  service --> hours: Próximo or Pular informational
+  hours --> done: PUT hours or Pular
+  done --> dashboard: Ir para Dashboard
+  business --> business: validation error
+```
+
+| Step | `canSkip` | Primary action | Next route |
+| ---- | --------- | -------------- | ---------- |
+| `business` | **false** | `POST` establishment | `/onboarding/professional` |
+| `professional` | true | `POST` professional or skip | `/onboarding/service` |
+| `service` | true | Info only | `/onboarding/hours` |
+| `hours` | true | Batch `PUT` weekdays or skip | `/onboarding/done` |
+| `done` | — | Link to dashboard | `/dashboard` |
+
+**Active establishment:** `const establishment = establishments[0]` after step 1 invalidates list. Mid-wizard refresh: re-fetch list; if `length >= 1`, use first item’s `id` for steps 2–4.
+
+**Step 1 form fields (MVP):**
+
+| Field | Maps to API |
+| ----- | ------------- |
+| `name` | `name` |
+| `timezone` | `timezone` (select: `America/Sao_Paulo`, etc.) |
+| `email` | pre-filled from `user.email`, `email` |
+| `slug` | omitted → API auto-generates |
+
+Category field: **hidden/disabled** with helper text (deferred).
+
+**Step 4 hours UI:** Multi-select weekdays (MON–SUN); for each open day, `opensAt`, `closesAt`, optional lunch → `breakStartsAt` / `breakEndsAt`. Closed days: `PUT` with `{ closed: true }` or skip PUT (Design: skip PUT for unchecked days — establishment has no row = closed).
+
+**Step 5 summary:** Read-only list from cached query data (establishment name, optional professional name if created, hours count). No extra API call.
+
+### Onboarding UI store (optional, TanStack Store)
+
+**File:** `#/modules/onboarding/stores/onboarding-ui-store.ts`
+
+- Draft form values per step (survive back navigation within wizard)
+- **Not** used for completion flag (establishments query is source of truth)
+
+---
+
+## Components
+
+### Layouts
+
+| Component | Location | Props / behavior |
+| --------- | -------- | ---------------- |
+| `AuthLayout` | `#/components/layouts/auth-layout.tsx` | Centered `Card`, logo, `children`, footer slot |
+| `OnboardingLayout` | `#/components/layouts/onboarding-layout.tsx` | `StepProgress`, `OnboardingShell` slot |
+| `DashboardLayout` | `#/components/layouts/dashboard-layout.tsx` | Stub shell for MVP (header + logout placeholder) |
+
+### Auth module
+
+| Component | Purpose |
+| --------- | ------- |
+| `AuthFormCard` | Title, subtitle, children, footer links |
+| `LoginForm` | Email, password, remember me |
+| `SignUpForm` | Name, email, password, confirm password |
+| `ForgotPasswordForm` | Email + neutral success panel |
+| `ResetPasswordForm` | New + confirm password; invalid token state |
+| `VerifyEmailPanel` | Email display, resend button + cooldown, back to login |
+
+### Onboarding module
+
+| Component | Purpose |
+| --------- | ------- |
+| `OnboardingShell` | Step label, `onSkip?`, `onNext`, loading |
+| `StepProgress` | 5-step indicator (current highlighted) |
+| `BusinessStepForm` | Step 1 |
+| `ProfessionalStepForm` | Step 2 |
+| `ServiceInfoStep` | Step 3 static copy + CTAs |
+| `HoursStepForm` | Step 4 |
+| `OnboardingDoneSummary` | Step 5 |
+
+---
+
+## Data models (frontend types)
+
+Mirror API shapes; prefer Zod inference in module schemas.
+
+```typescript
+type AuthUser = {
+  id: string
+  email: string
+  emailVerified: boolean
+  name: string | null
+}
+
+type MeResponse = { user: AuthUser }
+
+type EstablishmentPublic = {
+  id: string
+  name: string
+  slug: string
+  email: string
+  timezone: string
+  // ...nullable fields per API
+}
+
+type BetterAuthErrorBody = { message: string; code?: string }
+```
+
+Shared package `@agenda-xpto/validations` has no auth schemas yet — **define locally** in `#/modules/auth/schemas/` and align with `apps/api/.../auth.schema.ts` when `@agenda-xpto/validations` is extended (future).
+
+---
+
+## Error handling
+
+| Scenario | Detection | User-facing (pt-BR) |
+| -------- | ----------- | --------------------- |
+| Invalid login | 401 / Better Auth body | “E-mail ou senha inválidos.” (generic) |
+| Duplicate signup | `code` or message match* | “Este e-mail já está cadastrado.” |
+| CSRF / 403 on auth | 403 | “Não foi possível entrar. Tente novamente.” |
+| Unverified login | Redirect / API signal | `/verify-email` |
+| Reset token invalid | 400 | “Link inválido ou expirado.” + CTA forgot |
+| Network error | Axios no response | Toast + retry |
+| Establishment slug conflict | 422 `SLUG_ALREADY_TAKEN` | Show API message or retry without custom slug |
+
+\* **Duplicate email mapping** (`context.md` agent discretion):
+
+```typescript
+// #/modules/auth/lib/map-auth-error.ts
+const DUPLICATE_EMAIL_CODES = new Set([
+  'USER_ALREADY_EXISTS',
+  'EMAIL_ALREADY_EXISTS',
+  // extend after probing Better Auth in dev
+])
+
+export function mapSignUpError(error: BetterAuthErrorBody): string
+```
+
+Probe real responses during AUTH-01 implementation; log unknown codes in dev only.
+
+**Resend cooldown:** UI-only 60s; ignore API errors with toast “Não foi possível reenviar. Tente mais tarde.”
+
+---
+
+## Auth forms & validation (Zod)
+
+| Schema | Rules |
+| ------ | ----- |
+| `signUpSchema` | `name` min 1; `email`; `password` 8–128; `confirmPassword` refines match |
+| `signInSchema` | `email`; `password` min 8 |
+| `forgotPasswordSchema` | `email` |
+| `resetPasswordSchema` | `newPassword` 8–128; confirm match |
+| `businessStepSchema` | `name`; `timezone` |
+| `professionalStepSchema` | `name`; optional `email`, `phone` |
+| `hoursStepSchema` | At least one weekday open with valid times |
+
+---
+
+## MSW (tests & Storybook)
+
+**File:** `#/test/msw/handlers/auth-handlers.ts`, `establishments-handlers.ts`, `onboarding-handlers.ts`
+
+| Handler | Method | Notes |
+| ------- | ------ | ----- |
+| `me` | GET | Cookie optional in tests via `document.cookie` or bypass |
+| `sign-in` | POST | Set mock session cookie header |
+| `sign-up` | POST | Return `emailVerified: false` |
+| `send-verification-email` | POST | 200 |
+| `establishments list/create` | GET/POST | Drive onboarding guards |
+| `professionals create` | POST | |
+| `business-hours put` | PUT | |
+
+Register in `#/test/setup.ts` for Vitest; Storybook `preview.ts` imports subset.
+
+---
+
+## Tech decisions
+
+| Decision | Choice | Rationale |
+| -------- | ------ | ----------- |
+| Auth HTTP client | Axios + `authApi` | Locked in `context.md` (5B); no extra dependency |
+| Session source | `GET /api/v1/me` | Typed, matches dashboard auth |
+| Onboarding complete | `establishments.length >= 1` | Locked (2C); single query drives guards |
+| Step 3 | Informational | Locked (1A); no Services API |
+| Step 1 | Mandatory | Locked (4B); no skip UI |
+| Route protection | `beforeLoad` + Query `ensureQueryData` | TanStack Router + SSR Query integration already in `router.tsx` |
+| Post-verify URL | `/onboarding/business` | Locked in context |
+| Duplicate signup error | Explicit message via `mapSignUpError` | context agent discretion — safe on signup only |
+| Already onboarded hits `/onboarding` | Redirect to `/dashboard` | Simplest reading of spec AC #9 |
+| Wizard draft state | TanStack Store optional | Not required for completion; improves UX on back nav |
+
+---
+
+## Requirement mapping (design coverage)
+
+| ID | Design section |
+| -- | -------------- |
+| AUTH-01–05 | API layer, hooks, auth routes, schemas, errors |
+| AUTH-06, AUTH-18 | Route guards, query keys, index redirect |
+| AUTH-07 | AuthLayout, `_auth` routes |
+| AUTH-08 | `#/lib/axios.ts`, `authApi` |
+| AUTH-09 | `PasswordField` |
+| AUTH-12–17 | Onboarding routes, shell, step forms, flow diagram |
+| AUTH-20 | `useResendVerification` + cooldown |
+| AUTH-10 | `useSignOut` + dashboard layout stub |
+| AUTH-21 | Deferred (informational step 3) |
+
+---
+
+## Implementation order (for Tasks phase)
+
+1. `axios` + `urls` + `authApi` + query keys + `sessionQueryOptions` (AUTH-08, AUTH-06 base)
+2. Route guards + `_auth` / `_authenticated` tree (AUTH-07, AUTH-18)
+3. Login / signup / verify / forgot / reset pages (AUTH-01–05, AUTH-09, AUTH-20)
+4. Establishments API + list query (AUTH-13 dependency)
+5. Onboarding shell + steps 1–5 (AUTH-12–17)
+6. Dashboard stub + sign out (AUTH-10)
+7. MSW + tests per `TESTING.md` gates
+
+---
+
+## Open items (verify in implementation)
+
+| Item | Action |
+| ---- | ------ |
+| Better Auth duplicate-email `code` | Probe in dev; extend `DUPLICATE_EMAIL_CODES` |
+| SSR cookie forwarding | Test `beforeLoad` with TanStack Start; add `Cookie` header pass-through if 401 on server |
+| `GET /api/auth/verify-email` from email link | May be full-page navigation to API host — ensure `callbackURL` is web URL; if API redirects to web, no extra route needed |
+
+---
+
+*Next phase: **Tasks** (`tasks.md`) — atomic tasks with dependencies aligned to implementation order above.*

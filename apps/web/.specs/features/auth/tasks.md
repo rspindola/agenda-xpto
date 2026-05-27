@@ -1,613 +1,783 @@
-# Tasks — Authentication & Onboarding Welcome Wizard
+# Auth Tasks
 
-**Design**: [design.md](file:///Users/renato.castro/workspace/copilot-test/apps/web/.specs/features/auth/design.md)
-**Status**: In Progress
+**Design:** `.specs/features/auth/design.md`  
+**Spec:** `.specs/features/auth/spec.md`  
+**Context:** `.specs/features/auth/context.md`  
+**Status:** Approved
 
 ---
 
 ## Execution Plan
 
-### Phase 1: Foundation & Mock Setup (Sequential)
-
-Establish validation rules, mock API servers (MSW), global stores, and hooks before building any visual interface.
+### Phase 1: Foundation (sequential)
 
 ```
-T1 ──→ T2 ──→ T3 ──→ T4
+T1 → T2 → T3 → T4 → T5 → T6
 ```
 
-### Phase 2: Backend Service CRUD - Option A (Sequential)
-
-Implement database-backed service creation endpoints to support Step 3 (Service Setup) during local development.
+### Phase 2: Shared UI & MSW (parallel after T1)
 
 ```
-T5 ──→ T6 ──→ T7 ──→ T8
+T1 complete:
+  ├── T7 [P]  PasswordField
+  └── T8 [P]  MSW handlers (needs T4 types)
+T6 needs T2, T4, T5
 ```
 
-### Phase 3: Frontend Routes & Pages (Parallel / Sequential)
-
-Build the layout structure and authentication page cards first, followed by each wizard step in sequence (since steps naturally depend on each other's data caches).
+### Phase 3: Layouts & route shells (sequential)
 
 ```
-          ┌─→ T10 [P] ─┐
-T9 ───────┼─→ T11 [P] ─┴─→ T12 ──→ T13 ──→ T14 ──→ T15 ──→ T16
+T6, T8 → T9 → T10 → T16
 ```
+
+### Phase 4: Auth pages (parallel after T10)
+
+```
+T10 complete:
+  ├── T11 [P]  Login
+  ├── T12 [P]  Signup
+  ├── T13 [P]  Verify email + resend
+  └── T14 [P]  Forgot + reset password
+```
+
+### Phase 5: Establishments & onboarding (sequential)
+
+```
+T15 → T16 → T17 → T18 → T19 → T20 → T21 → T22
+```
+
+### Phase 6: Dashboard & integration (sequential)
+
+```
+T22 → T23 → T24
+```
+
+### Parallel execution map
+
+```
+Phase 1:  T1 ──→ T2 ──→ T3 ──→ T4 ──→ T5 ──→ T6
+
+Phase 2:  T1 done → T7 [P], T8 [P]  (parallel with each other)
+
+Phase 3:  T6,T8 → T9 → T10 → T16
+
+Phase 4:  T10 → T11 [P] | T12 [P] | T13 [P] | T14 [P]
+
+Phase 5:  T15 → T16 → T17 → T18 → T19 → T20 → T21 → T22
+
+Phase 6:  T21 → T23 → T24
+         T22 can start after T11 (useSignOut) — run with Phase 5 tail or after T21
+```
+
+**Note:** T22 (`DashboardLayout` + sign out) depends on T11 (`useSignOut`). Schedule T22 after T11; may overlap with T17–T21 if sign-out hook is extracted in T11.
 
 ---
 
 ## Task Breakdown
 
-### T1: Create Validation Schemas
+### T1: Axios singleton and web URL helpers
 
-**What**: Define Zod schemas for all form validations (Login, Signup, Reset Password, Onboarding Steps 1 to 4).
-**Where**:
+**What:** Create `#/lib/axios.ts` (`api` with `withCredentials`, `baseURL` from `VITE_API_URL`) and `#/lib/urls.ts` (`webUrls` for callback/redirect absolutes). Document vars in `.env.example` if missing.
 
-- `apps/web/src/modules/auth/schemas/auth.schema.ts`
-- `apps/web/src/modules/auth/schemas/onboarding.schema.ts`
-  **Depends on**: None
-  **Requirement**: `AUTH-01`, `AUTH-02`, `AUTH-03`, `AUTH-04`, `AUTH-07`, `AUTH-08`, `AUTH-09`, `AUTH-10`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `tailwind-design-system`
-    **Tests**: Unit tests (Vitest) co-located in `auth.schema.test.ts` and `onboarding.schema.test.ts`.
-    **Gate**: Quick (`pnpm test`)
+**Where:** `src/lib/axios.ts`, `src/lib/urls.ts`
 
-**Done when**:
+**Depends on:** None
 
-- [x] Zod schema validations successfully defined for login (email/password format constraints).
-- [x] Zod schemas for onboarding Step 1-4 cover required attributes (Timezones, advance minutes, opening ranges).
-- [x] Gate check passes: `pnpm lint && pnpm test`
-- [x] Test count: 12 tests passing.
+**Reuses:** `#/lib/utils.ts` (none for axios)
 
-**Verify**:
+**Requirement:** AUTH-08, AUTH-NF-01
 
-```bash
-pnpm test src/modules/auth/schemas/
-```
+**Done when:**
+
+- [x] `api` exported with `withCredentials: true`
+- [x] `webUrls.onboardingBusiness()`, `verifyEmail()`, `resetPassword()` return absolute URLs
+- [x] No TypeScript errors
+- [x] Gate: `pnpm lint` passes
+
+**Tests:** none (infra)
+
+**Gate:** quick (`pnpm lint`)
 
 ---
 
-### T2: Create Onboarding TanStack Store
+### T2: Query keys and session query options
 
-**What**: Implement a persisted TanStack Store (`onboardingStore.ts`) with utility actions (`onboardingActions`) to manage, auto-cache, and persist wizard inputs to `localStorage` using `@tanstack/store` and `@tanstack/react-store`.
-**Where**: `apps/web/src/modules/auth/stores/onboardingStore.ts`
-**Depends on**: T1
-**Requirement**: `AUTH-12`
-**Tools**:
+**What:** `authKeys`, `establishmentKeys`, `sessionQueryOptions`, `establishmentsQueryOptions` factories.
 
-- MCP: `filesystem`
-- Skill: `vite`
-  **Tests**: Unit tests in `onboardingStore.test.ts` verifying step caching, action modifications, and LocalStorage synchronization.
-  **Gate**: Quick (`pnpm test`)
+**Where:** `src/modules/auth/query-keys.ts`, `src/modules/auth/queries/session-queries.ts`, `src/modules/establishments/query-keys.ts` (or shared `src/lib/query-keys.ts` per design)
 
-**Done when**:
+**Depends on:** T1, T4 (authApi.getMe for sessionQueryOptions — **order:** T4 before T2 session fn, or inline queryFn in T2 and refactor in T4)
 
-- [x] `onboardingStore` and `onboardingActions` successfully written and exported.
-- [x] LocalStorage subscription is active and correctly recovers wizard state on boot.
-- [x] Gate check passes: `pnpm lint && pnpm test`
-- [x] Test count: 8 tests passing.
+**Reuses:** TanStack Query patterns from `#/router.tsx`
 
-**Verify**:
+**Requirement:** AUTH-06, AUTH-08
 
-```bash
-pnpm test src/modules/auth/stores/
-```
+**Done when:**
 
----
+- [x] `sessionQueryOptions` uses `retry: false`, `staleTime: 60_000`
+- [x] Keys stable for invalidation
+- [x] Unit test: query key shape snapshot or factory test
 
-### T3: Configure MSW Mock Setup
+**Tests:** unit (`src/modules/auth/__tests__/query-keys.test.ts`)
 
-**What**: Set up the Mock Service Worker browser/server lifecycle integration and integrate it with Vitest testing suite.
-**Where**:
+**Gate:** quick (`pnpm test`)
 
-- `apps/web/src/mocks/handlers.ts`
-- `apps/web/src/mocks/server.ts`
-- `apps/web/src/mocks/browser.ts`
-- `apps/web/src/test/setup.ts` (modify)
-  **Depends on**: T2
-  **Requirement**: None (Infrastructure)
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `vitest`
-    **Tests**: Integration test verifying MSW correctly intercepts external HTTP requests during mock testing.
-    **Gate**: Quick (`pnpm test`)
+**Adjust dependency:** T2 depends on T1 only; `queryFn` stubs until T4 — **merge T2 after T4** in execution.
 
-**Done when**:
-
-- [x] MSW handlers created with base HTTP endpoint responses.
-- [x] Vitest setup file intercepts and releases active mock ports correctly.
-- [x] Gate check passes: `pnpm lint && pnpm test`
-- [x] Test count: 2 tests passing.
-
-**Verify**:
-
-```bash
-pnpm test src/mocks/
-```
+**Revised:** T2 **Depends on:** T1, T4
 
 ---
 
-### T4: Create Unified Hooks
+### T3: QueryClient default options
 
-**What**: Define React custom hooks leveraging TanStack Query/Axios to query and mutate session/onboarding states.
-**Where**:
+**What:** Set sensible `defaultOptions.queries.staleTime` in `#/integrations/tanstack-query/root-provider.tsx` (per CONCERNS.md).
 
-- `apps/web/src/modules/auth/hooks/useAuth.ts`
-- `apps/web/src/modules/auth/hooks/useOnboarding.ts`
-  **Depends on**: T3
-  **Requirement**: `AUTH-01`, `AUTH-02`, `AUTH-03`, `AUTH-04`, `AUTH-05`, `AUTH-06`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `vitest`
-    **Tests**: Hook unit tests using `@testing-library/react` and MSW hooks verification.
-    **Gate**: Quick (`pnpm test`)
+**Where:** `src/integrations/tanstack-query/root-provider.tsx`
 
-**Done when**:
+**Depends on:** None
 
-- [x] `useAuth` correctly implements login, signup, current session, and signout flows.
-- [x] `useOnboarding` triggers API mutations and syncs with the `onboardingStore`.
-- [x] Gate check passes: `pnpm lint && pnpm test`
-- [x] Test count: 10 tests passing.
+**Reuses:** existing `getContext()`
 
-**Verify**:
+**Requirement:** AUTH-NF (performance)
 
-```bash
-pnpm test src/modules/auth/hooks/
-```
+**Done when:**
+
+- [x] Global `staleTime` ≥ 30s or queries use per-options override from T2
+- [x] App still boots; `pnpm test` passes
+
+**Tests:** none
+
+**Gate:** quick (`pnpm test`)
 
 ---
 
-### T5: Align Auth Session Contract
+### T4: authApi module and Auth types
 
-**What**: Align frontend session query behavior with backend `/api/v1/me` contract.
-**Where**: `apps/web/src/modules/auth/hooks/useAuth.ts`
-**Depends on**: T4
-**Requirement**: `AUTH-05`, `AUTH-06`
-**Tools**:
+**What:** `authApi` wrappers for all Better Auth + `/me` endpoints; `AuthUser`, `MeResponse`, `BetterAuthErrorBody` types.
 
-- MCP: `filesystem`
-- Skill: `vitest`
-  **Tests**: Hook unit tests using MSW session response.
-  **Gate**: Quick (`pnpm test`)
+**Where:** `src/modules/auth/api/auth-api.ts`, `src/modules/auth/types/auth-types.ts`
 
-**Done when**:
+**Depends on:** T1
 
-- [x] Session query reads `{ user }` response shape and returns a `SessionUser`.
-- [x] Session types match backend contract (nullable name).
-- [x] Gate check passes: `pnpm test src/modules/auth/hooks/`
+**Reuses:** `#/lib/axios.ts`, `#/lib/urls.ts`
 
-**Verify**:
+**Requirement:** AUTH-08
 
-```bash
-pnpm --filter api test services.repository.test.ts
-```
+**Done when:**
+
+- [x] All endpoints from design table implemented
+- [x] Unit tests mock axios and assert paths/methods/bodies
+- [x] Gate: `pnpm test` — auth-api tests pass
+
+**Tests:** unit
+
+**Gate:** quick
 
 ---
 
-### T6: Align Verify Email Contract
+### T5: Auth Zod schemas and mapSignUpError
 
-**What**: Update verify email action to use backend GET contract with token and callback URL.
-**Where**: `apps/web/src/modules/auth/hooks/useAuth.ts`
-**Depends on**: T5
-**Requirement**: `AUTH-06`
-**Tools**:
+**What:** `signUpSchema`, `signInSchema`, `forgotPasswordSchema`, `resetPasswordSchema`; `mapSignUpError` + `DUPLICATE_EMAIL_CODES` set.
 
-- MCP: `filesystem`
-- Skill: `vitest`
-  **Tests**: Hook unit tests using MSW verify email handler.
-  **Gate**: Quick (`pnpm test`)
+**Where:** `src/modules/auth/schemas/`, `src/modules/auth/lib/map-auth-error.ts`
 
-**Done when**:
+**Depends on:** None
 
-- [x] Verify email mutation uses GET `/api/auth/verify-email` with query params.
-- [x] Session query invalidates after verification.
-- [x] Gate check passes: `pnpm test src/modules/auth/hooks/`
+**Reuses:** Zod v4 patterns from UI tests
 
-**Verify**:
+**Requirement:** AUTH-01, AUTH-02, AUTH-NF-02
 
-```bash
-pnpm --filter api test services.service.test.ts
-```
+**Done when:**
+
+- [x] Schemas reject invalid password length and confirm-password mismatch
+- [x] `mapSignUpError` returns explicit pt-BR string for known duplicate codes
+- [x] Unit tests for schema + mapper
+
+**Tests:** unit
+
+**Gate:** quick
 
 ---
 
-### T7: Service API Routes Plugin (Option A)
+### T6: Route guards
 
-**What**: Register a new Fastify route plugin for Service endpoints under availability route encapsulation.
-**Where**:
+**What:** `route-guards.ts` with `ensureGuest`, `ensureSession`, `ensureEmailVerified`, `ensureOnboardingPending`, `ensureOnboardingComplete`, `resolvePostLoginPath`, `fetchSession`, `fetchEstablishments`.
 
-- `apps/api/src/modules/availability/plugins/services.plugin.ts`
-- `apps/api/src/modules/availability/availability.plugin.ts`
-  **Depends on**: T6
-  **Requirement**: `AUTH-09`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `fastify-best-practices`
-    **Tests**: Route-level HTTP mocking integration test suite.
-    **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/auth/lib/route-guards.ts`
 
-**Done when**:
+**Depends on:** T2, T4, T5
 
-- [ ] Route `POST /api/v1/establishments/:establishmentId/services` is active.
-- [ ] Route-level validations handle bad inputs correctly (e.g. negative prices, empty names).
-- [ ] Gate check passes: `pnpm --filter api test`
-- [ ] Test count: 8 tests passing.
+**Reuses:** TanStack Router `redirect()`, `queryClient.ensureQueryData`
 
-**Status Note**: Blocked (backend out of scope by instruction; no changes in apps/api).
+**Requirement:** AUTH-06, AUTH-18
 
-**Verify**:
+**Done when:**
 
-```bash
-pnpm --filter api test
-```
+- [x] Unit tests cover redirect targets for guest / unverified / no establishments / has establishments
+- [x] No `localStorage` token usage
+- [x] Gate: `pnpm test` passes
+
+**Tests:** unit (mock queryClient)
+
+**Gate:** quick
 
 ---
 
-### T8: Align MSW Auth Responses
+### T7: PasswordField component [P]
 
-**What**: Ensure MSW handlers mirror backend auth response shapes for session and verification.
-**Where**:
+**What:** `PasswordField` with show/hide toggle, label, error; Storybook stories; Vitest interaction test.
 
-- `apps/web/src/mocks/handlers.ts`
-- `apps/web/src/mocks/__tests__/msw.test.ts`
-  **Depends on**: T5
-  **Requirement**: `AUTH-05`, `AUTH-06`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `vitest`
-    **Tests**: MSW integration test for `/api/v1/me` shape.
-    **Gate**: Quick (`pnpm test`)
+**Where:** `src/components/ui/password-field.tsx`, `.stories.tsx`, `__tests__/`
 
-**Done when**:
+**Depends on:** T1 (optional — only `cn`)
 
-- [x] MSW `/api/v1/me` returns `{ user }` payload and tests validate it.
-- [x] Verify email handler uses GET contract with required token.
-- [x] Gate check passes: `pnpm test src/mocks/`
+**Reuses:** `#/components/ui/input.tsx`, `#/lib/utils.ts`
 
-**Verify**:
+**Requirement:** AUTH-09
 
-```bash
-pnpm --filter api test
-```
+**Done when:**
+
+- [ ] Stories: default, error, disabled
+- [ ] Test: toggles visibility, associates label
+- [ ] Gate: `pnpm test` passes
+
+**Tests:** integration (UI)
+
+**Gate:** quick
 
 ---
 
-### T9: Register Router Configuration & Auth Layout
+### T8: MSW handlers for auth and establishments [P]
 
-**What**: Establish TanStack Router routes and a premium, responsive base layout featuring gradients, glassmorphism, and smooth transitions.
-**Where**:
+**What:** Handlers for `me`, auth mutations, establishments list/create, professionals create, business-hours PUT; register in `#/test/setup.ts`.
 
-- `apps/web/src/routes/login.tsx`
-- `apps/web/src/routes/signup.tsx`
-- `apps/web/src/routes/forgot-password.tsx`
-- `apps/web/src/routes/reset-password.tsx`
-- `apps/web/src/routes/verify-email.tsx`
-- `apps/web/src/routes/welcome.tsx`
-- `apps/web/src/modules/auth/components/AuthLayout.tsx`
-  **Depends on**: T4
-  **Requirement**: `AUTH-01`, `AUTH-02`, `AUTH-03`, `AUTH-04`, `AUTH-06`, `AUTH-07`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `frontend-design`
-    **Tests**: Router setup checks and base layout component snapshots.
-    **Gate**: Quick (`pnpm test`)
+**Where:** `src/test/msw/handlers/auth-handlers.ts`, `establishments-handlers.ts`, `src/test/setup.ts`
 
-**Done when**:
+**Depends on:** T4 (response shapes)
 
-- [ ] All routes compiled and dynamically registered with the route tree.
-- [ ] `AuthLayout` successfully renders high-fidelity branding elements and gradients.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 4 tests passing.
+**Reuses:** MSW 2 from `package.json`
 
-**Verify**:
+**Requirement:** AUTH-NF-04, AUTH-NF-08
 
-```bash
-pnpm test src/modules/auth/components/AuthLayout.test.tsx
-```
+**Done when:**
+
+- [ ] Handlers used by at least one passing test (can be placeholder test in T8)
+- [ ] `pnpm test` passes
+
+**Tests:** unit (handler contract test optional)
+
+**Gate:** quick
 
 ---
 
-### T10: Implement LoginForm & SignUpForm [P]
+### T9: AuthLayout and AuthFormCard
 
-**What**: Design the Login and Sign-Up card form panels inside the premium layout, hook up submit handles to useAuth.
-**Where**:
+**What:** Centered auth layout + reusable card wrapper (title, subtitle, footer links).
 
-- `apps/web/src/modules/auth/components/LoginForm.tsx`
-- `apps/web/src/modules/auth/components/SignUpForm.tsx`
-  **Depends on**: T9
-  **Requirement**: `AUTH-01`, `AUTH-02`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `frontend-design`
-    **Tests**: Component tests using `@testing-library/react` and `@testing-library/user-event` to simulate validation states. Add CSF 3.0 Storybook stories.
-    **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/components/layouts/auth-layout.tsx`, `src/modules/auth/components/auth-form-card.tsx`
 
-**Done when**:
+**Depends on:** T7 (PasswordField used by forms later — optional dep), `#/components/ui/card.tsx`
 
-- [ ] Forms validate input dynamically (minimum length, valid emails).
-- [ ] API calls are routed via MSW mock handlers.
-- [ ] Storybook story created and renders cleanly under port 6006.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 12 tests passing.
+**Reuses:** `#/components/ui/card.tsx`, `button.tsx`
 
-**Verify**:
+**Requirement:** AUTH-07
 
-```bash
-pnpm test src/modules/auth/components/LoginForm.test.tsx
-```
+**Done when:**
+
+- [ ] Renders children in responsive centered layout
+- [ ] Storybook story for `AuthFormCard` (optional) or smoke test
+- [ ] Gate: `pnpm lint` passes
+
+**Tests:** none (layout); optional story only
+
+**Gate:** quick
 
 ---
 
-### T11: Implement ForgotPasswordForm & ResetPasswordForm [P]
+### T10: Public auth route tree (`_auth`)
 
-**What**: Build standard password recovery cards with Zod validations and link them to recovery endpoint mutations.
-**Where**:
+**What:** `src/routes/_auth/route.tsx` with `AuthLayout` + `ensureGuest`; stub child routes (empty) for login/signup/forgot/reset/verify paths.
 
-- `apps/web/src/modules/auth/components/ForgotPasswordForm.tsx`
-- `apps/web/src/modules/auth/components/ResetPasswordForm.tsx`
-  **Depends on**: T9
-  **Requirement**: `AUTH-03`, `AUTH-04`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `frontend-design`
-    **Tests**: Unit tests for both card templates + CSF 3.0 Storybook stories.
-    **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/routes/_auth/`
 
-**Done when**:
+**Depends on:** T6, T9
 
-- [ ] Forms correctly parse parameters from the URL (recovery tokens).
-- [ ] Storybook story created and interactive controls behave correctly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 10 tests passing.
+**Reuses:** TanStack Router file routes
 
-**Verify**:
+**Requirement:** AUTH-07
 
-```bash
-pnpm test src/modules/auth/components/ForgotPasswordForm.test.tsx
-```
+**Done when:**
+
+- [ ] `routeTree.gen.ts` regenerates with `_auth` layout
+- [ ] Guest hitting `/login` renders layout
+- [ ] Gate: `pnpm lint && pnpm test` (no regression)
+
+**Tests:** integration (minimal route render with MSW)
+
+**Gate:** quick
 
 ---
 
-### T12: Implement Onboarding Step 1: Business Setup
+### T11: Login page and useSignIn [P]
 
-**What**: Build the Step 1 form panel under `/welcome` to manage establishment creation (`POST /api/v1/establishments`) with validation rules.
-**Where**: `apps/web/src/modules/auth/components/onboarding/Step1Business.tsx`
-**Depends on**: T10, T11
-**Requirement**: `AUTH-07`
-**Tools**:
+**What:** `LoginForm`, `useSignIn`, `sign-in` hook tests, `src/routes/_auth/login.tsx` with TanStack Form + generic error copy.
 
-- MCP: `filesystem`
-- Skill: `frontend-design`
-  **Tests**: Form integration tests using user-event + MSW mocks. CSF 3.0 Storybook story.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/auth/hooks/use-sign-in.ts`, `components/login-form.tsx`, `src/routes/_auth/login.tsx`
 
-**Done when**:
+**Depends on:** T5, T7, T10, T8
 
-- [ ] Business name, Category, Country, and Timezone dropdowns are fully operational.
-- [ ] Form dynamically caches input into `onboardingStore` on change.
-- [ ] Clicking "Próximo" submits establishment to the backend and advances to Step 2.
-- [ ] Storybook story created and interactive play functions pass.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 8 tests passing.
+**Reuses:** `authApi.signInEmail`, `sessionQueryOptions`, `resolvePostLoginPath`
 
-**Verify**:
+**Requirement:** AUTH-02
 
-```bash
-pnpm test src/modules/auth/components/onboarding/Step1Business.test.tsx
-```
+**Done when:**
+
+- [ ] Successful sign-in invalidates session and navigates per establishments count
+- [ ] Invalid credentials show generic pt-BR message
+- [ ] Hook test with MSW passes
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit (hook) + integration (form)
+
+**Gate:** quick
 
 ---
 
-### T13: Implement Onboarding Step 2: Professional Setup
+### T12: Signup page and useSignUp [P]
 
-**What**: Build the Step 2 form panel to handle creating the first professional associated with the new establishment (`POST /api/v1/establishments/:id/professionals`).
-**Where**: `apps/web/src/modules/auth/components/onboarding/Step2Professional.tsx`
-**Depends on**: T12
-**Requirement**: `AUTH-08`
-**Tools**:
+**What:** `SignUpForm`, `useSignUp`, signup route; duplicate email uses `mapSignUpError`; redirect to `/verify-email?email=`.
 
-- MCP: `filesystem`
-- Skill: `frontend-design`
-  **Tests**: Form integration tests using user-event + MSW mocks. CSF 3.0 Storybook story.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/auth/hooks/use-sign-up.ts`, `components/sign-up-form.tsx`, `src/routes/_auth/signup.tsx`
 
-**Done when**:
+**Depends on:** T5, T7, T10, T8
 
-- [ ] Professional Name, Email, and Phone fields validate correctly.
-- [ ] Supports skippability ("Pular") without creating professionals.
-- [ ] Successfully binds the new professional to the `establishmentId` cached from Step 1.
-- [ ] Storybook story created and renders cleanly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 8 tests passing.
+**Reuses:** `webUrls.onboardingBusiness()` as `callbackURL`
 
-**Verify**:
+**Requirement:** AUTH-01
 
-```bash
-pnpm test src/modules/auth/components/onboarding/Step2Professional.test.tsx
-```
+**Done when:**
+
+- [ ] Signup navigates to verify-email with email in search
+- [ ] Duplicate email shows explicit message (MSW 422/409 scenario)
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit + integration
+
+**Gate:** quick
 
 ---
 
-### T14: Implement Onboarding Step 3: Service Setup
+### T13: Verify email page, resend, cooldown [P]
 
-**What**: Build the Step 3 form panel to manage scheduling service creation (`POST /api/v1/establishments/:id/services`) and link it to the Step 2 professional.
-**Where**: `apps/web/src/modules/auth/components/onboarding/Step3Service.tsx`
-**Depends on**: T13
-**Requirement**: `AUTH-09`
-**Tools**:
+**What:** `VerifyEmailPanel`, `useResendVerification` (60s cooldown), `verify-email.tsx`; `POST send-verification-email`.
 
-- MCP: `filesystem`
-- Skill: `frontend-design`
-  **Tests**: Form integration tests + CSF 3.0 Storybook story.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/auth/hooks/use-resend-verification.ts`, `components/verify-email-panel.tsx`, `src/routes/_auth/verify-email.tsx`
 
-**Done when**:
+**Depends on:** T4, T10, T8
 
-- [ ] Service Name, Duration (minutes), and Price (cents) fields validate.
-- [ ] Supports skippability ("Pular").
-- [ ] Link between Service and Professional maps correctly.
-- [ ] Storybook story created and renders cleanly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 8 tests passing.
+**Reuses:** `webUrls`, email from route search
 
-**Verify**:
+**Requirement:** AUTH-03, AUTH-20
 
-```bash
-pnpm test src/modules/auth/components/onboarding/Step3Service.test.tsx
-```
+**Done when:**
+
+- [ ] Resend disabled 60s after click with countdown label
+- [ ] Tests mock timer or cooldown state
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit (hook) + integration
+
+**Gate:** quick
 
 ---
 
-### T15: Implement Onboarding Step 4: Working Hours Setup
+### T14: Forgot and reset password pages [P]
 
-**What**: Build the interactive weekday grid and hours slider component (`PUT /api/v1/establishments/:id/availability/business-hours`) with responsive styling.
-**Where**: `apps/web/src/modules/auth/components/onboarding/Step4WorkingHours.tsx`
-**Depends on**: T14
-**Requirement**: `AUTH-10`
-**Tools**:
+**What:** `ForgotPasswordForm`, `ResetPasswordForm`, hooks, routes; neutral forgot copy; reset requires `token` search param.
 
-- MCP: `filesystem`
-- Skill: `frontend-design`
-  **Tests**: Form interaction tests verifying invalid working hours blocks submit (e.g. closesAt < opensAt). CSF 3.0 Storybook story.
-  **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/auth/hooks/`, `components/`, `src/routes/_auth/forgot-password.tsx`, `reset-password.tsx`
 
-**Done when**:
+**Depends on:** T5, T7, T10, T8
 
-- [ ] Interactive weekday grid enables/disables business days.
-- [ ] Custom opening, closing, and break hour pickers are functional and fully style-responsive.
-- [ ] Submitting maps to the establishment's business hours correctly.
-- [ ] Storybook story created and renders cleanly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 10 tests passing.
+**Reuses:** `authApi.requestPasswordReset`, `resetPassword`
 
-**Verify**:
+**Requirement:** AUTH-04, AUTH-05
 
-```bash
-pnpm test src/modules/auth/components/onboarding/Step4WorkingHours.test.tsx
-```
+**Done when:**
+
+- [ ] Forgot always shows neutral success state
+- [ ] Reset without token shows invalid-link UI
+- [ ] Successful reset redirects to `/login`
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit + integration
+
+**Gate:** quick
 
 ---
 
-### T16: Implement Onboarding Step 5: Summary & Onboarding Gate Routing
+### T15: Establishments API and query
 
-**What**: Create the summary dashboard panel showing entered cache, the email verification gate page `/verify-email`, and dynamic auth route guards.
-**Where**:
+**What:** `establishmentsApi.list/create`, `establishmentsQueryOptions`, types aligned with API schema.
 
-- `apps/web/src/modules/auth/components/onboarding/Step5Summary.tsx`
-- `apps/web/src/modules/auth/pages/VerifyEmailPage.tsx`
-- `apps/web/src/modules/auth/pages/WelcomePage.tsx`
-  **Depends on**: T15
-  **Requirement**: `AUTH-05`, `AUTH-06`, `AUTH-07`, `AUTH-11`
-  **Tools**:
-  - MCP: `filesystem`
-  - Skill: `frontend-design`
-    **Tests**: Unit tests covering email resend buttons, layout summaries, and router middleware auth guards. CSF 3.0 Storybook story.
-    **Gate**: Full (`pnpm lint && pnpm test`)
+**Where:** `src/modules/establishments/api/establishments-api.ts`, queries file
 
-**Done when**:
+**Depends on:** T1, T2, T8
 
-- [ ] Onboarding wizard completed summary card details match cached store keys.
-- [ ] VerifyEmail page correctly guards dashboard access and manages resend triggers.
-- [ ] Complete onboarding flow resets the wizard cache and redirects to `/dashboard`.
-- [ ] Storybook stories created and render cleanly.
-- [ ] Gate check passes: `pnpm lint && pnpm test`
-- [ ] Test count: 12 tests passing.
+**Reuses:** `establishmentKeys`
 
-**Verify**:
+**Requirement:** AUTH-13, AUTH-17, AUTH-18
 
-```bash
-pnpm test src/modules/auth/components/onboarding/Step5Summary.test.tsx
-```
+**Done when:**
+
+- [ ] List/create tested with MSW
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit
+
+**Gate:** quick
 
 ---
 
-## Parallel Execution Map
+### T16: Authenticated route shell and index redirect
 
-Visual representation of what can run simultaneously:
+**What:** `_authenticated/route.tsx` with `ensureSession` + `ensureEmailVerified`; update `src/routes/index.tsx` redirect hub.
 
-```
-Phase 1 (Foundation):
-  T1 ──→ T2 ──→ T3 ──→ T4
+**Where:** `src/routes/_authenticated/route.tsx`, `src/routes/index.tsx`
 
-Phase 2 (Backend Services - Option A):
-  T5 ──→ T6 ──→ T7 ──→ T8
+**Depends on:** T6, T15
 
-Phase 3 (Frontend Pages):
-  T4 and T8 complete, then:
-    T9 ────────┬──→ T10 [P] ──┐
-               └──→ T11 [P] ──┴──→ T12 ──→ T13 ──→ T14 ──→ T15 ──→ T16
-```
+**Reuses:** route guards
+
+**Requirement:** AUTH-06, AUTH-18
+
+**Done when:**
+
+- [ ] `/` redirects unauthenticated → login, no establishments → onboarding, else dashboard
+- [ ] Route test with mocked loader context
+- [ ] Gate: `pnpm test`
+
+**Tests:** integration
+
+**Gate:** quick
+
+---
+
+### T17: Onboarding layout and shell components
+
+**What:** `OnboardingLayout`, `OnboardingShell`, `StepProgress`; `onboarding/route.tsx` with `ensureOnboardingPending`.
+
+**Where:** `src/components/layouts/onboarding-layout.tsx`, `src/modules/onboarding/components/`, `src/routes/_authenticated/onboarding/route.tsx`
+
+**Depends on:** T16
+
+**Reuses:** UI `Button`
+
+**Requirement:** AUTH-12
+
+**Done when:**
+
+- [ ] Step 1 route has no “Pular”; steps 2–4 shell supports skip prop
+- [ ] Progress shows Passo X/5
+- [ ] Gate: `pnpm lint`
+
+**Tests:** integration (shell render)
+
+**Gate:** quick
+
+---
+
+### T18: Onboarding step 1 — business (mandatory)
+
+**What:** `businessStepSchema`, `BusinessStepForm`, `useCreateEstablishment`, `business.tsx`; POST establishment; invalidate list.
+
+**Where:** `src/modules/onboarding/schemas/`, `components/business-step-form.tsx`, `hooks/`, `src/routes/_authenticated/onboarding/business.tsx`
+
+**Depends on:** T15, T17, T11 (session user email prefill)
+
+**Reuses:** `establishmentsApi.create`, TanStack Form
+
+**Requirement:** AUTH-13
+
+**Done when:**
+
+- [ ] Cannot proceed without valid name + timezone
+- [ ] Success navigates to `/onboarding/professional`
+- [ ] MSW integration test passes
+- [ ] Gate: `pnpm test`
+
+**Tests:** integration
+
+**Gate:** quick
+
+---
+
+### T19: Onboarding step 2 — professional
+
+**What:** `ProfessionalStepForm`, `useCreateProfessional`, `professional.tsx`; skip advances without API.
+
+**Where:** `src/modules/onboarding/`
+
+**Depends on:** T18, T8
+
+**Reuses:** `onboarding-api` → professionals POST, `establishments[0].id`
+
+**Requirement:** AUTH-14
+
+**Done when:**
+
+- [ ] Skip goes to service step
+- [ ] Create professional then next works
+- [ ] Gate: `pnpm test`
+
+**Tests:** integration
+
+**Gate:** quick
+
+---
+
+### T20: Onboarding step 3 — service (informational)
+
+**What:** `ServiceInfoStep` static copy (pt-BR); `service.tsx`; only Próximo/Pular.
+
+**Where:** `src/modules/onboarding/components/service-info-step.tsx`, `src/routes/_authenticated/onboarding/service.tsx`
+
+**Depends on:** T17
+
+**Reuses:** `OnboardingShell`
+
+**Requirement:** AUTH-15
+
+**Done when:**
+
+- [ ] No API calls on this step
+- [ ] Navigates to hours
+- [ ] Gate: `pnpm lint`
+
+**Tests:** integration (smoke)
+
+**Gate:** quick
+
+---
+
+### T21: Onboarding step 4 — business hours
+
+**What:** `hoursStepSchema`, `HoursStepForm`, `onboarding-api` batch PUT, `hours.tsx`.
+
+**Where:** `src/modules/onboarding/api/onboarding-api.ts`, components, route
+
+**Depends on:** T18, T8
+
+**Reuses:** availability PUT per weekday from design
+
+**Requirement:** AUTH-16
+
+**Done when:**
+
+- [ ] At least one weekday can be saved
+- [ ] Skip advances to done without PUT
+- [ ] Gate: `pnpm test`
+
+**Tests:** unit (batch mapper) + integration
+
+**Gate:** quick
+
+---
+
+### T22: Onboarding step 5 — done + dashboard stub
+
+**What:** `OnboardingDoneSummary`, `done.tsx`; `DashboardLayout` stub; `dashboard/index.tsx` with `ensureOnboardingComplete`; wire `useSignOut` in header.
+
+**Where:** `src/routes/_authenticated/onboarding/done.tsx`, `src/routes/_authenticated/dashboard/index.tsx`, layouts
+
+**Depends on:** T21, T11 (useSignOut), T16
+
+**Reuses:** establishments query for summary
+
+**Requirement:** AUTH-17, AUTH-10
+
+**Done when:**
+
+- [ ] Done → dashboard only if establishments ≥ 1
+- [ ] Deep-link `/onboarding/done` without establishment redirects to business
+- [ ] Sign out clears cache and goes to login
+- [ ] Gate: `pnpm test`
+
+**Tests:** integration
+
+**Gate:** quick
+
+---
+
+### T23: Route guard and onboarding flow integration tests
+
+**What:** End-to-end-style tests: verify-email path → onboarding business → skip 2–4 → done → dashboard; guard blocks dashboard with 0 establishments.
+
+**Where:** `src/routes/__tests__/auth-flow.test.tsx` or `src/modules/auth/__tests__/route-guards.test.ts` (extend)
+
+**Depends on:** T22, T8
+
+**Reuses:** MSW full handler set
+
+**Requirement:** AUTH-06, AUTH-12–AUTH-18
+
+**Done when:**
+
+- [ ] At least 3 scenarios from spec independent tests covered
+- [ ] Gate: `pnpm test`
+
+**Tests:** integration
+
+**Gate:** quick
+
+---
+
+### T24: Full gate and spec traceability update
+
+**What:** Run `pnpm lint && pnpm test`; fix regressions; mark tasks complete in this file; update `spec.md` traceability statuses.
+
+**Where:** repo-wide
+
+**Depends on:** T23
+
+**Reuses:** TESTING.md full gate
+
+**Requirement:** All AUTH-* MVP
+
+**Done when:**
+
+- [ ] `pnpm lint && pnpm test` green
+- [ ] No sensitive data in logs
+- [ ] Manual smoke: signup → verify (MSW) → onboarding step 1 → dashboard
+
+**Tests:** full suite
+
+**Gate:** full (`pnpm lint && pnpm test`)
+
+**Commit:** `feat(auth): complete auth and onboarding MVP`
 
 ---
 
 ## Task Granularity Check
 
-Validation check to confirm each task is atomic and represents one cohesive unit of deliverable.
-
-| Task                                                      | Scope                                    | Status                     |
-| --------------------------------------------------------- | ---------------------------------------- | -------------------------- |
-| **T1**: Create Validation Schemas                         | 2 validation schema files (Zod)          | ✅ Granular                |
-| **T2**: Create Onboarding Store                           | 1 state store file (TanStack Store)      | ✅ Granular                |
-| **T3**: Configure MSW Mock Setup                          | 4 infrastructure files (MSW integration) | ✅ Cohesive Infrastructure |
-| **T4**: Create Unified Hooks                              | 2 hooks files (Query/Mutations)          | ✅ Granular                |
-| **T5**: Service DB & Repository Layer                     | 1 Prisma repository file                 | ✅ Granular                |
-| **T6**: Service Business Logic Layer                      | 1 service class file                     | ✅ Granular                |
-| **T7**: Service API Routes Plugin                         | 2 Fastify plugin files                   | ✅ Granular                |
-| **T8**: Service Comprehensive Integration                 | 1 integration route test file            | ✅ Granular                |
-| **T9**: Register Router & Auth Layout                     | 6 route files + 1 layout container       | ✅ Cohesive Routing        |
-| **T10**: Implement LoginForm & SignUpForm                 | 2 card component files                   | ✅ Granular                |
-| **T11**: Implement ForgotPasswordForm & ResetPasswordForm | 2 card component files                   | ✅ Granular                |
-| **T12**: Implement Onboarding Step 1: Business Setup      | 1 step form component file               | ✅ Granular                |
-| **T13**: Implement Onboarding Step 2: Professional Setup  | 1 step form component file               | ✅ Granular                |
-| **T14**: Implement Onboarding Step 3: Service Setup       | 1 step form component file               | ✅ Granular                |
-| **T15**: Implement Onboarding Step 4: Working Hours Setup | 1 step form component file               | ✅ Granular                |
-| **T16**: Implement Onboarding Step 5: Summary & Gate      | 1 step form + 2 page components          | ✅ Cohesive Completion     |
+| Task | Scope | Status |
+| ---- | ----- | ------ |
+| T1 | 2 lib files | ✅ |
+| T4 | 1 API module | ✅ |
+| T6 | 1 guard module + tests | ✅ |
+| T7 | 1 UI component | ✅ |
+| T11 | Login hook + form + route | ✅ |
+| T12 | Signup hook + form + route | ✅ |
+| T18 | 1 onboarding step | ✅ |
+| T24 | Meta verification | ✅ |
 
 ---
 
-## Diagram-Definition Cross-Check
+## Diagram–Definition Cross-Check
 
-Cross-check showing alignment between dependencies in the execution plan diagram and task declarations.
+| Task | Depends on (body) | Diagram | Status |
+| ---- | ------------------- | ------- | ------ |
+| T1 | None | Phase 1 start | ✅ |
+| T2 | T1, T4 | After T4 | ✅ |
+| T3 | None | Parallel to T1 | ✅ |
+| T4 | T1 | T1 → T4 | ✅ |
+| T5 | None | T1 parallel | ✅ |
+| T6 | T2, T4, T5 | T5 → T6 | ✅ |
+| T7 | T1 | T1 → T7 [P] | ✅ |
+| T8 | T4 | T1 → T8 [P] | ✅ |
+| T9 | — | T6,T8 → T9 | ✅ (T9 deps T7 optional) |
+| T10 | T6, T9 | T9 → T10 | ✅ |
+| T11–T14 | T10 + … | T10 → parallel | ✅ |
+| T15 | T1, T2, T8 | T15 → T16 | ✅ |
+| T16 | T6, T15 | T15 → T16 | ✅ |
+| T17–T21 | chain | sequential | ✅ |
+| T22 | T21, T11, T16 | Phase 6 | ✅ |
+| T23 | T22, T8 | T22 → T23 | ✅ |
+| T24 | T23 | T23 → T24 | ✅ |
 
-| Task    | Depends On (task body) | Diagram Shows | Status   |
-| ------- | ---------------------- | ------------- | -------- |
-| **T1**  | None                   | None          | ✅ Match |
-| **T2**  | T1                     | T1            | ✅ Match |
-| **T3**  | T2                     | T2            | ✅ Match |
-| **T4**  | T3                     | T3            | ✅ Match |
-| **T5**  | None                   | None          | ✅ Match |
-| **T6**  | T5                     | T5            | ✅ Match |
-| **T7**  | T6                     | T6            | ✅ Match |
-| **T8**  | T7                     | T7            | ✅ Match |
-| **T9**  | T4                     | T4            | ✅ Match |
-| **T10** | T9                     | T9            | ✅ Match |
-| **T11** | T9                     | T9            | ✅ Match |
-| **T12** | T10, T11               | T10, T11      | ✅ Match |
-| **T13** | T12                    | T12           | ✅ Match |
-| **T14** | T13                    | T13           | ✅ Match |
-| **T15** | T14                    | T14           | ✅ Match |
-| **T16** | T15                    | T15           | ✅ Match |
+**Correction:** Execute **T15 before T16** (establishments query required by `ensureOnboardingComplete` in authenticated shell). Phase 5 order: `T16 depends T15` — diagram updated in Execution Plan above.
 
 ---
 
 ## Test Co-location Validation
 
-Cross-check validating that every task includes testing files matching the codebase's `TESTING.md` coverage matrix guidelines.
+| Task | Layer | Matrix requires | Task Tests | Status |
+| ---- | ----- | --------------- | ---------- | ------ |
+| T1 | lib | none | none | ✅ |
+| T2 | query factories | unit | unit | ✅ |
+| T3 | integration provider | none | none | ✅ |
+| T4 | module API | unit | unit | ✅ |
+| T5 | schemas/lib | unit | unit | ✅ |
+| T6 | module lib | unit | unit | ✅ |
+| T7 | UI component | integration | integration | ✅ |
+| T8 | MSW | unit/none | unit | ✅ |
+| T9 | layout | none | none | ✅ |
+| T10 | routes | integration | integration | ✅ |
+| T11–T14 | hooks + routes + forms | unit + integration | unit + integration | ✅ |
+| T15 | module API | unit | unit | ✅ |
+| T16 | routes | integration | integration | ✅ |
+| T17–T22 | components/routes | integration | integration | ✅ |
+| T23 | routes flow | integration | integration | ✅ |
+| T24 | — | full gate | full | ✅ |
 
-| Task    | Code Layer Created/Modified | Matrix Requires        | Task Says                               | Status   |
-| ------- | --------------------------- | ---------------------- | --------------------------------------- | -------- |
-| **T1**  | Validation Schemas          | Unit (Vitest)          | Unit tests in `*.schema.test.ts`        | ✅ Match |
-| **T2**  | TanStack Store              | Unit (Vitest)          | Unit tests in `onboardingStore.test.ts` | ✅ Match |
-| **T3**  | Mock Infrastructure         | Integration (Vitest)   | Mock handler tests in `setup.ts`        | ✅ Match |
-| **T4**  | React Hooks                 | Unit (Vitest)          | Hook tests in `useAuth.test.ts`         | ✅ Match |
-| **T5**  | Prisma Repository           | Integration (Vitest)   | Repo tests on PostgreSQL                | ✅ Match |
-| **T6**  | Service Logic               | Unit (Vitest)          | Service unit tests with mocks           | ✅ Match |
-| **T7**  | API Routes                  | Integration (Vitest)   | Fastify route integration tests         | ✅ Match |
-| **T8**  | Full API Integration        | Integration (Vitest)   | Route integration test suite            | ✅ Match |
-| **T9**  | Router Setup & Layout       | Route Unit/Integration | Snapshots & setup tests                 | ✅ Match |
-| **T10** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T11** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T12** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T13** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T14** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T15** | Components                  | Integration (Vitest)   | Vitest component + Storybook play       | ✅ Match |
-| **T16** | Components / Router         | Route Unit/Integration | Component + gate route tests            | ✅ Match |
+---
+
+## Requirement Traceability (task → AUTH ID)
+
+| Task | Requirements |
+| ---- | ------------- |
+| T1, T4 | AUTH-08 |
+| T2, T3, T6, T16, T23 | AUTH-06, AUTH-18 |
+| T5, T12 | AUTH-01 |
+| T11 | AUTH-02 |
+| T13 | AUTH-03, AUTH-20 |
+| T14 | AUTH-04, AUTH-05 |
+| T7 | AUTH-09 |
+| T9, T10 | AUTH-07 |
+| T17–T21 | AUTH-12–AUTH-17 |
+| T15, T18 | AUTH-13 |
+| T19 | AUTH-14 |
+| T20 | AUTH-15 |
+| T21 | AUTH-16 |
+| T22 | AUTH-10, AUTH-17 |
+| T24 | All MVP |
+
+---
+
+## Tools (execute phase)
+
+**MCP:** NONE required  
+**Skills:** `tlc-spec-driven` implement, `vitest`, `storybook` (T7), `frontend` rules  
+
+Before Execute, confirm with user if additional MCPs desired.
+
+---
+
+## Task Status Tracker
+
+| ID | Status | Notes |
+| -- | ------ | ----- |
+| T1 | pending | |
+| T2 | pending | |
+| T3 | pending | |
+| T4 | pending | |
+| T5 | pending | |
+| T6 | pending | |
+| T7 | pending | |
+| T8 | pending | |
+| T9 | pending | |
+| T10 | pending | |
+| T11 | pending | |
+| T12 | pending | |
+| T13 | pending | |
+| T14 | pending | |
+| T15 | pending | |
+| T16 | pending | |
+| T17 | pending | |
+| T18 | pending | |
+| T19 | pending | |
+| T20 | pending | |
+| T21 | pending | |
+| T22 | pending | |
+| T23 | pending | |
+| T24 | pending | |
