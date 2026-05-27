@@ -284,9 +284,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Renders children in responsive centered layout
-- [ ] Storybook story for `AuthFormCard` (optional) or smoke test
-- [ ] Gate: `pnpm lint` passes
+- [x] Renders children in responsive centered layout
+- [x] Storybook story for `AuthFormCard` (optional) or smoke test
+- [x] Gate: `pnpm lint` passes
 
 **Tests:** none (layout); optional story only
 
@@ -308,9 +308,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] `routeTree.gen.ts` regenerates with `_auth` layout
-- [ ] Guest hitting `/login` renders layout
-- [ ] Gate: `pnpm lint && pnpm test` (no regression)
+- [x] `routeTree.gen.ts` regenerates with `_auth` layout
+- [x] Guest hitting `/login` renders layout
+- [x] Gate: `pnpm lint && pnpm test` (no regression)
 
 **Tests:** integration (minimal route render with MSW)
 
