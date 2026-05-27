@@ -237,9 +237,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Stories: default, error, disabled
-- [ ] Test: toggles visibility, associates label
-- [ ] Gate: `pnpm test` passes
+- [x] Stories: default, error, disabled
+- [x] Test: toggles visibility, associates label
+- [x] Gate: `pnpm test` passes
 
 **Tests:** integration (UI)
 
@@ -261,8 +261,8 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Handlers used by at least one passing test (can be placeholder test in T8)
-- [ ] `pnpm test` passes
+- [x] Handlers used by at least one passing test (can be placeholder test in T8)
+- [x] `pnpm test` passes
 
 **Tests:** unit (handler contract test optional)
 

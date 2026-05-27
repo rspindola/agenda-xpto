@@ -11,7 +11,7 @@ export function mapSignUpError(error?: BetterAuthErrorBody | null): string {
   }
 
   const code = error.code?.toUpperCase()
-  const message = error.message?.toLowerCase() || ''
+  const message = error.message.toLowerCase()
 
   if (code && DUPLICATE_EMAIL_CODES.has(code)) {
     return 'Este e-mail já está cadastrado.'

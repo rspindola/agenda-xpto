@@ -10,7 +10,7 @@ import {
 } from '../route-guards'
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-router')>()
+  const actual = await importOriginal<Record<string, any>>()
   return {
     ...actual,
     redirect: vi.fn((opts) => opts),
