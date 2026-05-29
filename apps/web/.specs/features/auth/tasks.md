@@ -332,10 +332,10 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Successful sign-in invalidates session and navigates per establishments count
-- [ ] Invalid credentials show generic pt-BR message
-- [ ] Hook test with MSW passes
-- [ ] Gate: `pnpm test`
+- [x] Successful sign-in invalidates session and navigates per establishments count
+- [x] Invalid credentials show generic pt-BR message
+- [x] Hook test with MSW passes
+- [x] Gate: `pnpm test`
 
 **Tests:** unit (hook) + integration (form)
 
@@ -357,9 +357,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Signup navigates to verify-email with email in search
-- [ ] Duplicate email shows explicit message (MSW 422/409 scenario)
-- [ ] Gate: `pnpm test`
+- [x] Signup navigates to verify-email with email in search
+- [x] Duplicate email shows explicit message (MSW 422/409 scenario)
+- [x] Gate: `pnpm test`
 
 **Tests:** unit + integration
 
@@ -381,9 +381,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Resend disabled 60s after click with countdown label
-- [ ] Tests mock timer or cooldown state
-- [ ] Gate: `pnpm test`
+- [x] Resend disabled 60s after click with countdown label
+- [x] Tests mock timer or cooldown state
+- [x] Gate: `pnpm test`
 
 **Tests:** unit (hook) + integration
 
@@ -405,10 +405,10 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Forgot always shows neutral success state
-- [ ] Reset without token shows invalid-link UI
-- [ ] Successful reset redirects to `/login`
-- [ ] Gate: `pnpm test`
+- [x] Forgot always shows neutral success state
+- [x] Reset without token shows invalid-link UI
+- [x] Successful reset redirects to `/login`
+- [x] Gate: `pnpm test`
 
 **Tests:** unit + integration
 
@@ -430,8 +430,8 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] List/create tested with MSW
-- [ ] Gate: `pnpm test`
+- [x] List/create tested with MSW
+- [x] Gate: `pnpm test`
 
 **Tests:** unit
 
@@ -453,9 +453,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] `/` redirects unauthenticated → login, no establishments → onboarding, else dashboard
-- [ ] Route test with mocked loader context
-- [ ] Gate: `pnpm test`
+- [x] `/` redirects unauthenticated → login, no establishments → onboarding, else dashboard
+- [x] Route test with mocked loader context
+- [x] Gate: `pnpm test`
 
 **Tests:** integration
 
@@ -477,9 +477,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Step 1 route has no “Pular”; steps 2–4 shell supports skip prop
-- [ ] Progress shows Passo X/5
-- [ ] Gate: `pnpm lint`
+- [x] Step 1 route has no “Pular”; steps 2–4 shell supports skip prop
+- [x] Progress shows Passo X/5
+- [x] Gate: `pnpm lint`
 
 **Tests:** integration (shell render)
 
@@ -501,10 +501,10 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Cannot proceed without valid name + timezone
-- [ ] Success navigates to `/onboarding/professional`
-- [ ] MSW integration test passes
-- [ ] Gate: `pnpm test`
+- [x] Cannot proceed without valid name + timezone
+- [x] Success navigates to `/onboarding/professional`
+- [x] MSW integration test passes
+- [x] Gate: `pnpm test`
 
 **Tests:** integration
 
@@ -526,9 +526,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Skip goes to service step
-- [ ] Create professional then next works
-- [ ] Gate: `pnpm test`
+- [x] Skip goes to service step
+- [x] Create professional then next works
+- [x] Gate: `pnpm test`
 
 **Tests:** integration
 
@@ -550,9 +550,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] No API calls on this step
-- [ ] Navigates to hours
-- [ ] Gate: `pnpm lint`
+- [x] No API calls on this step
+- [x] Navigates to hours
+- [x] Gate: `pnpm lint`
 
 **Tests:** integration (smoke)
 
@@ -574,9 +574,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] At least one weekday can be saved
-- [ ] Skip advances to done without PUT
-- [ ] Gate: `pnpm test`
+- [x] At least one weekday can be saved
+- [x] Skip advances to done without PUT
+- [x] Gate: `pnpm test`
 
 **Tests:** unit (batch mapper) + integration
 
@@ -598,10 +598,10 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] Done → dashboard only if establishments ≥ 1
-- [ ] Deep-link `/onboarding/done` without establishment redirects to business
-- [ ] Sign out clears cache and goes to login
-- [ ] Gate: `pnpm test`
+- [x] Done → dashboard only if establishments ≥ 1
+- [x] Deep-link `/onboarding/done` without establishment redirects to business
+- [x] Sign out clears cache and goes to login
+- [x] Gate: `pnpm test`
 
 **Tests:** integration
 
@@ -623,8 +623,8 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] At least 3 scenarios from spec independent tests covered
-- [ ] Gate: `pnpm test`
+- [x] At least 3 scenarios from spec independent tests covered
+- [x] Gate: `pnpm test`
 
 **Tests:** integration
 
@@ -646,9 +646,9 @@ Phase 6:  T21 → T23 → T24
 
 **Done when:**
 
-- [ ] `pnpm lint && pnpm test` green
-- [ ] No sensitive data in logs
-- [ ] Manual smoke: signup → verify (MSW) → onboarding step 1 → dashboard
+- [x] `pnpm lint && pnpm test` green
+- [x] No sensitive data in logs
+- [x] Manual smoke: signup → verify (MSW) → onboarding step 1 → dashboard
 
 **Tests:** full suite
 
@@ -757,27 +757,27 @@ Before Execute, confirm with user if additional MCPs desired.
 
 | ID | Status | Notes |
 | -- | ------ | ----- |
-| T1 | pending | |
-| T2 | pending | |
-| T3 | pending | |
-| T4 | pending | |
-| T5 | pending | |
-| T6 | pending | |
-| T7 | pending | |
-| T8 | pending | |
-| T9 | pending | |
-| T10 | pending | |
-| T11 | pending | |
-| T12 | pending | |
-| T13 | pending | |
-| T14 | pending | |
-| T15 | pending | |
-| T16 | pending | |
-| T17 | pending | |
-| T18 | pending | |
-| T19 | pending | |
-| T20 | pending | |
-| T21 | pending | |
-| T22 | pending | |
-| T23 | pending | |
-| T24 | pending | |
+| T1 | completed | |
+| T2 | completed | |
+| T3 | completed | |
+| T4 | completed | |
+| T5 | completed | |
+| T6 | completed | |
+| T7 | completed | |
+| T8 | completed | |
+| T9 | completed | |
+| T10 | completed | |
+| T11 | completed | |
+| T12 | completed | |
+| T13 | completed | |
+| T14 | completed | |
+| T15 | completed | |
+| T16 | completed | |
+| T17 | completed | |
+| T18 | completed | |
+| T19 | completed | |
+| T20 | completed | |
+| T21 | completed | |
+| T22 | completed | |
+| T23 | completed | |
+| T24 | completed | |

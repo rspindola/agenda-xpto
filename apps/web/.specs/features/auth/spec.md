@@ -380,29 +380,29 @@ Wireframes reference (`docs/flow/01-auth/diagrams/wireframes/pages.md`): signup 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AUTH-01 | P1: Sign up | Implement | Pending |
-| AUTH-02 | P1: Sign in | Implement | Pending |
-| AUTH-03 | P1: Email verification gate | Implement | Pending |
-| AUTH-04 | P1: Request password reset | Implement | Pending |
-| AUTH-05 | P1: Reset password | Implement | Pending |
-| AUTH-06 | P1: Session + protected routes | Implement | Pending |
-| AUTH-07 | P1: AuthLayout + public routes | Implement | Pending |
-| AUTH-08 | P1: Axios + auth API module | Implement | Pending |
-| AUTH-09 | UI: PasswordField (+ story) | Implement | Pending |
-| AUTH-10 | P2: Sign out from dashboard | — | Pending |
+| AUTH-01 | P1: Sign up | Implement | Completed |
+| AUTH-02 | P1: Sign in | Implement | Completed |
+| AUTH-03 | P1: Email verification gate | Implement | Completed |
+| AUTH-04 | P1: Request password reset | Implement | Completed |
+| AUTH-05 | P1: Reset password | Implement | Completed |
+| AUTH-06 | P1: Session + protected routes | Implement | Completed |
+| AUTH-07 | P1: AuthLayout + public routes | Implement | Completed |
+| AUTH-08 | P1: Axios + auth API module | Implement | Completed |
+| AUTH-09 | UI: PasswordField (+ story) | Implement | Completed |
+| AUTH-10 | P2: Sign out from dashboard | — | Completed |
 | AUTH-11 | P3: Change password | — | Deferred |
-| AUTH-12 | P1: Onboarding wizard shell + routes | Implement | Pending |
-| AUTH-13 | P1: Step 1 — business (establishment) | Implement | Pending |
-| AUTH-14 | P1: Step 2 — professional | Implement | Pending |
-| AUTH-15 | P1: Step 3 — service (informational) | Implement | Pending |
-| AUTH-16 | P1: Step 4 — business hours | Implement | Pending |
-| AUTH-17 | P1: Step 5 — done + establishments heuristic | Implement | Pending |
-| AUTH-18 | P1: Onboarding guard + post-verify redirect | Implement | Pending |
+| AUTH-12 | P1: Onboarding wizard shell + routes | Implement | Completed |
+| AUTH-13 | P1: Step 1 — business (establishment) | Implement | Completed |
+| AUTH-14 | P1: Step 2 — professional | Implement | Completed |
+| AUTH-15 | P1: Step 3 — service (informational) | Implement | Completed |
+| AUTH-16 | P1: Step 4 — business hours | Implement | Completed |
+| AUTH-17 | P1: Step 5 — done + establishments heuristic | Implement | Completed |
+| AUTH-18 | P1: Onboarding guard + post-verify redirect | Implement | Completed |
 | AUTH-19 | P2: Re-open wizard from settings | — | Pending |
-| AUTH-20 | P1: Resend verification + 60s cooldown | Implement | Pending |
+| AUTH-20 | P1: Resend verification + 60s cooldown | Implement | Completed |
 | AUTH-21 | Services CRUD API (full step 3) | — | Deferred |
 
-**Coverage:** 21 total, 0 mapped to tasks, 13 MVP pending design/tasks
+**Coverage:** 21 total, 18 completed, 2 deferred, 1 pending
 
 ---
 

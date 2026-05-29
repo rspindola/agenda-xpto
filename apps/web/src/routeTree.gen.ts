@@ -9,14 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
+import { Route as AuthenticatedOnboardingRouteRouteImport } from './routes/_authenticated/onboarding/route'
+import { Route as AuthenticatedOnboardingServiceRouteImport } from './routes/_authenticated/onboarding/service'
+import { Route as AuthenticatedOnboardingProfessionalRouteImport } from './routes/_authenticated/onboarding/professional'
+import { Route as AuthenticatedOnboardingHoursRouteImport } from './routes/_authenticated/onboarding/hours'
+import { Route as AuthenticatedOnboardingDoneRouteImport } from './routes/_authenticated/onboarding/done'
+import { Route as AuthenticatedOnboardingBusinessRouteImport } from './routes/_authenticated/onboarding/business'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -25,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -51,68 +68,156 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthenticatedOnboardingRouteRoute =
+  AuthenticatedOnboardingRouteRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOnboardingServiceRoute =
+  AuthenticatedOnboardingServiceRouteImport.update({
+    id: '/service',
+    path: '/service',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingProfessionalRoute =
+  AuthenticatedOnboardingProfessionalRouteImport.update({
+    id: '/professional',
+    path: '/professional',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingHoursRoute =
+  AuthenticatedOnboardingHoursRouteImport.update({
+    id: '/hours',
+    path: '/hours',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingDoneRoute =
+  AuthenticatedOnboardingDoneRouteImport.update({
+    id: '/done',
+    path: '/done',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingBusinessRoute =
+  AuthenticatedOnboardingBusinessRouteImport.update({
+    id: '/business',
+    path: '/business',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/onboarding': typeof AuthenticatedOnboardingRouteRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/signup': typeof AuthSignupRoute
   '/verify-email': typeof AuthVerifyEmailRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/onboarding/business': typeof AuthenticatedOnboardingBusinessRoute
+  '/onboarding/done': typeof AuthenticatedOnboardingDoneRoute
+  '/onboarding/hours': typeof AuthenticatedOnboardingHoursRoute
+  '/onboarding/professional': typeof AuthenticatedOnboardingProfessionalRoute
+  '/onboarding/service': typeof AuthenticatedOnboardingServiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/onboarding': typeof AuthenticatedOnboardingRouteRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/signup': typeof AuthSignupRoute
   '/verify-email': typeof AuthVerifyEmailRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/onboarding/business': typeof AuthenticatedOnboardingBusinessRoute
+  '/onboarding/done': typeof AuthenticatedOnboardingDoneRoute
+  '/onboarding/hours': typeof AuthenticatedOnboardingHoursRoute
+  '/onboarding/professional': typeof AuthenticatedOnboardingProfessionalRoute
+  '/onboarding/service': typeof AuthenticatedOnboardingServiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRouteRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/signup': typeof AuthSignupRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/onboarding/business': typeof AuthenticatedOnboardingBusinessRoute
+  '/_authenticated/onboarding/done': typeof AuthenticatedOnboardingDoneRoute
+  '/_authenticated/onboarding/hours': typeof AuthenticatedOnboardingHoursRoute
+  '/_authenticated/onboarding/professional': typeof AuthenticatedOnboardingProfessionalRoute
+  '/_authenticated/onboarding/service': typeof AuthenticatedOnboardingServiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/onboarding'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
     | '/signup'
     | '/verify-email'
+    | '/dashboard'
+    | '/onboarding/business'
+    | '/onboarding/done'
+    | '/onboarding/hours'
+    | '/onboarding/professional'
+    | '/onboarding/service'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/onboarding'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
     | '/signup'
     | '/verify-email'
+    | '/dashboard'
+    | '/onboarding/business'
+    | '/onboarding/done'
+    | '/onboarding/hours'
+    | '/onboarding/professional'
+    | '/onboarding/service'
   id:
     | '__root__'
     | '/'
     | '/_auth'
+    | '/_authenticated'
+    | '/_authenticated/onboarding'
     | '/_auth/forgot-password'
     | '/_auth/login'
     | '/_auth/reset-password'
     | '/_auth/signup'
     | '/_auth/verify-email'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/onboarding/business'
+    | '/_authenticated/onboarding/done'
+    | '/_authenticated/onboarding/hours'
+    | '/_authenticated/onboarding/professional'
+    | '/_authenticated/onboarding/service'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -126,6 +231,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_auth/verify-email': {
       id: '/_auth/verify-email'
@@ -162,6 +274,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding/service': {
+      id: '/_authenticated/onboarding/service'
+      path: '/service'
+      fullPath: '/onboarding/service'
+      preLoaderRoute: typeof AuthenticatedOnboardingServiceRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/professional': {
+      id: '/_authenticated/onboarding/professional'
+      path: '/professional'
+      fullPath: '/onboarding/professional'
+      preLoaderRoute: typeof AuthenticatedOnboardingProfessionalRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/hours': {
+      id: '/_authenticated/onboarding/hours'
+      path: '/hours'
+      fullPath: '/onboarding/hours'
+      preLoaderRoute: typeof AuthenticatedOnboardingHoursRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/done': {
+      id: '/_authenticated/onboarding/done'
+      path: '/done'
+      fullPath: '/onboarding/done'
+      preLoaderRoute: typeof AuthenticatedOnboardingDoneRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/business': {
+      id: '/_authenticated/onboarding/business'
+      path: '/business'
+      fullPath: '/onboarding/business'
+      preLoaderRoute: typeof AuthenticatedOnboardingBusinessRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
   }
 }
 
@@ -185,9 +339,47 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface AuthenticatedOnboardingRouteRouteChildren {
+  AuthenticatedOnboardingBusinessRoute: typeof AuthenticatedOnboardingBusinessRoute
+  AuthenticatedOnboardingDoneRoute: typeof AuthenticatedOnboardingDoneRoute
+  AuthenticatedOnboardingHoursRoute: typeof AuthenticatedOnboardingHoursRoute
+  AuthenticatedOnboardingProfessionalRoute: typeof AuthenticatedOnboardingProfessionalRoute
+  AuthenticatedOnboardingServiceRoute: typeof AuthenticatedOnboardingServiceRoute
+}
+
+const AuthenticatedOnboardingRouteRouteChildren: AuthenticatedOnboardingRouteRouteChildren =
+  {
+    AuthenticatedOnboardingBusinessRoute: AuthenticatedOnboardingBusinessRoute,
+    AuthenticatedOnboardingDoneRoute: AuthenticatedOnboardingDoneRoute,
+    AuthenticatedOnboardingHoursRoute: AuthenticatedOnboardingHoursRoute,
+    AuthenticatedOnboardingProfessionalRoute:
+      AuthenticatedOnboardingProfessionalRoute,
+    AuthenticatedOnboardingServiceRoute: AuthenticatedOnboardingServiceRoute,
+  }
+
+const AuthenticatedOnboardingRouteRouteWithChildren =
+  AuthenticatedOnboardingRouteRoute._addFileChildren(
+    AuthenticatedOnboardingRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOnboardingRouteRoute: typeof AuthenticatedOnboardingRouteRouteWithChildren
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOnboardingRouteRoute:
+    AuthenticatedOnboardingRouteRouteWithChildren,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
