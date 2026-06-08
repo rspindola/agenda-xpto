@@ -83,7 +83,7 @@ export function SignUpForm() {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                className={field.state.meta.errors.length ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-800 bg-zinc-900/50 text-zinc-100'}
+                className={`bg-zinc-900/50 text-zinc-100 ${field.state.meta.errors.length ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-800'}`}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-xs text-destructive font-medium mt-0.5">
@@ -117,7 +117,7 @@ export function SignUpForm() {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                className={field.state.meta.errors.length ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-800 bg-zinc-900/50 text-zinc-100'}
+                className={`bg-zinc-900/50 text-zinc-100 ${field.state.meta.errors.length ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-800'}`}
               />
               {field.state.meta.errors.length > 0 && (
                 <p className="text-xs text-destructive font-medium mt-0.5">
