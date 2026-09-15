@@ -308,13 +308,13 @@ Phase 4 (Sequential):
 **Requirement:** EST-05, EST-15  
 
 **Done when:**
-- [ ] Danger zone card displays warning about irreversible action
-- [ ] Confirmation dialog requires typing establishment name exactly; button disabled until match
-- [ ] Shows special warning if it is the owner's only establishment
-- [ ] Calls `useDeleteEstablishment` upon confirmation
-- [ ] Unit tests verify name matching validation and delete trigger
-- [ ] Storybook stories cover danger card, dialog empty input, dialog matched input, and single-establishment warning
-- [ ] Gate check passes: `pnpm test`
+- [x] Danger zone card displays warning about irreversible action
+- [x] Confirmation dialog requires typing establishment name exactly; button disabled until match
+- [x] Shows special warning if it is the owner's only establishment
+- [x] Calls `useDeleteEstablishment` upon confirmation
+- [x] Unit tests verify name matching validation and delete trigger
+- [x] Storybook stories cover danger card, dialog empty input, dialog matched input, and single-establishment warning
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
