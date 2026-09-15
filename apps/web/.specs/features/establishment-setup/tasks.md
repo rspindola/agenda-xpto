@@ -240,12 +240,12 @@ Phase 4 (Sequential):
 **Requirement:** EST-02, EST-09, EST-13, EST-NF-07  
 
 **Done when:**
-- [ ] Displays static establishment name for Starter plan (no chevron, no dropdown)
-- [ ] Displays dropdown menu for Pro/Business plans with establishment list, checkmark for active, and count ("N de M estabelecimentos")
-- [ ] Shows limit warning banner and disables "+ Novo" button when plan limit is reached
-- [ ] Unit tests verify Starter vs Pro behavior and context switching
-- [ ] Storybook stories cover Starter, Pro with 1/3, Pro at limit (3/3), and loading state
-- [ ] Gate check passes: `pnpm test`
+- [x] Displays static establishment name for Starter plan (no chevron, no dropdown)
+- [x] Displays dropdown menu for Pro/Business plans with establishment list, checkmark for active, and count ("N de M estabelecimentos")
+- [x] Shows limit warning banner and disables "+ Novo" button when plan limit is reached
+- [x] Unit tests verify Starter vs Pro behavior and context switching
+- [x] Storybook stories cover Starter, Pro with 1/3, Pro at limit (3/3), and loading state
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
