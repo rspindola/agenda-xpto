@@ -191,17 +191,17 @@ Phase 4 (Sequential):
 ### T4: Active Establishment Store & `useActiveEstablishment` Hook
 
 **What:** Create TanStack Store for `activeEstablishmentId` with `localStorage` persistence and the `useActiveEstablishment` hook with automatic fallback to the first available establishment.  
-**Where:** `src/modules/establishments/stores/establishment-store.ts`, `src/modules/establishments/hooks/use-active-establishment.ts`, `src/modules/establishments/__tests__/use-active-establishment.test.ts`  
+**Where:** `src/modules/establishments/stores/establishment-store.ts`, `src/modules/establishments/hooks/use-active-establishment.ts`, `src/modules/establishments/__tests__/use-active-establishment.test.tsx`  
 **Depends on:** T2  
 **Reuses:** `@tanstack/react-store`, `sessionQueryOptions`  
 **Requirement:** EST-02, EST-07, EST-NF-03  
 
 **Done when:**
-- [ ] `establishmentStore` holds and syncs `activeEstablishmentId` with `localStorage`
-- [ ] `useActiveEstablishment()` returns `{ activeEstablishmentId, activeEstablishment, establishments, isLoading, setActiveEstablishmentId }`
-- [ ] Falls back automatically to `establishments[0].id` when current ID is null or not found in list
-- [ ] Unit tests verify store actions, persistence, and hook fallback behavior
-- [ ] Gate check passes: `pnpm test`
+- [x] `establishmentStore` holds and syncs `activeEstablishmentId` with `localStorage`
+- [x] `useActiveEstablishment()` returns `{ activeEstablishmentId, activeEstablishment, establishments, isLoading, setActiveEstablishmentId }`
+- [x] Falls back automatically to `establishments[0].id` when current ID is null or not found in list
+- [x] Unit tests verify store actions, persistence, and hook fallback behavior
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
