@@ -33,16 +33,10 @@ async function renderWithRouter(initialPath = '/settings/general') {
     component: () => <div data-testid="page-hours">Página Horários</div>,
   })
 
-  const profsRoute = createRoute({
+  const teamServicesRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/settings/professionals',
-    component: () => <div data-testid="page-professionals">Página Profissionais</div>,
-  })
-
-  const servsRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/settings/services',
-    component: () => <div data-testid="page-services">Página Serviços</div>,
+    path: '/settings/team-and-services',
+    component: () => <div data-testid="page-team-services">Página Equipe e Serviços</div>,
   })
 
   const dangerRoute = createRoute({
@@ -54,8 +48,7 @@ async function renderWithRouter(initialPath = '/settings/general') {
   const routeTree = rootRoute.addChildren([
     generalRoute,
     hoursRoute,
-    profsRoute,
-    servsRoute,
+    teamServicesRoute,
     dangerRoute,
   ])
 
@@ -68,14 +61,13 @@ async function renderWithRouter(initialPath = '/settings/general') {
 }
 
 describe('SettingsSidebar Component (T11)', () => {
-  it('should render all 5 navigation links', async () => {
+    it('should render all 4 navigation links', async () => {
     await renderWithRouter('/settings/general')
 
     expect(await screen.findByTestId('settings-sidebar')).toBeInTheDocument()
     expect(screen.getByTestId('nav-settings-general')).toHaveTextContent('Geral')
     expect(screen.getByTestId('nav-settings-hours')).toHaveTextContent('Horários de Funcionamento')
-    expect(screen.getByTestId('nav-settings-professionals')).toHaveTextContent('Profissionais')
-    expect(screen.getByTestId('nav-settings-services')).toHaveTextContent('Serviços')
+    expect(screen.getByTestId('nav-settings-team-services')).toHaveTextContent('Equipe e Serviços')
     expect(screen.getByTestId('nav-settings-danger')).toHaveTextContent('Zona de Perigo')
   })
 

@@ -22,18 +22,11 @@ export const SETTINGS_NAV_ITEMS = [
     testId: 'nav-settings-hours',
   },
   {
-    label: 'Profissionais',
-    to: '/settings/professionals' as const,
+    label: 'Equipe e Serviços',
+    to: '/settings/team-and-services' as const,
     icon: Users,
     isDanger: false,
-    testId: 'nav-settings-professionals',
-  },
-  {
-    label: 'Serviços',
-    to: '/settings/services' as const,
-    icon: Scissors,
-    isDanger: false,
-    testId: 'nav-settings-services',
+    testId: 'nav-settings-team-services',
   },
   {
     label: 'Zona de Perigo',

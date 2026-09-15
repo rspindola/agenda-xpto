@@ -9,60 +9,47 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
-import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
-import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
-import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
-import { Route as AuthenticatedSettingsRouteRouteImport } from './routes/_authenticated/settings/route'
+import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
+import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOnboardingRouteRouteImport } from './routes/_authenticated/onboarding/route'
-import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
-import { Route as AuthenticatedSettingsServicesRouteImport } from './routes/_authenticated/settings/services'
-import { Route as AuthenticatedSettingsProfessionalsRouteImport } from './routes/_authenticated/settings/professionals'
-import { Route as AuthenticatedSettingsHoursRouteImport } from './routes/_authenticated/settings/hours'
-import { Route as AuthenticatedSettingsGeneralRouteImport } from './routes/_authenticated/settings/general'
-import { Route as AuthenticatedSettingsDangerRouteImport } from './routes/_authenticated/settings/danger'
-import { Route as AuthenticatedOnboardingServiceRouteImport } from './routes/_authenticated/onboarding/service'
-import { Route as AuthenticatedOnboardingProfessionalRouteImport } from './routes/_authenticated/onboarding/professional'
-import { Route as AuthenticatedOnboardingHoursRouteImport } from './routes/_authenticated/onboarding/hours'
-import { Route as AuthenticatedOnboardingDoneRouteImport } from './routes/_authenticated/onboarding/done'
+import { Route as AuthenticatedSettingsRouteRouteImport } from './routes/_authenticated/settings/route'
 import { Route as AuthenticatedOnboardingBusinessRouteImport } from './routes/_authenticated/onboarding/business'
+import { Route as AuthenticatedOnboardingDoneRouteImport } from './routes/_authenticated/onboarding/done'
+import { Route as AuthenticatedOnboardingHoursRouteImport } from './routes/_authenticated/onboarding/hours'
+import { Route as AuthenticatedOnboardingProfessionalRouteImport } from './routes/_authenticated/onboarding/professional'
+import { Route as AuthenticatedOnboardingServiceRouteImport } from './routes/_authenticated/onboarding/service'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsDangerRouteImport } from './routes/_authenticated/settings/danger'
+import { Route as AuthenticatedSettingsGeneralRouteImport } from './routes/_authenticated/settings/general'
+import { Route as AuthenticatedSettingsHoursRouteImport } from './routes/_authenticated/settings/hours'
+import { Route as AuthenticatedSettingsTeamAndServicesRouteRouteImport } from './routes/_authenticated/settings/team-and-services/route'
+import { Route as AuthenticatedSettingsTeamAndServicesIndexRouteImport } from './routes/_authenticated/settings/team-and-services/index'
+import { Route as AuthenticatedSettingsTeamAndServicesProfessionalsRouteImport } from './routes/_authenticated/settings/team-and-services/professionals'
+import { Route as AuthenticatedSettingsTeamAndServicesServicesRouteImport } from './routes/_authenticated/settings/team-and-services/services'
 
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -70,75 +57,42 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthenticatedSettingsRouteRoute =
-  AuthenticatedSettingsRouteRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRouteRoute =
   AuthenticatedOnboardingRouteRouteImport.update({
     id: '/onboarding',
     path: '/onboarding',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsIndexRoute =
-  AuthenticatedSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+const AuthenticatedSettingsRouteRoute =
+  AuthenticatedSettingsRouteRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsServicesRoute =
-  AuthenticatedSettingsServicesRouteImport.update({
-    id: '/services',
-    path: '/services',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedSettingsProfessionalsRoute =
-  AuthenticatedSettingsProfessionalsRouteImport.update({
-    id: '/professionals',
-    path: '/professionals',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedSettingsHoursRoute =
-  AuthenticatedSettingsHoursRouteImport.update({
-    id: '/hours',
-    path: '/hours',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedSettingsGeneralRoute =
-  AuthenticatedSettingsGeneralRouteImport.update({
-    id: '/general',
-    path: '/general',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedSettingsDangerRoute =
-  AuthenticatedSettingsDangerRouteImport.update({
-    id: '/danger',
-    path: '/danger',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-const AuthenticatedOnboardingServiceRoute =
-  AuthenticatedOnboardingServiceRouteImport.update({
-    id: '/service',
-    path: '/service',
-    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
-  } as any)
-const AuthenticatedOnboardingProfessionalRoute =
-  AuthenticatedOnboardingProfessionalRouteImport.update({
-    id: '/professional',
-    path: '/professional',
-    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
-  } as any)
-const AuthenticatedOnboardingHoursRoute =
-  AuthenticatedOnboardingHoursRouteImport.update({
-    id: '/hours',
-    path: '/hours',
+const AuthenticatedOnboardingBusinessRoute =
+  AuthenticatedOnboardingBusinessRouteImport.update({
+    id: '/business',
+    path: '/business',
     getParentRoute: () => AuthenticatedOnboardingRouteRoute,
   } as any)
 const AuthenticatedOnboardingDoneRoute =
@@ -147,11 +101,71 @@ const AuthenticatedOnboardingDoneRoute =
     path: '/done',
     getParentRoute: () => AuthenticatedOnboardingRouteRoute,
   } as any)
-const AuthenticatedOnboardingBusinessRoute =
-  AuthenticatedOnboardingBusinessRouteImport.update({
-    id: '/business',
-    path: '/business',
+const AuthenticatedOnboardingHoursRoute =
+  AuthenticatedOnboardingHoursRouteImport.update({
+    id: '/hours',
+    path: '/hours',
     getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingProfessionalRoute =
+  AuthenticatedOnboardingProfessionalRouteImport.update({
+    id: '/professional',
+    path: '/professional',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedOnboardingServiceRoute =
+  AuthenticatedOnboardingServiceRouteImport.update({
+    id: '/service',
+    path: '/service',
+    getParentRoute: () => AuthenticatedOnboardingRouteRoute,
+  } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsDangerRoute =
+  AuthenticatedSettingsDangerRouteImport.update({
+    id: '/danger',
+    path: '/danger',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsGeneralRoute =
+  AuthenticatedSettingsGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsHoursRoute =
+  AuthenticatedSettingsHoursRouteImport.update({
+    id: '/hours',
+    path: '/hours',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsTeamAndServicesRouteRoute =
+  AuthenticatedSettingsTeamAndServicesRouteRouteImport.update({
+    id: '/team-and-services',
+    path: '/team-and-services',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+const AuthenticatedSettingsTeamAndServicesIndexRoute =
+  AuthenticatedSettingsTeamAndServicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsTeamAndServicesRouteRoute,
+  } as any)
+const AuthenticatedSettingsTeamAndServicesProfessionalsRoute =
+  AuthenticatedSettingsTeamAndServicesProfessionalsRouteImport.update({
+    id: '/professionals',
+    path: '/professionals',
+    getParentRoute: () => AuthenticatedSettingsTeamAndServicesRouteRoute,
+  } as any)
+const AuthenticatedSettingsTeamAndServicesServicesRoute =
+  AuthenticatedSettingsTeamAndServicesServicesRouteImport.update({
+    id: '/services',
+    path: '/services',
+    getParentRoute: () => AuthenticatedSettingsTeamAndServicesRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -164,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings/team-and-services': typeof AuthenticatedSettingsTeamAndServicesRouteRouteWithChildren
   '/onboarding/business': typeof AuthenticatedOnboardingBusinessRoute
   '/onboarding/done': typeof AuthenticatedOnboardingDoneRoute
   '/onboarding/hours': typeof AuthenticatedOnboardingHoursRoute
@@ -172,9 +187,10 @@ export interface FileRoutesByFullPath {
   '/settings/danger': typeof AuthenticatedSettingsDangerRoute
   '/settings/general': typeof AuthenticatedSettingsGeneralRoute
   '/settings/hours': typeof AuthenticatedSettingsHoursRoute
-  '/settings/professionals': typeof AuthenticatedSettingsProfessionalsRoute
-  '/settings/services': typeof AuthenticatedSettingsServicesRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/settings/team-and-services/professionals': typeof AuthenticatedSettingsTeamAndServicesProfessionalsRoute
+  '/settings/team-and-services/services': typeof AuthenticatedSettingsTeamAndServicesServicesRoute
+  '/settings/team-and-services/': typeof AuthenticatedSettingsTeamAndServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -193,9 +209,10 @@ export interface FileRoutesByTo {
   '/settings/danger': typeof AuthenticatedSettingsDangerRoute
   '/settings/general': typeof AuthenticatedSettingsGeneralRoute
   '/settings/hours': typeof AuthenticatedSettingsHoursRoute
-  '/settings/professionals': typeof AuthenticatedSettingsProfessionalsRoute
-  '/settings/services': typeof AuthenticatedSettingsServicesRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/settings/team-and-services/professionals': typeof AuthenticatedSettingsTeamAndServicesProfessionalsRoute
+  '/settings/team-and-services/services': typeof AuthenticatedSettingsTeamAndServicesServicesRoute
+  '/settings/team-and-services': typeof AuthenticatedSettingsTeamAndServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -210,6 +227,7 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/settings/team-and-services': typeof AuthenticatedSettingsTeamAndServicesRouteRouteWithChildren
   '/_authenticated/onboarding/business': typeof AuthenticatedOnboardingBusinessRoute
   '/_authenticated/onboarding/done': typeof AuthenticatedOnboardingDoneRoute
   '/_authenticated/onboarding/hours': typeof AuthenticatedOnboardingHoursRoute
@@ -218,9 +236,10 @@ export interface FileRoutesById {
   '/_authenticated/settings/danger': typeof AuthenticatedSettingsDangerRoute
   '/_authenticated/settings/general': typeof AuthenticatedSettingsGeneralRoute
   '/_authenticated/settings/hours': typeof AuthenticatedSettingsHoursRoute
-  '/_authenticated/settings/professionals': typeof AuthenticatedSettingsProfessionalsRoute
-  '/_authenticated/settings/services': typeof AuthenticatedSettingsServicesRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/_authenticated/settings/team-and-services/professionals': typeof AuthenticatedSettingsTeamAndServicesProfessionalsRoute
+  '/_authenticated/settings/team-and-services/services': typeof AuthenticatedSettingsTeamAndServicesServicesRoute
+  '/_authenticated/settings/team-and-services/': typeof AuthenticatedSettingsTeamAndServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,6 +253,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify-email'
     | '/dashboard'
+    | '/settings/team-and-services'
     | '/onboarding/business'
     | '/onboarding/done'
     | '/onboarding/hours'
@@ -242,9 +262,10 @@ export interface FileRouteTypes {
     | '/settings/danger'
     | '/settings/general'
     | '/settings/hours'
-    | '/settings/professionals'
-    | '/settings/services'
     | '/settings/'
+    | '/settings/team-and-services/professionals'
+    | '/settings/team-and-services/services'
+    | '/settings/team-and-services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -263,9 +284,10 @@ export interface FileRouteTypes {
     | '/settings/danger'
     | '/settings/general'
     | '/settings/hours'
-    | '/settings/professionals'
-    | '/settings/services'
     | '/settings'
+    | '/settings/team-and-services/professionals'
+    | '/settings/team-and-services/services'
+    | '/settings/team-and-services'
   id:
     | '__root__'
     | '/'
@@ -279,6 +301,7 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_auth/verify-email'
     | '/_authenticated/dashboard'
+    | '/_authenticated/settings/team-and-services'
     | '/_authenticated/onboarding/business'
     | '/_authenticated/onboarding/done'
     | '/_authenticated/onboarding/hours'
@@ -287,9 +310,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/danger'
     | '/_authenticated/settings/general'
     | '/_authenticated/settings/hours'
-    | '/_authenticated/settings/professionals'
-    | '/_authenticated/settings/services'
     | '/_authenticated/settings/'
+    | '/_authenticated/settings/team-and-services/professionals'
+    | '/_authenticated/settings/team-and-services/services'
+    | '/_authenticated/settings/team-and-services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -300,11 +324,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -314,39 +338,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_auth/verify-email': {
-      id: '/_auth/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof AuthVerifyEmailRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/signup': {
-      id: '/_auth/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/reset-password': {
-      id: '/_auth/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
+    '/_auth/forgot-password': {
+      id: '/_auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/login': {
@@ -356,18 +359,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/forgot-password': {
-      id: '/_auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+    '/_auth/reset-password': {
+      id: '/_auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteRouteImport
+    '/_auth/signup': {
+      id: '/_auth/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/verify-email': {
+      id: '/_auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/onboarding': {
@@ -377,67 +394,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings/services': {
-      id: '/_authenticated/settings/services'
-      path: '/services'
-      fullPath: '/settings/services'
-      preLoaderRoute: typeof AuthenticatedSettingsServicesRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/settings/professionals': {
-      id: '/_authenticated/settings/professionals'
-      path: '/professionals'
-      fullPath: '/settings/professionals'
-      preLoaderRoute: typeof AuthenticatedSettingsProfessionalsRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/settings/hours': {
-      id: '/_authenticated/settings/hours'
-      path: '/hours'
-      fullPath: '/settings/hours'
-      preLoaderRoute: typeof AuthenticatedSettingsHoursRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/settings/general': {
-      id: '/_authenticated/settings/general'
-      path: '/general'
-      fullPath: '/settings/general'
-      preLoaderRoute: typeof AuthenticatedSettingsGeneralRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/settings/danger': {
-      id: '/_authenticated/settings/danger'
-      path: '/danger'
-      fullPath: '/settings/danger'
-      preLoaderRoute: typeof AuthenticatedSettingsDangerRouteImport
-      parentRoute: typeof AuthenticatedSettingsRouteRoute
-    }
-    '/_authenticated/onboarding/service': {
-      id: '/_authenticated/onboarding/service'
-      path: '/service'
-      fullPath: '/onboarding/service'
-      preLoaderRoute: typeof AuthenticatedOnboardingServiceRouteImport
-      parentRoute: typeof AuthenticatedOnboardingRouteRoute
-    }
-    '/_authenticated/onboarding/professional': {
-      id: '/_authenticated/onboarding/professional'
-      path: '/professional'
-      fullPath: '/onboarding/professional'
-      preLoaderRoute: typeof AuthenticatedOnboardingProfessionalRouteImport
-      parentRoute: typeof AuthenticatedOnboardingRouteRoute
-    }
-    '/_authenticated/onboarding/hours': {
-      id: '/_authenticated/onboarding/hours'
-      path: '/hours'
-      fullPath: '/onboarding/hours'
-      preLoaderRoute: typeof AuthenticatedOnboardingHoursRouteImport
+    '/_authenticated/onboarding/business': {
+      id: '/_authenticated/onboarding/business'
+      path: '/business'
+      fullPath: '/onboarding/business'
+      preLoaderRoute: typeof AuthenticatedOnboardingBusinessRouteImport
       parentRoute: typeof AuthenticatedOnboardingRouteRoute
     }
     '/_authenticated/onboarding/done': {
@@ -447,12 +415,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingDoneRouteImport
       parentRoute: typeof AuthenticatedOnboardingRouteRoute
     }
-    '/_authenticated/onboarding/business': {
-      id: '/_authenticated/onboarding/business'
-      path: '/business'
-      fullPath: '/onboarding/business'
-      preLoaderRoute: typeof AuthenticatedOnboardingBusinessRouteImport
+    '/_authenticated/onboarding/hours': {
+      id: '/_authenticated/onboarding/hours'
+      path: '/hours'
+      fullPath: '/onboarding/hours'
+      preLoaderRoute: typeof AuthenticatedOnboardingHoursRouteImport
       parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/professional': {
+      id: '/_authenticated/onboarding/professional'
+      path: '/professional'
+      fullPath: '/onboarding/professional'
+      preLoaderRoute: typeof AuthenticatedOnboardingProfessionalRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/onboarding/service': {
+      id: '/_authenticated/onboarding/service'
+      path: '/service'
+      fullPath: '/onboarding/service'
+      preLoaderRoute: typeof AuthenticatedOnboardingServiceRouteImport
+      parentRoute: typeof AuthenticatedOnboardingRouteRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/danger': {
+      id: '/_authenticated/settings/danger'
+      path: '/danger'
+      fullPath: '/settings/danger'
+      preLoaderRoute: typeof AuthenticatedSettingsDangerRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/general': {
+      id: '/_authenticated/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof AuthenticatedSettingsGeneralRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/hours': {
+      id: '/_authenticated/settings/hours'
+      path: '/hours'
+      fullPath: '/settings/hours'
+      preLoaderRoute: typeof AuthenticatedSettingsHoursRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/team-and-services': {
+      id: '/_authenticated/settings/team-and-services'
+      path: '/team-and-services'
+      fullPath: '/settings/team-and-services'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamAndServicesRouteRouteImport
+      parentRoute: typeof AuthenticatedSettingsRouteRoute
+    }
+    '/_authenticated/settings/team-and-services/': {
+      id: '/_authenticated/settings/team-and-services/'
+      path: '/'
+      fullPath: '/settings/team-and-services/'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamAndServicesIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsTeamAndServicesRouteRoute
+    }
+    '/_authenticated/settings/team-and-services/professionals': {
+      id: '/_authenticated/settings/team-and-services/professionals'
+      path: '/professionals'
+      fullPath: '/settings/team-and-services/professionals'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamAndServicesProfessionalsRouteImport
+      parentRoute: typeof AuthenticatedSettingsTeamAndServicesRouteRoute
+    }
+    '/_authenticated/settings/team-and-services/services': {
+      id: '/_authenticated/settings/team-and-services/services'
+      path: '/services'
+      fullPath: '/settings/team-and-services/services'
+      preLoaderRoute: typeof AuthenticatedSettingsTeamAndServicesServicesRouteImport
+      parentRoute: typeof AuthenticatedSettingsTeamAndServicesRouteRoute
     }
   }
 }
@@ -500,23 +538,42 @@ const AuthenticatedOnboardingRouteRouteWithChildren =
     AuthenticatedOnboardingRouteRouteChildren,
   )
 
+interface AuthenticatedSettingsTeamAndServicesRouteRouteChildren {
+  AuthenticatedSettingsTeamAndServicesProfessionalsRoute: typeof AuthenticatedSettingsTeamAndServicesProfessionalsRoute
+  AuthenticatedSettingsTeamAndServicesServicesRoute: typeof AuthenticatedSettingsTeamAndServicesServicesRoute
+  AuthenticatedSettingsTeamAndServicesIndexRoute: typeof AuthenticatedSettingsTeamAndServicesIndexRoute
+}
+
+const AuthenticatedSettingsTeamAndServicesRouteRouteChildren: AuthenticatedSettingsTeamAndServicesRouteRouteChildren =
+  {
+    AuthenticatedSettingsTeamAndServicesProfessionalsRoute:
+      AuthenticatedSettingsTeamAndServicesProfessionalsRoute,
+    AuthenticatedSettingsTeamAndServicesServicesRoute:
+      AuthenticatedSettingsTeamAndServicesServicesRoute,
+    AuthenticatedSettingsTeamAndServicesIndexRoute:
+      AuthenticatedSettingsTeamAndServicesIndexRoute,
+  }
+
+const AuthenticatedSettingsTeamAndServicesRouteRouteWithChildren =
+  AuthenticatedSettingsTeamAndServicesRouteRoute._addFileChildren(
+    AuthenticatedSettingsTeamAndServicesRouteRouteChildren,
+  )
+
 interface AuthenticatedSettingsRouteRouteChildren {
+  AuthenticatedSettingsTeamAndServicesRouteRoute: typeof AuthenticatedSettingsTeamAndServicesRouteRouteWithChildren
   AuthenticatedSettingsDangerRoute: typeof AuthenticatedSettingsDangerRoute
   AuthenticatedSettingsGeneralRoute: typeof AuthenticatedSettingsGeneralRoute
   AuthenticatedSettingsHoursRoute: typeof AuthenticatedSettingsHoursRoute
-  AuthenticatedSettingsProfessionalsRoute: typeof AuthenticatedSettingsProfessionalsRoute
-  AuthenticatedSettingsServicesRoute: typeof AuthenticatedSettingsServicesRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteChildren =
   {
+    AuthenticatedSettingsTeamAndServicesRouteRoute:
+      AuthenticatedSettingsTeamAndServicesRouteRouteWithChildren,
     AuthenticatedSettingsDangerRoute: AuthenticatedSettingsDangerRoute,
     AuthenticatedSettingsGeneralRoute: AuthenticatedSettingsGeneralRoute,
     AuthenticatedSettingsHoursRoute: AuthenticatedSettingsHoursRoute,
-    AuthenticatedSettingsProfessionalsRoute:
-      AuthenticatedSettingsProfessionalsRoute,
-    AuthenticatedSettingsServicesRoute: AuthenticatedSettingsServicesRoute,
     AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   }
 

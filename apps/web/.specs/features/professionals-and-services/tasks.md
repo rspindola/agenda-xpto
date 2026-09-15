@@ -189,6 +189,8 @@ graph TD
 
 ### T7: Update SettingsSidebar [P]
 **What**: Update the sidebar links to use `/settings/team-and-services/professionals` instead of the separate ones.
+**Status**: ✅ Complete
+**What**: Replace "Profissionais" and "Serviços" links with a single "Equipe e Serviços" link (or points to the default tab).
 **Where**: `src/modules/establishments/components/settings-sidebar.tsx`
 **Depends on**: None
 **Reuses**: Existing `SettingsSidebar`
@@ -207,7 +209,8 @@ graph TD
 ---
 
 ### T8: Team & Services Layout Route [P]
-**What**: Layout component that renders the Outlet and visual tabs for Professionals and Services.
+**Status**: ✅ Complete
+**What**: Create layout with Tabs (Profissionais / Serviços) using TanStack Router nested routes.
 **Where**: `src/routes/_authenticated/settings/team-and-services/route.tsx`
 **Depends on**: None
 **Reuses**: `@tanstack/react-router` Link
@@ -226,8 +229,9 @@ graph TD
 
 ---
 
-### T9: Route - Services Tab
-**What**: Page component that queries services and renders the list using `ServiceCard` and `ServiceFormModal`.
+### T9: Route - Services Tab [P]
+**Status**: ✅ Complete
+**What**: Mount `ServiceCard` list and `ServiceFormModal` connecting to API hooks.
 **Where**: `src/routes/_authenticated/settings/team-and-services/services.tsx`
 **Depends on**: T1, T3, T5, T8
 **Reuses**: None
@@ -247,8 +251,9 @@ graph TD
 
 ---
 
-### T10: Route - Professionals Tab
-**What**: Page component that queries professionals and renders the list using `ProfessionalCard` and `ProfessionalFormModal`.
+### T10: Route - Professionals Tab [P]
+**Status**: ✅ Complete
+**What**: Mount `ProfessionalCard` list and `ProfessionalFormModal` connecting to API hooks.
 **Where**: `src/routes/_authenticated/settings/team-and-services/professionals.tsx`
 **Depends on**: T2, T4, T6, T8
 **Reuses**: None
@@ -268,8 +273,9 @@ graph TD
 
 ---
 
-### T11: Delete old routes
-**What**: Remove the old separate settings routes.
+### T11: Delete old routes [P]
+**Status**: ✅ Complete
+**What**: Remove `src/routes/_authenticated/settings/professionals.tsx` and `src/routes/_authenticated/settings/services.tsx`.
 **Where**: `src/routes/_authenticated/settings/professionals.tsx` and `src/routes/_authenticated/settings/services.tsx`
 **Depends on**: T7, T9, T10
 **Reuses**: None
