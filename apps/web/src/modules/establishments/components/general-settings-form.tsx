@@ -57,7 +57,10 @@ export function GeneralSettingsForm({ establishment }: GeneralSettingsFormProps)
   })
 
   return (
-    <Card className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl">
+    <Card
+      data-testid="general-settings-form"
+      className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl"
+    >
       <div className="border-b border-zinc-800/60 pb-5 mb-6">
         <h2 className="text-xl font-bold text-zinc-100 tracking-tight">Informações Gerais</h2>
         <p className="text-sm text-zinc-400 mt-1">
@@ -110,6 +113,7 @@ export function GeneralSettingsForm({ establishment }: GeneralSettingsFormProps)
                 </label>
                 <Input
                   id={field.name}
+                  data-testid="general-name-input"
                   type="text"
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -145,6 +149,7 @@ export function GeneralSettingsForm({ establishment }: GeneralSettingsFormProps)
                 </label>
                 <Input
                   id={field.name}
+                  data-testid="general-slug-input"
                   type="text"
                   value={field.state.value}
                   onBlur={field.handleBlur}

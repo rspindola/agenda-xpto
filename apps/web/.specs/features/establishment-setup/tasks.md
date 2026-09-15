@@ -396,12 +396,12 @@ Phase 4 (Sequential):
 **Requirement:** EST-01, EST-04, EST-05, EST-08, EST-10, EST-11, EST-12, EST-NF-05  
 
 **Done when:**
-- [ ] `/settings` automatically redirects to `/settings/general`
-- [ ] Sub-routes `/settings/general`, `/settings/hours`, `/settings/professionals`, `/settings/services`, `/settings/danger` render respective components
-- [ ] Context switching updates all settings sub-pages in real time
-- [ ] Deleting active establishment redirects to next establishment or `/onboarding/business`
-- [ ] Full test suite passes: `pnpm test` and `pnpm lint`
-- [ ] Gate check passes: `pnpm test`
+- [x] `/settings` automatically redirects to `/settings/general`
+- [x] Sub-routes `/settings/general`, `/settings/hours`, `/settings/professionals`, `/settings/services`, `/settings/danger` render respective components
+- [x] Context switching updates all settings sub-pages in real time
+- [x] Deleting active establishment redirects to next establishment or `/onboarding/business`
+- [x] Full test suite passes: `pnpm test` and `pnpm lint`
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** integration  
 **Gate:** full (`pnpm test && pnpm lint`)  

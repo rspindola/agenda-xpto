@@ -367,24 +367,24 @@ src/components/layouts/
 
 | Requirement ID | Story | Task | Phase | Status |
 | -------------- | ----- | ---- | ----- | ------ |
-| EST-01 | P1: View and edit general settings | T1, T5, T8, T13 | Tasks | Pending |
-| EST-02 | P1: Establishment context switcher | T4, T6, T12 | Tasks | Pending |
-| EST-03 | P1: Create additional establishment | T1, T5, T7 | Tasks | Pending |
-| EST-04 | P1: Settings sidebar navigation | T11, T12, T13 | Tasks | Pending |
-| EST-05 | P1: Delete establishment (soft delete) | T5, T9, T13 | Tasks | Pending |
-| EST-06 | P1: Establishments API extension (getById, update, delete) | T2, T5 | Tasks | Pending |
-| EST-07 | P1: Active establishment store (TanStack Store) | T4 | Tasks | Pending |
-| EST-08 | P1: Settings route tree + guards | T12, T13 | Tasks | Pending |
-| EST-09 | P2: Plan limit feedback in switcher | T6 | Tasks | Pending |
-| EST-10 | P2: Settings — Hours summary (read-only) | T5, T10, T13 | Tasks | Pending |
-| EST-11 | P2: Settings — Professionals list (read-only) | T5, T10, T13 | Tasks | Pending |
-| EST-12 | P2: Settings — Services list (read-only) | T5, T10, T13 | Tasks | Pending |
-| EST-13 | UI: EstablishmentSwitcher (+ story) | T6 | Tasks | Pending |
-| EST-14 | UI: CreateEstablishmentDialog (+ story) | T7 | Tasks | Pending |
-| EST-15 | UI: DeleteConfirmationDialog (+ story) | T9 | Tasks | Pending |
-| EST-16 | UI: SettingsSidebar (+ story) | T11 | Tasks | Pending |
-| EST-17 | UI: GeneralSettingsForm (+ story) | T8 | Tasks | Pending |
-| EST-18 | P1: MSW handlers for establishment CRUD | T3 | Tasks | Pending |
+| EST-01 | P1: View and edit general settings | T1, T5, T8, T13 | Execute | Done |
+| EST-02 | P1: Establishment context switcher | T4, T6, T12 | Execute | Done |
+| EST-03 | P1: Create additional establishment | T1, T5, T7 | Execute | Done |
+| EST-04 | P1: Settings sidebar navigation | T11, T12, T13 | Execute | Done |
+| EST-05 | P1: Delete establishment (soft delete) | T5, T9, T13 | Execute | Done |
+| EST-06 | P1: Establishments API extension (getById, update, delete) | T2, T5 | Execute | Done |
+| EST-07 | P1: Active establishment store (TanStack Store) | T4 | Execute | Done |
+| EST-08 | P1: Settings route tree + guards | T12, T13 | Execute | Done |
+| EST-09 | P2: Plan limit feedback in switcher | T6 | Execute | Done |
+| EST-10 | P2: Settings — Hours summary (read-only) | T5, T10, T13 | Execute | Done |
+| EST-11 | P2: Settings — Professionals list (read-only) | T5, T10, T13 | Execute | Done |
+| EST-12 | P2: Settings — Services list (read-only) | T5, T10, T13 | Execute | Done |
+| EST-13 | UI: EstablishmentSwitcher (+ story) | T6 | Execute | Done |
+| EST-14 | UI: CreateEstablishmentDialog (+ story) | T7 | Execute | Done |
+| EST-15 | UI: DeleteConfirmationDialog (+ story) | T9 | Execute | Done |
+| EST-16 | UI: SettingsSidebar (+ story) | T11 | Execute | Done |
+| EST-17 | UI: GeneralSettingsForm (+ story) | T8 | Execute | Done |
+| EST-18 | P1: MSW handlers for establishment CRUD | T3 | Execute | Done |
 | EST-19 | P3: DashboardLayout with sidebar | — | Deferred | Deferred |
 
 **Coverage:** 19 total, 18 mapped to tasks, 1 deferred (0 unmapped ✅)
@@ -393,13 +393,13 @@ src/components/layouts/
 
 ## Success Criteria
 
-- [ ] Owner can edit all establishment fields in `/settings/general` and see changes persist after reload.
-- [ ] Pro/Business owner can create a second establishment via dialog and switch to it immediately.
-- [ ] Starter owner sees only the establishment name in the header — no dropdown interaction.
-- [ ] Owner can delete an establishment with double confirmation; context switches to next or triggers onboarding.
-- [ ] Settings sidebar navigation works across all sections (general, hours, professionals, services, danger).
-- [ ] Plan limit is enforced in the UI: button disabled + message when at limit.
-- [ ] `pnpm lint && pnpm test` pass for new establishment module tests and Storybook stories.
+- [x] Owner can edit all establishment fields in `/settings/general` and see changes persist after reload.
+- [x] Pro/Business owner can create a second establishment via dialog and switch to it immediately.
+- [x] Starter owner sees only the establishment name in the header — no dropdown interaction.
+- [x] Owner can delete an establishment with double confirmation; context switches to next or triggers onboarding.
+- [x] Settings sidebar navigation works across all sections (general, hours, professionals, services, danger).
+- [x] Plan limit is enforced in the UI: button disabled + message when at limit.
+- [x] `pnpm lint && pnpm test` pass for new establishment module tests and Storybook stories.
 
 ---
 
