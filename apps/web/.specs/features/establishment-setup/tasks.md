@@ -376,10 +376,10 @@ Phase 4 (Sequential):
 **Requirement:** EST-02, EST-04, EST-08  
 
 **Done when:**
-- [ ] `SettingsLayout` renders two-column container with sidebar on left and outlet/children on right
-- [ ] `dashboard.tsx` header integrates `EstablishmentSwitcher` alongside user greeting and sign out
-- [ ] Unit tests verify layout structure and switcher presence
-- [ ] Gate check passes: `pnpm test`
+- [x] `SettingsLayout` renders two-column container with sidebar on left and outlet/children on right
+- [x] `dashboard.tsx` header integrates `EstablishmentSwitcher` alongside user greeting and sign out
+- [x] Unit tests verify layout structure and switcher presence
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  

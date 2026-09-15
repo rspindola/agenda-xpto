@@ -72,7 +72,11 @@ export function EstablishmentSwitcher({ className, onOpenCreate }: Establishment
   }
 
   return (
-    <div ref={dropdownRef} className={cn('relative inline-block text-left', className)}>
+    <div
+      ref={dropdownRef}
+      data-testid="establishment-switcher"
+      className={cn('relative inline-block text-left', className)}
+    >
       <Button
         type="button"
         variant="ghost"
