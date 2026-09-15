@@ -212,18 +212,18 @@ Phase 4 (Sequential):
 ### T5: Establishment Mutation and Query Hooks
 
 **What:** Implement React Query hooks for detail queries, update mutation (`PATCH`), delete mutation (`DELETE`), create mutation (`POST`), and sub-resource queries.  
-**Where:** `src/modules/establishments/hooks/use-establishment-queries.ts`, `src/modules/establishments/hooks/use-update-establishment.ts`, `src/modules/establishments/hooks/use-delete-establishment.ts`, `src/modules/establishments/hooks/use-create-establishment.ts`, `src/modules/establishments/__tests__/use-establishment-mutations.test.ts`  
+**Where:** `src/modules/establishments/hooks/use-establishment-queries.ts`, `src/modules/establishments/hooks/use-update-establishment.ts`, `src/modules/establishments/hooks/use-delete-establishment.ts`, `src/modules/establishments/hooks/use-create-establishment.ts`, `src/modules/establishments/__tests__/use-establishment-mutations.test.tsx`  
 **Depends on:** T2, T4  
 **Reuses:** `@tanstack/react-query`, `establishmentKeys`  
 **Requirement:** EST-01, EST-03, EST-05, EST-06, EST-10, EST-11, EST-12  
 
 **Done when:**
-- [ ] `useEstablishmentDetail(id)`, `useEstablishmentProfessionals(id)`, `useEstablishmentServices(id)`, `useEstablishmentHours(id)` exported
-- [ ] `useUpdateEstablishment()` invalidates `establishmentKeys.detail(id)` and `establishmentKeys.list()` on success
-- [ ] `useDeleteEstablishment()` invalidates `establishmentKeys.list()` on success
-- [ ] `useCreateEstablishment()` invalidates `establishmentKeys.list()` and sets new establishment active
-- [ ] Unit tests verify cache invalidation and mutation execution
-- [ ] Gate check passes: `pnpm test`
+- [x] `useEstablishmentDetail(id)`, `useEstablishmentProfessionals(id)`, `useEstablishmentServices(id)`, `useEstablishmentHours(id)` exported
+- [x] `useUpdateEstablishment()` invalidates `establishmentKeys.detail(id)` and `establishmentKeys.list()` on success
+- [x] `useDeleteEstablishment()` invalidates `establishmentKeys.list()` on success
+- [x] `useCreateEstablishment()` invalidates `establishmentKeys.list()` and sets new establishment active
+- [x] Unit tests verify cache invalidation and mutation execution
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
