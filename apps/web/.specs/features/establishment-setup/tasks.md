@@ -353,13 +353,13 @@ Phase 4 (Sequential):
 **Requirement:** EST-04, EST-16  
 
 **Done when:**
-- [ ] Renders links: Geral, Horários, Profissionais, Serviços, Zona de Perigo
-- [ ] Highlights active sub-route based on current router pathname
-- [ ] Applies destructive/red text styling to "Zona de Perigo"
-- [ ] Responsive styling (collapses or transforms into horizontal tabs on mobile)
-- [ ] Unit tests verify navigation link rendering and active state
-- [ ] Storybook stories cover desktop and mobile variants
-- [ ] Gate check passes: `pnpm test`
+- [x] Renders links: Geral, Horários, Profissionais, Serviços, Zona de Perigo
+- [x] Highlights active sub-route based on current router pathname
+- [x] Applies destructive/red text styling to "Zona de Perigo"
+- [x] Responsive styling (collapses or transforms into horizontal tabs on mobile)
+- [x] Unit tests verify navigation link rendering and active state
+- [x] Storybook stories cover desktop and mobile variants
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
