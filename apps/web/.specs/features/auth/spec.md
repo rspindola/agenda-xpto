@@ -8,13 +8,13 @@ This spec defines the **frontend auth + onboarding flow** aligned with the **imp
 
 ## Goals
 
-- [ ] Owner can **sign up**, **verify email**, **sign in**, **sign out**, and **reset password** using Better Auth endpoints.
-- [ ] After first verified login, owner is guided through a **5-step onboarding wizard** (business **required**, steps 2–4 optional, summary).
-- [ ] Onboarding **complete** when `GET /api/v1/establishments` returns ≥ 1 item (no DB flag, no `localStorage`).
-- [ ] Session is maintained via **HTTP-only session cookies** (`credentials: 'include'` on Axios); no tokens in `localStorage`; auth via **`authApi` + TanStack Query** (no `better-auth` package on web).
-- [ ] Unauthenticated users → `/login`; verified with zero establishments → `/onboarding`; verified with ≥1 establishment → `/dashboard`.
-- [ ] Unverified users see a **verification gate** and cannot use protected routes until `emailVerified === true`.
-- [ ] Forms use **Zod validation**, **TanStack Form**, and existing **`src/components/ui/`** components.
+- [x] Owner can **sign up**, **verify email**, **sign in**, **sign out**, and **reset password** using Better Auth endpoints.
+- [x] After first verified login, owner is guided through a **5-step onboarding wizard** (business **required**, steps 2–4 optional, summary).
+- [x] Onboarding **complete** when `GET /api/v1/establishments` returns ≥ 1 item (no DB flag, no `localStorage`).
+- [x] Session is maintained via **HTTP-only session cookies** (`credentials: 'include'` on Axios); no tokens in `localStorage`; auth via **`authApi` + TanStack Query** (no `better-auth` package on web).
+- [x] Unauthenticated users → `/login`; verified with zero establishments → `/onboarding`; verified with ≥1 establishment → `/dashboard`.
+- [x] Unverified users see a **verification gate** and cannot use protected routes until `emailVerified === true`.
+- [x] Forms use **Zod validation**, **TanStack Form**, and existing **`src/components/ui/`** components.
 
 ## Out of Scope
 
@@ -380,42 +380,42 @@ Wireframes reference (`docs/flow/01-auth/diagrams/wireframes/pages.md`): signup 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AUTH-01 | P1: Sign up | Implement | Completed |
-| AUTH-02 | P1: Sign in | Implement | Completed |
-| AUTH-03 | P1: Email verification gate | Implement | Completed |
-| AUTH-04 | P1: Request password reset | Implement | Completed |
-| AUTH-05 | P1: Reset password | Implement | Completed |
-| AUTH-06 | P1: Session + protected routes | Implement | Completed |
-| AUTH-07 | P1: AuthLayout + public routes | Implement | Completed |
-| AUTH-08 | P1: Axios + auth API module | Implement | Completed |
-| AUTH-09 | UI: PasswordField (+ story) | Implement | Completed |
-| AUTH-10 | P2: Sign out from dashboard | — | Completed |
+| AUTH-01 | P1: Sign up | Implement | ✅ Verified |
+| AUTH-02 | P1: Sign in | Implement | ✅ Verified |
+| AUTH-03 | P1: Email verification gate | Implement | ✅ Verified |
+| AUTH-04 | P1: Request password reset | Implement | ✅ Verified |
+| AUTH-05 | P1: Reset password | Implement | ✅ Verified |
+| AUTH-06 | P1: Session + protected routes | Implement | ✅ Verified |
+| AUTH-07 | P1: AuthLayout + public routes | Implement | ✅ Verified |
+| AUTH-08 | P1: Axios + auth API module | Implement | ✅ Verified |
+| AUTH-09 | UI: PasswordField (+ story) | Implement | ✅ Verified |
+| AUTH-10 | P2: Sign out from dashboard | Implement | ✅ Verified |
 | AUTH-11 | P3: Change password | — | Deferred |
-| AUTH-12 | P1: Onboarding wizard shell + routes | Implement | Completed |
-| AUTH-13 | P1: Step 1 — business (establishment) | Implement | Completed |
-| AUTH-14 | P1: Step 2 — professional | Implement | Completed |
-| AUTH-15 | P1: Step 3 — service (informational) | Implement | Completed |
-| AUTH-16 | P1: Step 4 — business hours | Implement | Completed |
-| AUTH-17 | P1: Step 5 — done + establishments heuristic | Implement | Completed |
-| AUTH-18 | P1: Onboarding guard + post-verify redirect | Implement | Completed |
+| AUTH-12 | P1: Onboarding wizard shell + routes | Implement | ✅ Verified |
+| AUTH-13 | P1: Step 1 — business (establishment) | Implement | ✅ Verified |
+| AUTH-14 | P1: Step 2 — professional | Implement | ✅ Verified |
+| AUTH-15 | P1: Step 3 — service (informational) | Implement | ✅ Verified |
+| AUTH-16 | P1: Step 4 — business hours | Implement | ✅ Verified |
+| AUTH-17 | P1: Step 5 — done + establishments heuristic | Implement | ✅ Verified |
+| AUTH-18 | P1: Onboarding guard + post-verify redirect | Implement | ✅ Verified |
 | AUTH-19 | P2: Re-open wizard from settings | — | Pending |
-| AUTH-20 | P1: Resend verification + 60s cooldown | Implement | Completed |
+| AUTH-20 | P1: Resend verification + 60s cooldown | Implement | ✅ Verified |
 | AUTH-21 | Services CRUD API (full step 3) | — | Deferred |
 
-**Coverage:** 21 total, 18 completed, 2 deferred, 1 pending
+**Coverage:** 21 total, 18 ✅ verified, 2 deferred, 1 pending
 
 ---
 
 ## Success Criteria
 
-- [ ] New owner completes signup → verification → onboarding (at least step 1 + done) → `/dashboard` in &lt; 10 minutes (happy path, dev environment).
-- [ ] Returning owner with completed onboarding signs in → `/dashboard` without manual cookie handling.
-- [ ] New owner cannot reach `/dashboard` without completing onboarding step 1 (establishment created).
-- [ ] New owner can skip onboarding steps 2–4 and still reach `/dashboard` after step 1.
-- [ ] Forgot/reset password completes with neutral messaging and no email enumeration in UI.
-- [ ] Unauthenticated access to `/dashboard` always redirects to `/login`.
-- [ ] Unverified session never renders dashboard content.
-- [ ] `pnpm lint && pnpm test` pass for auth module tests and new UI stories.
+- [x] New owner completes signup → verification → onboarding (at least step 1 + done) → `/dashboard` in &lt; 10 minutes (happy path, dev environment).
+- [x] Returning owner with completed onboarding signs in → `/dashboard` without manual cookie handling.
+- [x] New owner cannot reach `/dashboard` without completing onboarding step 1 (establishment created).
+- [x] New owner can skip onboarding steps 2–4 and still reach `/dashboard` after step 1.
+- [x] Forgot/reset password completes with neutral messaging and no email enumeration in UI.
+- [x] Unauthenticated access to `/dashboard` always redirects to `/login`.
+- [x] Unverified session never renders dashboard content.
+- [x] `pnpm lint && pnpm test` pass for auth module tests and new UI stories.
 
 ---
 
@@ -450,4 +450,4 @@ Captured in `context.md` (2026-05-20). Summary:
 
 ---
 
-*Spec status: **Approved** (2026-05-20). Tasks: **Approved** — `.specs/features/auth/tasks.md` (24 tasks). Next phase: **Execute** (start with T1).*
+*Spec status: **Verified** (2026-09-15). Tasks: 24/24 completed — `.specs/features/auth/tasks.md`. All 18 MVP requirements verified against implementation. 2 deferred, 1 pending (P2).*

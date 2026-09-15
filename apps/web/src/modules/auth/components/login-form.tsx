@@ -14,8 +14,8 @@ export function LoginForm() {
 
   const form = useForm({
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'owner@example.com',
+      password: 'DevSeedPassword123',
     },
     onSubmit: async ({ value }) => {
       setGenericError(null)
