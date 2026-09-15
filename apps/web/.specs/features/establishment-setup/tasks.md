@@ -262,13 +262,13 @@ Phase 4 (Sequential):
 **Requirement:** EST-03, EST-14  
 
 **Done when:**
-- [ ] Dialog opens/closes via controlled `open` prop
-- [ ] Form contains: name, email (prefilled), timezone, phone, address, slug, operationalEmail
-- [ ] Submits valid data via `useCreateEstablishment`, closes dialog, and sets new establishment as active
-- [ ] Displays server error in dialog without closing if submission fails
-- [ ] Unit tests verify form validation and submit flow
-- [ ] Storybook stories cover open state, loading, and validation error state
-- [ ] Gate check passes: `pnpm test`
+- [x] Dialog opens/closes via controlled `open` prop
+- [x] Form contains: name, email (prefilled), timezone, phone, address, slug, operationalEmail
+- [x] Submits valid data via `useCreateEstablishment`, closes dialog, and sets new establishment as active
+- [x] Displays server error in dialog without closing if submission fails
+- [x] Unit tests verify form validation and submit flow
+- [x] Storybook stories cover open state, loading, and validation error state
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  

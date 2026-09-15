@@ -7,6 +7,16 @@ import { establishmentsHandlers } from './msw/handlers/establishments-handlers'
 
 expect.extend(matchers)
 
+if (typeof HTMLDialogElement !== 'undefined') {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.open = true
+  }
+  HTMLDialogElement.prototype.close = function () {
+    this.open = false
+    this.dispatchEvent(new Event('close'))
+  }
+}
+
 export const server = setupServer(...authHandlers, ...establishmentsHandlers)
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
