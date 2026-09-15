@@ -325,18 +325,18 @@ Phase 4 (Sequential):
 ### T10: Read-only Summaries (Hours, Professionals, Services) [P]
 
 **What:** Implement read-only summary components for business hours, professionals list, and services list (with BRL currency formatting and CTA links to future modules).  
-**Where:** `src/modules/establishments/components/hours-readonly-summary.tsx`, `src/modules/establishments/components/professionals-readonly-list.tsx`, `src/modules/establishments/components/services-readonly-list.tsx`, `.stories.tsx`, `src/modules/establishments/components/__tests__/readonly-lists.test.tsx`  
+**Where:** `src/modules/establishments/components/hours-readonly-summary.tsx`, `src/modules/establishments/components/professionals-readonly-list.tsx`, `src/modules/establishments/components/services-readonly-list.tsx`, `src/modules/establishments/components/readonly-lists.stories.tsx`, `src/modules/establishments/components/__tests__/readonly-lists.test.tsx`  
 **Depends on:** T5  
 **Reuses:** `Card`, `Button`, `useEstablishmentHours`, `useEstablishmentProfessionals`, `useEstablishmentServices`  
 **Requirement:** EST-10, EST-11, EST-12  
 
 **Done when:**
-- [ ] `HoursReadonlySummary` displays weekday schedule or empty state with CTA
-- [ ] `ProfessionalsReadonlyList` displays linked professionals or empty state with CTA
-- [ ] `ServicesReadonlyList` displays service duration & price formatted in BRL (`R$ XX,XX`) or empty state with CTA
-- [ ] Unit tests verify list rendering and empty states
-- [ ] Storybook stories cover populated and empty states for each component
-- [ ] Gate check passes: `pnpm test`
+- [x] `HoursReadonlySummary` displays weekday schedule or empty state with CTA
+- [x] `ProfessionalsReadonlyList` displays linked professionals or empty state with CTA
+- [x] `ServicesReadonlyList` displays service duration & price formatted in BRL (`R$ XX,XX`) or empty state with CTA
+- [x] Unit tests verify list rendering and empty states
+- [x] Storybook stories cover populated and empty states for each component
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
