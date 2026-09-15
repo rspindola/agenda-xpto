@@ -285,13 +285,13 @@ Phase 4 (Sequential):
 **Requirement:** EST-01, EST-17, EST-NF-06  
 
 **Done when:**
-- [ ] Pre-fills all fields from active establishment data
-- [ ] Displays live URL preview below slug input (`agenda.xpto.com/:slug`)
-- [ ] Displays warning when `isActive` toggle is switched off
-- [ ] Submits changed fields via `useUpdateEstablishment` with toast feedback
-- [ ] Unit tests verify field editing, validation errors, and save action
-- [ ] Storybook stories cover default, dirty, and submitting states
-- [ ] Gate check passes: `pnpm test`
+- [x] Pre-fills all fields from active establishment data
+- [x] Displays live URL preview below slug input (`agenda.xpto.com/:slug`)
+- [x] Displays warning when `isActive` toggle is switched off
+- [x] Submits changed fields via `useUpdateEstablishment` with toast feedback
+- [x] Unit tests verify field editing, validation errors, and save action
+- [x] Storybook stories cover default, dirty, and submitting states
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
