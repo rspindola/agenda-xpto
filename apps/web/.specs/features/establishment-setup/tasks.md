@@ -158,10 +158,10 @@ Phase 4 (Sequential):
 **Requirement:** EST-06, EST-NF-01, EST-NF-08  
 
 **Done when:**
-- [ ] `establishmentsApi` has methods: `list()`, `getById(id)`, `create(body)`, `update(id, body)`, `delete(id)`, `getProfessionals(id)`, `getServices(id)`, `getBusinessHours(id)`
-- [ ] `establishmentKeys` factory exported with `all`, `list()`, `detail(id)`, `professionals(id)`, `services(id)`, `hours(id)`
-- [ ] Unit tests cover all API client methods
-- [ ] Gate check passes: `pnpm test`
+- [x] `establishmentsApi` has methods: `list()`, `getById(id)`, `create(body)`, `update(id, body)`, `delete(id)`, `getProfessionals(id)`, `getServices(id)`, `getBusinessHours(id)`
+- [x] `establishmentKeys` factory exported with `all`, `list()`, `detail(id)`, `professionals(id)`, `services(id)`, `hours(id)`
+- [x] Unit tests cover all API client methods
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  
@@ -178,9 +178,9 @@ Phase 4 (Sequential):
 **Requirement:** EST-18, EST-NF-04  
 
 **Done when:**
-- [ ] MSW handlers respond to `GET /api/v1/establishments/:id`, `PATCH /api/v1/establishments/:id`, `DELETE /api/v1/establishments/:id`
-- [ ] MSW handlers respond to `GET /api/v1/establishments/:id/professionals`, `GET /api/v1/establishments/:id/services`, `GET /api/v1/establishments/:id/availability/business-hours`
-- [ ] Gate check passes: `pnpm test`
+- [x] MSW handlers respond to `GET /api/v1/establishments/:id`, `PATCH /api/v1/establishments/:id`, `DELETE /api/v1/establishments/:id`
+- [x] MSW handlers respond to `GET /api/v1/establishments/:id/professionals`, `GET /api/v1/establishments/:id/services`, `GET /api/v1/establishments/:id/availability/business-hours`
+- [x] Gate check passes: `pnpm test`
 
 **Tests:** unit  
 **Gate:** quick (`pnpm test`)  

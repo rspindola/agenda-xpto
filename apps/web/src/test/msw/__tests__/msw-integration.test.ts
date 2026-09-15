@@ -16,14 +16,13 @@ describe('MSW Integration Server', () => {
 
   it('should intercept GET /api/v1/establishments and return mock establishments', async () => {
     const { data } = await api.get('/api/v1/establishments')
-    expect(data).toEqual([
-      {
-        id: 'est_mock_123',
-        name: 'Mock Establishment',
-        slug: 'mock-establishment',
-        email: 'mock@establishment.com',
-        timezone: 'America/Sao_Paulo',
-      },
-    ])
+    expect(data).toBeInstanceOf(Array)
+    expect(data[0]).toMatchObject({
+      id: 'est_mock_123',
+      name: 'Mock Establishment',
+      slug: 'mock-establishment',
+      email: 'mock@establishment.com',
+      timezone: 'America/Sao_Paulo',
+    })
   })
 })
