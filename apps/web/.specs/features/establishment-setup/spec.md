@@ -438,4 +438,4 @@ Captured in `context.md` (2026-09-15). Summary:
 
 ---
 
-*Spec status: **Approved** (2026-09-15). Design status: **Approved** ([`design.md`](file:///Users/renatocastro/workspace/agenda-xpto/apps/web/.specs/features/establishment-setup/design.md)). Tasks status: **Ready for Review** ([`tasks.md`](file:///Users/renatocastro/workspace/agenda-xpto/apps/web/.specs/features/establishment-setup/tasks.md)). Next phase: **Execute**.*
+*Spec status: **Approved** (2026-09-15). Design status: **Approved** ([`design.md`](file:///Users/renatocastro/workspace/agenda-xpto/apps/web/.specs/features/establishment-setup/design.md)). Tasks status: **Completed** ([`tasks.md`](file:///Users/renatocastro/workspace/agenda-xpto/apps/web/.specs/features/establishment-setup/tasks.md)). Feature status: **Validated**.*

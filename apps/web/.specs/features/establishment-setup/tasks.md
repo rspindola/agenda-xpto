@@ -3,7 +3,7 @@
 **Design:** `.specs/features/establishment-setup/design.md`  
 **Spec:** `.specs/features/establishment-setup/spec.md`  
 **Context:** `.specs/features/establishment-setup/context.md`  
-**Status:** Draft (2026-09-15)
+**Status:** Completed (2026-09-15)
 
 ---
 
